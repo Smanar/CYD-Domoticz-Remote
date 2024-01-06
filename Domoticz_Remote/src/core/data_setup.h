@@ -11,7 +11,9 @@ enum {
     TYPE_SELECTOR = 5,
     TYPE_DIMMER = 6,
     TYPE_COLOR = 7,
-    TYPE_PLUG = 8
+    TYPE_PLUG = 8,
+    TYPE_HUMIDITY = 9,
+    TYPE_CONSUMPTION = 10
 };
 
 typedef struct _Device {

@@ -5,7 +5,7 @@
 #include "lvgl.h"
 #include "core/data_setup.h"
 #include "ui/main_ui.h"
-#include "ui/nav_buttons.h"
+#include "ui/navigation.h"
 
 void wifi_init_inner();
 bool CheckJson();
@@ -44,12 +44,13 @@ void setup() {
 
     Serial.println("Application ready");
 
-
+    //Set defaut Style
     nav_style_setup();
+    
     main_ui_setup();
 
     //Start on Home panel
-    nav_buttons_setup(0);
+    navigation_screen(0);
 
 }
 

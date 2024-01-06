@@ -124,7 +124,7 @@ void screen_timer_setup()
 
 void screen_timer_start()
 {
-    lv_timer_resume(screenSleepTimer);
+    if (global_config.screenTimeout > 0) lv_timer_resume(screenSleepTimer);
 }
 
 void screen_timer_stop()
