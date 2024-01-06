@@ -5,3 +5,5 @@ It use Wifi connection to connect direclty to domoticz, to ask information and u
 In reality the project is not finished so lot of settings are hard coded on the device, for exemple wich one devices will be displayed on the homepage, but it already work in stand alone mode.   
 
 You can found some captures here https://www.domoticz.com/forum/viewtopic.php?t=41232
+
+ATM, I m aking tries on the 2.8'' device a ESP32-2432S028R.
