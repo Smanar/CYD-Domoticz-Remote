@@ -21,4 +21,7 @@ There is different way to install the code on th device, but I think this one is
 - Download the project and open it with Visual Studio Code.
 - ???
 - Just launch a compilation (Build) and upload (Upload) the code on the device using the USB cable. Don't forget to short press the button (Boot) on the device to autorie tha action.
-- On first launch, configure the Wifi, the domoticz IP and port, and on setting select the devices you want o display on the Homepage.   
+- On first launch, configure the Wifi, the domoticz IP and port, and on setting select the devices you want o display on the Homepage.
+   
+   
+For ther moment, need to edit code itself to set defaut devices, the edit box is here, but not possible to edit value.
