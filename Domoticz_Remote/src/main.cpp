@@ -11,6 +11,9 @@ void wifi_init_inner();
 bool CheckJson();
 void Websocket_loop(void);
 
+//personnal devices
+static int t[] = {37, 81, 16, 36, 28, 35, 57, 14, 87};
+
 static void event_handler(lv_event_t * e){
     lv_event_code_t code = lv_event_get_code(e);
 
@@ -28,15 +31,19 @@ void setup() {
     screen_setup();
     Serial.println("Screen init done");
 
-    //Personnal Settings
-    strcpy(global_config.wifiPassword, "xxxxxxxxxxxxxxxx");
-    strcpy(global_config.wifiSSID, "xxxxxxxxxxxxxxx");
-    strcpy(global_config.ServerHost, "192.168.1.1");
-    global_config.ServerPort = 8080;
-    global_config.wifiConfigured = true;
-    global_config.ipConfigured = true;
-    global_config.invertColors = true;
-    WriteGlobalConfig();
+    //Personnal Settings to don't have to set them at every reset, need to be removed
+    #if 1
+        strcpy(global_config.wifiPassword, "xxxxxxxxxxxxxxxx");
+        strcpy(global_config.wifiSSID, "xxxxxxxxxxxxxxx");
+        strcpy(global_config.ServerHost, "192.168.1.1");
+        global_config.ServerPort = 8080;
+        global_config.wifiConfigured = true;
+        global_config.ipConfigured = true;
+        global_config.invertColors = true;
+        for (int i=0; i<9; i++)
+            global_config.ListDevices[i] = t[i];
+        WriteGlobalConfig();
+    #endif
     
     wifi_init(); // Wifi initialisation
     WS_init(); // Websocket initialisation
@@ -50,7 +57,7 @@ void setup() {
     main_ui_setup();
 
     //Start on Home panel
-    navigation_screen(0);
+    navigation_screen(1);
 
 }
 

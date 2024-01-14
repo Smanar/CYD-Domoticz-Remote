@@ -5,6 +5,8 @@
 
 #define CONFIG_VERSION 3
 
+#define MAXDEVICES 9
+
 typedef struct _GLOBAL_CONFIG {
     unsigned char version;
     union {
@@ -16,7 +18,7 @@ typedef struct _GLOBAL_CONFIG {
             bool lightMode : 1;
             bool invertColors : 1;
             bool rotateScreen : 1;
-            bool onDuringPrint : 1;
+            bool notused : 1;
         };
     };
     float screenCalXOffset;
@@ -29,13 +31,13 @@ typedef struct _GLOBAL_CONFIG {
 
     char ServerHost[64];
     unsigned short ServerPort;
+
+    int ListDevices[MAXDEVICES];
     
     unsigned char color_scheme;
     unsigned char brightness;
     unsigned char screenTimeout;
 
-    unsigned short hotend_presets[3];
-    unsigned short bed_presets[3];
 } GLOBAL_CONFIG;
     
 typedef struct _COLOR_DEF {

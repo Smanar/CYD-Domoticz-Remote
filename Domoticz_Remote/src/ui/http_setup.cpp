@@ -85,7 +85,7 @@ void WS_init_inner(){
     portEntry = lv_textarea_create(lv_scr_act());
     lv_textarea_set_one_line(portEntry, true);
     lv_textarea_set_max_length(portEntry, 5);
-    lv_textarea_set_text(portEntry, "80");
+    lv_textarea_set_text(portEntry, "8080");
     lv_obj_align(portEntry, LV_ALIGN_TOP_LEFT, TFT_HEIGHT - 20 - 80, 40);
     lv_obj_add_event_cb(portEntry, ta_event_cb, LV_EVENT_ALL, keyboard);
     lv_obj_set_size(portEntry, 90, 60);

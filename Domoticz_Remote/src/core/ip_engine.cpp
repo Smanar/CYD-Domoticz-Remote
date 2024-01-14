@@ -1,9 +1,8 @@
 #include <HTTPClient.h>
 #include <WebSocketsClient.h>
-#include <ArduinoJson.h>
+//#include <ArduinoJson.h>
 #include <WebSocketsClient.h>
 
-#include "base64.hpp"
 #include "../conf/global_config.h"
 #include "ip_engine.h"
 
@@ -13,29 +12,16 @@ bool connect_ok = false;
 void Update_data(JsonObject RJson2);
 
 bool verify_ip(){
-    HTTPClient client;
-    String url = "http://" + String(global_config.ServerHost) + ":" + String(global_config.ServerPort) + "/info";
-    int httpCode;
-    try {
-        Serial.println(url);
-        client.setTimeout(500);
-        client.begin(url.c_str());
-        httpCode = client.GET();
-        if  (httpCode == 200)
-        {
-            connect_ok = true;
-            return true;
-        }
-    }
-    catch (...) {
-        Serial.println("Failed to connect");
-        return false;
-    }
-
-    return false;
+    return HTTPGETRequestWithReturn("/json.htm?type=command&param=getServerTime",NULL);
 }
 
 bool HTTPGETRequest(char * url2)
+{
+    return HTTPGETRequestWithReturn(url2,NULL);
+}
+
+
+bool HTTPGETRequestWithReturn(char * url2, JsonArray *JS)
 {
     HTTPClient client;
     String url = "http://" + String(global_config.ServerHost) + ":" + String(global_config.ServerPort) + url2;
@@ -43,25 +29,7 @@ bool HTTPGETRequest(char * url2)
     try {
         Serial.println(url);
         client.setTimeout(500);
-        client.begin(url.c_str());
-        httpCode = client.GET();
-        return httpCode == 200;
-    }
-    catch (...) {
-        Serial.println("Failed to connect");
-        return false;
-    }
-}
-
-bool HttpInitDevice(Device *d, const char * id)
-{
-    HTTPClient client;
-    String url = "http://" + String(global_config.ServerHost) + ":" + String(global_config.ServerPort) + "/json.htm?type=command&param=getdevices&rid=" + id;
-    int httpCode;
-    try {
-        Serial.println(url);
-        client.setTimeout(500);
-        client.begin(url.c_str());
+        client.begin(url);
         httpCode = client.GET();
         if (httpCode != 200)
         {
@@ -69,96 +37,27 @@ bool HttpInitDevice(Device *d, const char * id)
              return false;
         }
 
+        //if no need data return
+        if (!JS) return true;
+
         String payload = client.getString();
-        DynamicJsonDocument doc(60000);
+
+        DynamicJsonDocument doc(100000);
+        //DynamicJsonDocument doc(65536);
         auto a = deserializeJson(doc, payload);
-        Serial.printf("JSON PARSE: %s\n", a.c_str());
-        auto result = doc["result"].as<JsonArray>();
 
-        if (!result) return false;
+        //Some debug
+        //https://arduinojson.org/v6/how-to/determine-the-capacity-of-the-jsondocument/
+        //Serial.printf("JSON PARSE: %s\n", a.c_str());
+        //Serial.printf("xxx %d\n", JS->size());
+        //Serial.printf("Available Memory %d\n", ESP.getMaxAllocHeap()); // 45044 
 
-        for (auto i : result)  // Scan the array ( only 1)
+        *JS = doc["result"].as<JsonArray>();
+
+        if (!*JS)
         {
-            d->name = (char*)malloc(strlen(i["Name"]) + 1);
-            strcpy(d->name, i["Name"]);
-
-            const char* JSondata = NULL;
-            JSondata = i["Data"];
-            //do some cleaning
-            if (strncmp(JSondata, "Humidity ", 9) == 0) JSondata+=9;
-            strncpy(d->data, JSondata,10);
-
-            d->ID = (char*)malloc(strlen(i["ID"]) + 1);
-            strcpy(d->ID, i["ID"]);
-            d->HardwareID = i["HardwareID"];
-            d->idx = i["idx"];
-            d->level = i["Level"];
-
-            const char* type = i["Type"];
-            const char* subtype = i["SubType"];
-            const char* image = i["Image"];
-
-            if (strcmp(type, "Light/Switch") == 0)
-            {
-                d->type = TYPE_SWITCH;
-
-                bool b = i["HaveDimmer"];
-
-                if (b)
-                {
-                    d->type = TYPE_DIMMER;
-                }
-            }
-            else if (strcmp(type, "Color Switch") == 0)
-            {
-                d->type = TYPE_COLOR;
-            }
-            else if (strcmp(type, "Temp") == 0)
-            {
-                d->type = TYPE_TEMPERATURE;
-            }
-            else if (strcmp(type, "Humidity") == 0)
-            {
-                d->type = TYPE_HUMIDITY;
-            }
-            else if (strcmp(type, "Usage") == 0)
-            {
-                d->type = TYPE_CONSUMPTION;
-            }
-            else if (strcmp(type, "General") == 0)
-            {
-                d->type = TYPE_WARNING;
-            }
-
-            if (strcmp(subtype,"Selector Switch") == 0)
-            {
-
-                d->type = TYPE_SELECTOR;
-                const char *base64 = i["LevelNames"]; 
-                d->levelname = (char*)malloc(strlen(i["LevelNames"]) + 1);
-
-                unsigned int string_length = decode_base64((const unsigned char*)base64, (unsigned char *)d->levelname);
-                d->levelname[string_length] = '\0';
-
-                char *ptr = d->levelname;
-                while (*ptr != '\0')
-                {
-                    if (*ptr == '|') { *ptr = '\n'; }
-                    ptr++;
-                }
-
-            }
-
-            // Correction by image
-            if (image && strcmp(image,"WallSocket") == 0)
-            {
-                d->type = TYPE_PLUG;
-            }
-            if (image && strcmp(image,"Speaker") == 0)
-            {
-                d->type = TYPE_SPEAKER;
-            }
-
+            Serial.println("Json not available\n");
+            return false;
         }
 
         return true;
@@ -170,7 +69,10 @@ bool HttpInitDevice(Device *d, const char * id)
     }
 
     return false;
+
 }
+
+
 
 void hexdump(const void *mem, uint32_t len, uint8_t cols = 16) {
 	const uint8_t* src = (const uint8_t*) mem;
@@ -200,7 +102,7 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
 			WSclient.sendTXT("Connected");
 			break;
 		case WStype_TEXT:
-			Serial.printf("[WSc] get text: %s\n", payload);
+			//Serial.printf("[WSc] get text: %s\n", payload);
             if (length > 0)
             {
                 DynamicJsonDocument doc(4096);

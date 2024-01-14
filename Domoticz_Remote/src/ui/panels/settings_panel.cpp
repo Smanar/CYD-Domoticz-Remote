@@ -72,10 +72,10 @@ static void rotate_screen_switch(lv_event_t* e){
     ESP.restart();
 }
 
-static void on_during_print_switch(lv_event_t* e){
+static void not_used_yet_switch(lv_event_t* e){
     auto state = lv_obj_get_state(lv_event_get_target(e));
     bool checked = (state & LV_STATE_CHECKED == LV_STATE_CHECKED);
-    global_config.onDuringPrint = checked;
+    global_config.notused = checked;
     check_if_screen_needs_to_be_disabled();
     WriteGlobalConfig();
 }
@@ -192,10 +192,21 @@ void settings_panel_init(lv_obj_t* panel)
     create_settings_widget("Rotate Screen", toggle, panel);
 
     toggle = lv_switch_create(panel);
-    lv_obj_add_event_cb(toggle, on_during_print_switch, LV_EVENT_VALUE_CHANGED, NULL);
+    lv_obj_add_event_cb(toggle, not_used_yet_switch, LV_EVENT_VALUE_CHANGED, NULL);
 
-    if (global_config.onDuringPrint)
+    if (global_config.notused)
         lv_obj_add_state(toggle, LV_STATE_CHECKED);
 
-    create_settings_widget("Screen On During Print", toggle, panel);
+    create_settings_widget("Not used yet", toggle, panel);
+
+    lv_obj_t * textarea = lv_textarea_create(panel);
+    String text;
+    for (int i = 0; i < sizeof(global_config.ListDevices) / sizeof(*global_config.ListDevices); i = i + 1)
+    {   if (i > 0) text = text + ",";
+        text = text + String(global_config.ListDevices[i]);
+    }
+    lv_textarea_add_text(textarea, text.c_str());
+    lv_textarea_set_one_line(textarea, true);
+    lv_obj_set_width(textarea, lv_pct(60));
+    create_settings_widget("Dft devices", textarea, panel);
 }

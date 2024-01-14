@@ -39,7 +39,7 @@ static void btn_event_cb(lv_event_t * e)
 
     if(code == LV_EVENT_CLICKED) {
         //Serial.printf("Clic sur boutton: %d", * btn_no);
-        Select_device(*btn_no);
+        Select_deviceHP(*btn_no);
     }
 }
 
@@ -98,7 +98,7 @@ void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int h, lv_c
 
 }
 
-void Widget_sensor(lv_obj_t* panel, char* desc, char* value, int x, int y, int w, int h, lv_color_t color, const lv_img_dsc_t *icon)
+void Widget_sensor(lv_obj_t* panel, char* desc, char* value, int x, int y, int w, int h, lv_color_t color, int *d, const lv_img_dsc_t *icon)
 {
 
     /*Create a container*/
@@ -108,7 +108,7 @@ void Widget_sensor(lv_obj_t* panel, char* desc, char* value, int x, int y, int w
     lv_obj_set_pos(Button_icon, x, y);
     lv_obj_add_style(Button_icon, &style_shadow, LV_PART_MAIN);
     lv_obj_clear_flag( Button_icon, LV_OBJ_FLAG_SCROLLABLE );
-
+    lv_obj_add_event_cb(Button_icon, btn_event_cb, LV_EVENT_ALL, d);              /*Assign a callback to the button*/
     //lv_obj_add_event_cb(Button_icon,button_draw_event_cb,LV_EVENT_DRAW_PART_END,NULL); // To bypass drawing
 
     /*Create icon*/
@@ -167,13 +167,10 @@ void home_panel_init(lv_obj_t* panel)
                 case TYPE_TEMPERATURE:
                 case TYPE_HUMIDITY:
                 case TYPE_CONSUMPTION:
+                case TYPE_SWITCH_SENSOR:
+                case TYPE_LUX:
                 {
-                    Widget_sensor(panel, myDevices[i].name, myDevices[i].data, cx , cy , Size_w , Size_h, device_color, icon);
-                }
-                break;
-                case TYPE_WARNING:
-                {
-                    Widget_button(panel, myDevices[i].name, cx, cy, Size_w , Size_h, device_color, &myDevices[i].pointer, icon); 
+                    Widget_sensor(panel, myDevices[i].name, myDevices[i].data, cx , cy , Size_w , Size_h, device_color, &myDevices[i].pointer, icon);
                 }
                 break;
                 case TYPE_SWITCH:
@@ -182,6 +179,8 @@ void home_panel_init(lv_obj_t* panel)
                 case TYPE_DIMMER:
                 case TYPE_PLUG:
                 case TYPE_COLOR:
+                case TYPE_LIGHT:
+                case TYPE_WARNING: // This one is a sensor, but too much text to be displayed on homepage
                 {
                     Widget_button(panel, myDevices[i].name, cx, cy, Size_w , Size_h, device_color, &myDevices[i].pointer, icon); 
                 }

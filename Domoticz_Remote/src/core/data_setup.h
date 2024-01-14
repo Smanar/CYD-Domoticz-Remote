@@ -3,24 +3,28 @@
 
 
 enum {
-    TYPE_UNKNOW = 0,
-    TYPE_SWITCH = 1,
-    TYPE_SPEAKER = 2,
-    TYPE_TEMPERATURE = 3,
-    TYPE_WARNING = 4,
-    TYPE_SELECTOR = 5,
-    TYPE_DIMMER = 6,
-    TYPE_COLOR = 7,
-    TYPE_PLUG = 8,
-    TYPE_HUMIDITY = 9,
-    TYPE_CONSUMPTION = 10
+    TYPE_UNKNOW,
+    TYPE_SWITCH,
+    TYPE_SPEAKER,
+    TYPE_TEMPERATURE,
+    TYPE_WARNING,
+    TYPE_SELECTOR,
+    TYPE_SWITCH_SENSOR,
+    TYPE_COLOR,
+    TYPE_PLUG,
+    TYPE_HUMIDITY,
+    TYPE_CONSUMPTION,
+    TYPE_LIGHT,
+    TYPE_DIMMER,
+    TYPE_BLINDS,
+    TYPE_LUX
 };
 
 typedef struct _Device {
     char* name;
     char * ID;
     int  HardwareID = 0;
-    char data[10];
+    char data[20];
     int level = 0;
     int  idx = 0;
     int type = 0;
@@ -34,5 +38,8 @@ typedef struct _Device {
 
 void Init_data();
 bool HTTPGETRequest(char * url);
+void FillDeviceData(Device *d, int idx);
+bool HttpInitDevice(Device *d, int id);
+int * GetGraphValue(int type, int idx, int *, int *);
 
 #endif

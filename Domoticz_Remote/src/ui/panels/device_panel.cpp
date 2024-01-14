@@ -7,20 +7,23 @@
 
 #include <HardwareSerial.h>
 #include <HTTPClient.h>
+#include <ArduinoJson.h>
 
 LV_FONT_DECLARE(Montserrat_Bold_14)
 
-int Selected_device = 0;
 static lv_obj_t * slider_label;
 
-extern Device myDevices[];
+extern Device myDevices[]; // For home page
+Device SelectedDevice; // The selected one
 extern lv_style_t style_shadow;
+
+int* pTab; // Pointer to graph value
 
 static void return_btn_event_handler(lv_event_t * e) {
     lv_event_code_t code = lv_event_get_code(e);
 
     if(code == LV_EVENT_CLICKED) {
-        navigation_screen(0);
+        ReturnPreviouspage();
     }
 }
 
@@ -34,7 +37,7 @@ static void colorwheel_event_cb(lv_event_t * e)
 
         char buff[256] = {};
         sprintf(buff, "/json.htm?type=command&param=setcolbrightnessvalue&idx=%d&color={\"m\":3,\"t\":0,\"r\":%d,\"g\":%d,\"b\":%d,\"cw\":0,\"ww\":0}&brightness=%d",
-                        myDevices[Selected_device].idx, c.ch.red, c.ch.green, c.ch.blue, 100);
+                        SelectedDevice.idx, c.ch.red, c.ch.green, c.ch.blue, 100);
         HTTPGETRequest(buff);
     }
 }
@@ -54,7 +57,7 @@ static void slider_event_cb(lv_event_t * e)
 
     if (code == LV_EVENT_VALUE_CHANGED) {
         char buff[256] = {};
-        sprintf(buff, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=Set%%20Level&level=%d", myDevices[Selected_device].idx, (int)lv_slider_get_value(slider));
+        sprintf(buff, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=Set%%20Level&level=%d", SelectedDevice.idx, (int)lv_slider_get_value(slider));
         HTTPGETRequest(buff);
     }
 }
@@ -66,7 +69,7 @@ static void  switch_event_handler(lv_event_t * e)
 
     if (code == LV_EVENT_VALUE_CHANGED) {
         char buff[256] = {};
-        sprintf(buff, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=%s", myDevices[Selected_device].idx, lv_obj_has_state(obj, LV_STATE_CHECKED) ? "On" : "Off");
+        sprintf(buff, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=%s", SelectedDevice.idx, lv_obj_has_state(obj, LV_STATE_CHECKED) ? "On" : "Off");
         HTTPGETRequest(buff);
     }
 }
@@ -83,15 +86,24 @@ static void dd_event_handler(lv_event_t * e)
         int index = lv_dropdown_get_selected(obj);
 
         char buff[256] = {};
-        sprintf(buff, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=Set%%20Level&level=%d", myDevices[Selected_device].idx, index * 10);
+        sprintf(buff, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=Set%%20Level&level=%d", SelectedDevice.idx, index * 10);
         HTTPGETRequest(buff);
     }
 }
 
-void Select_device(int device)
+void Select_deviceHP(int device)
 {
-    Selected_device = device;
-    navigation_screen(1);
+    //This one is already memorised so just pick it
+    SelectedDevice = myDevices[device];
+    navigation_screen(3);
+}
+
+void Select_deviceIDX(int idx)
+{
+    //This one is empty so get data
+    FillDeviceData(&SelectedDevice, idx);
+
+    navigation_screen(3);
 }
 
 lv_color_t Getcolor(int type)
@@ -100,6 +112,8 @@ lv_color_t Getcolor(int type)
     {
         case TYPE_TEMPERATURE:
         case TYPE_HUMIDITY:
+        case TYPE_SWITCH_SENSOR:
+        case TYPE_LUX:
             return LV_COLOR_MAKE(0x00, 0x7F, 0xFF);
         break;
         case TYPE_WARNING:
@@ -112,6 +126,7 @@ lv_color_t Getcolor(int type)
         case TYPE_DIMMER:
         case TYPE_PLUG:
         case TYPE_COLOR:
+        case TYPE_LIGHT:
             return LV_COLOR_MAKE(0xFF, 0x2F, 0x2F); 
         break;
         default:
@@ -155,6 +170,8 @@ const lv_img_dsc_t *Geticon(int type)
         case TYPE_DIMMER:
         case TYPE_SWITCH:
         case TYPE_COLOR:
+        case TYPE_LIGHT:
+        TYPE_SWITCH_SENSOR:
             return &lampe35x35; 
         break;
         default:
@@ -167,8 +184,8 @@ const lv_img_dsc_t *Geticon(int type)
 void device_panel_init(lv_obj_t* panel)
 {
 
-    lv_color_t color = Getcolor(myDevices[Selected_device].type);
-    const lv_img_dsc_t *icon = Geticon(myDevices[Selected_device].type);
+    lv_color_t color = Getcolor(SelectedDevice.type);
+    const lv_img_dsc_t *icon = Geticon(SelectedDevice.type);
     lv_obj_t * label;
 
     //Container
@@ -198,45 +215,46 @@ void device_panel_init(lv_obj_t* panel)
 
     //Label
     label = lv_label_create(cont);
-    lv_label_set_text(label, myDevices[Selected_device].name);
+    lv_label_set_text(label, SelectedDevice.name);
     lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
 
     lv_obj_add_flag(cont, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);       //Force new line
 
     //Options
-    if ((myDevices[Selected_device].type == TYPE_SWITCH) || (myDevices[Selected_device].type == TYPE_DIMMER)
-     || (myDevices[Selected_device].type == TYPE_PLUG) || (myDevices[Selected_device].type == TYPE_COLOR))
+    if ((SelectedDevice.type == TYPE_SWITCH) || (SelectedDevice.type == TYPE_DIMMER)
+     || (SelectedDevice.type == TYPE_PLUG) || (SelectedDevice.type == TYPE_COLOR)
+     || ( SelectedDevice.type == TYPE_SWITCH_SENSOR))
     {
         //Create switch
         lv_obj_t * sw = lv_switch_create(cont);
-        if (strcmp(myDevices[Selected_device].data, "On") == 0)
+        if (strcmp(SelectedDevice.data, "On") == 0)
         {
             lv_obj_add_state(sw, LV_STATE_CHECKED);
         }
         lv_obj_add_event_cb(sw, switch_event_handler, LV_EVENT_ALL, NULL);
     }
 
-    if (myDevices[Selected_device].type == TYPE_DIMMER)
+    if (SelectedDevice.type == TYPE_DIMMER)
     {
         /*Create a slider in the center of the display*/
         lv_obj_t * slider = lv_slider_create(cont);
-        lv_slider_set_value(slider, myDevices[Selected_device].level, LV_ANIM_ON);
+        lv_slider_set_value(slider, SelectedDevice.level, LV_ANIM_ON);
         lv_obj_set_width(slider, lv_pct(80));
         lv_obj_center(slider);
         lv_obj_add_event_cb(slider, slider_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
 
         /*Create a label below the slider*/
         slider_label = lv_label_create(lv_scr_act());
-        lv_label_set_text(slider_label, "0%");
+        lv_label_set_text_fmt(slider_label, "%d%",SelectedDevice.level);
         lv_obj_align_to(slider_label, slider, LV_ALIGN_OUT_RIGHT_MID, 10, 0);
     }
 
-    if (myDevices[Selected_device].type == TYPE_COLOR)
+    if (SelectedDevice.type == TYPE_COLOR)
     {
         
         /*Create a slider in the center of the display*/
         lv_obj_t * slider = lv_slider_create(panel);
-        lv_slider_set_value(slider, myDevices[Selected_device].level, LV_ANIM_ON);
+        lv_slider_set_value(slider, SelectedDevice.level, LV_ANIM_ON);
         lv_obj_set_size(slider, 10, lv_pct(40));
         lv_obj_add_event_cb(slider, slider_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
         //lv_obj_align_to(slider, cont, LV_ALIGN_BOTTOM_LEFT, 0, 0);
@@ -257,28 +275,67 @@ void device_panel_init(lv_obj_t* panel)
         //lv_obj_center(cw);
     }
 
-    if (myDevices[Selected_device].type == TYPE_SELECTOR || myDevices[Selected_device].type == TYPE_SPEAKER)
+    if (SelectedDevice.type == TYPE_SELECTOR || SelectedDevice.type == TYPE_SPEAKER)
     {
         /*Create a normal drop down list*/
         lv_obj_t * dd = lv_dropdown_create(cont);
-        lv_dropdown_set_options(dd, myDevices[Selected_device].levelname);
+        lv_dropdown_set_options(dd, SelectedDevice.levelname);
 
         //lv_obj_align(dd, LV_ALIGN_TOP_MID, 0, 20);
         lv_obj_add_event_cb(dd, dd_event_handler, LV_EVENT_VALUE_CHANGED, NULL);
-        lv_dropdown_set_selected(dd, myDevices[Selected_device].level / 10);
+        lv_dropdown_set_selected(dd, SelectedDevice.level / 10);
     }
 
-    if (myDevices[Selected_device].type == TYPE_WARNING)
+    if (SelectedDevice.type == TYPE_WARNING) 
     {
         lv_obj_add_flag(cont, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);       //Force new line
         lv_obj_add_flag(cont, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);       //Force new line
 
         label = lv_label_create(panel);
         lv_obj_set_style_text_font(label, &Montserrat_Bold_14, 0);
-        lv_label_set_text(label, myDevices[Selected_device].data);
+        lv_label_set_text(label, SelectedDevice.data);
         lv_obj_align_to(label, cont,  LV_ALIGN_CENTER, 0, 0);
         lv_obj_set_style_text_color(label, color, 0);
     }
+
+    if ((SelectedDevice.type == TYPE_TEMPERATURE)
+    || (SelectedDevice.type == TYPE_HUMIDITY) || (SelectedDevice.type == TYPE_CONSUMPTION)
+    || (SelectedDevice.type == TYPE_LUX))
+    {
+        //Making a graph
+        int min, max;
+        pTab = GetGraphValue(SelectedDevice.type, SelectedDevice.idx, &min, &max);
+
+        if (pTab)
+        {
+            lv_obj_t * chart;
+            chart = lv_chart_create(panel);
+            lv_obj_set_size(chart, lv_pct(70), lv_pct(45));
+            lv_obj_center(chart);
+            lv_chart_set_type(chart, LV_CHART_TYPE_LINE);   /*Show lines and points too*/
+
+            lv_chart_set_range(chart, LV_CHART_AXIS_PRIMARY_Y, min , max );
+            //lv_chart_set_range(chart, LV_CHART_AXIS_SECONDARY_X, 0 , 24 );
+            lv_chart_set_point_count(chart, 24);
+
+            lv_chart_series_t * ser1 = lv_chart_add_series(chart, lv_palette_main(LV_PALETTE_GREEN), LV_CHART_AXIS_PRIMARY_Y);
+
+            Serial.printf("Making chart with Range %d > %d\n",min , max);
+
+            uint16_t i;
+            for(i = 0; i < 24; i++) {
+                lv_chart_set_next_value(chart, ser1, pTab[i]);
+            }
+
+            lv_chart_refresh(chart); /*Required after direct set*/
+        }
+        else
+        {
+            Serial.printf("Can't retreive graph value\n");
+        }
+
+    }
+
 
     lv_obj_add_flag(cont, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);       //Force new line
 
