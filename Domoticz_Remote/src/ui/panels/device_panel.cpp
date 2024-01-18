@@ -114,6 +114,7 @@ lv_color_t Getcolor(int type)
         case TYPE_HUMIDITY:
         case TYPE_SWITCH_SENSOR:
         case TYPE_LUX:
+        case TYPE_PERCENT_SENSOR:
             return LV_COLOR_MAKE(0x00, 0x7F, 0xFF);
         break;
         case TYPE_WARNING:
@@ -143,6 +144,7 @@ LV_IMG_DECLARE(warning35x35)
 LV_IMG_DECLARE(speaker35x35)
 LV_IMG_DECLARE(humidity35x35)
 LV_IMG_DECLARE(power35x35)
+LV_IMG_DECLARE(sensor35x35)
 
 // To convert image https://lvgl.io/tools/imageconverter
 const lv_img_dsc_t *Geticon(int type)
@@ -171,8 +173,12 @@ const lv_img_dsc_t *Geticon(int type)
         case TYPE_SWITCH:
         case TYPE_COLOR:
         case TYPE_LIGHT:
-        TYPE_SWITCH_SENSOR:
+        case TYPE_BLINDS:
             return &lampe35x35; 
+        case TYPE_SWITCH_SENSOR:
+        case TYPE_LUX:
+        case TYPE_PERCENT_SENSOR:
+            return &sensor35x35; 
         break;
         default:
         break;
@@ -188,56 +194,105 @@ void device_panel_init(lv_obj_t* panel)
     const lv_img_dsc_t *icon = Geticon(SelectedDevice.type);
     lv_obj_t * label;
 
-    //Container
-    static lv_style_t style_container;
-    lv_style_init(&style_container);
-    lv_style_set_flex_flow(&style_container, LV_FLEX_FLOW_ROW_WRAP); // Place the children in a row with wrapping
-    lv_style_set_flex_main_place(&style_container, LV_FLEX_ALIGN_SPACE_EVENLY); // items are distributed so that the spacing between any two items (and the space to the edges) is equal
-    lv_style_set_layout(&style_container, LV_LAYOUT_FLEX); // Make Flex layout
+    static lv_coord_t col_dsc[] = {LV_GRID_FR(34), LV_GRID_FR(33), LV_GRID_FR(33), LV_GRID_TEMPLATE_LAST};
+    static lv_coord_t row_dsc[] = {LV_GRID_FR(30), LV_GRID_FR(54), LV_GRID_FR(16), LV_GRID_TEMPLATE_LAST};
 
+    /*Create a container with grid*/
     lv_obj_t * cont = lv_obj_create(panel);
-    lv_obj_set_size(cont, lv_pct(80), lv_pct(90));
+    lv_obj_set_grid_dsc_array(cont, col_dsc, row_dsc);
+    lv_obj_set_size(cont, lv_pct(90), lv_pct(90));
     //lv_obj_set_size(cont, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
     lv_obj_center(cont);
-    //lv_obj_add_style(cont, &style_shadow, 0);
+
     lv_obj_add_style(cont, &style_shadow, LV_PART_MAIN);
-    //lv_obj_add_style(cont, &style_container, 0);
-    lv_obj_add_style(cont, &style_container, LV_PART_MAIN);
     lv_obj_clear_flag( cont, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_set_style_pad_row(cont, 0, LV_PART_MAIN);  //Remove space beetween grid part
+    lv_obj_set_style_pad_column(cont, 0, LV_PART_MAIN); //Remove space beetween grid part
+    lv_obj_set_style_pad_all(cont, 0, LV_PART_MAIN); //Remove parent padding
+
+    lv_obj_t * GridTop = lv_obj_create(cont);
+    lv_obj_set_size(GridTop, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+    lv_obj_set_grid_cell(GridTop, LV_GRID_ALIGN_STRETCH, 0, 3, LV_GRID_ALIGN_STRETCH, 0, 1);
+    //lv_obj_set_local_style_prop_meta(GridTop, LV_STYLE_TEXT_COLOR, LV_STYLE_PROP_META_INHERIT, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(GridTop, lv_palette_darken(LV_PALETTE_GREY, 4),0);
+    lv_obj_set_style_border_width(GridTop, 4, 0);
+    //lv_obj_set_style_border_color(cw, lv_color_hex(0xFFFFFF), LV_PART_KNOB | LV_STATE_DEFAULT);
+    //lv_obj_set_style_border_opa(cw, 255, LV_PART_KNOB | LV_STATE_DEFAULT);
+    lv_obj_clear_flag( GridTop, LV_OBJ_FLAG_SCROLLABLE );
+
+    lv_obj_t * GridSmall = lv_obj_create(cont);
+    lv_obj_set_size(GridSmall, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+    lv_obj_set_grid_cell(GridSmall, LV_GRID_ALIGN_STRETCH, 2, 1,LV_GRID_ALIGN_STRETCH, 1, 1);
+    lv_obj_set_style_bg_color(GridSmall, lv_palette_darken(LV_PALETTE_GREY, 4),0);
+    lv_obj_set_style_border_width(GridSmall, 0, 0);
+
+
+    lv_obj_t * GridBig = lv_obj_create(cont);
+    lv_obj_set_size(GridBig, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+    lv_obj_set_grid_cell(GridBig, LV_GRID_ALIGN_STRETCH, 0, 2, LV_GRID_ALIGN_STRETCH, 1, 2);
+    lv_obj_set_style_bg_color(GridBig, lv_palette_darken(LV_PALETTE_GREY, 4),0);
+    lv_obj_set_style_border_width(GridBig, 0, 0);
+
+
+    lv_obj_t * GridExit = lv_obj_create(cont);
+    lv_obj_set_size(GridExit, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+    lv_obj_clear_flag( GridExit, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_set_grid_cell(GridExit, LV_GRID_ALIGN_STRETCH, 2, 1, LV_GRID_ALIGN_STRETCH, 2, 1);
+    lv_obj_set_style_bg_color(GridExit, lv_palette_darken(LV_PALETTE_GREY, 4),0);
+    lv_obj_set_style_border_width(GridExit, 0, 0);
 
     // Icon
-    lv_obj_t *img = lv_img_create(cont);
+    lv_obj_t *img = lv_img_create(GridTop);
     lv_img_set_src(img, icon);
-    //lv_obj_align(img, LV_ALIGN_TOP_MID , 0, -10);
+    lv_obj_align(img, LV_ALIGN_LEFT_MID , 0, 0);
     //lv_obj_set_size(img, Size_icon, Size_icon);
     lv_obj_set_style_img_recolor_opa(img, 50, 0);
     lv_obj_set_style_img_recolor(img, color, 0);
-
     //Label
-    label = lv_label_create(cont);
+    label = lv_label_create(GridTop);
+    lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP); 
     lv_label_set_text(label, SelectedDevice.name);
-    lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
-
-    lv_obj_add_flag(cont, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);       //Force new line
+    lv_obj_align(label, LV_ALIGN_RIGHT_MID, 0, 0);
+    lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_size(label, TFT_WIDTH - 50, 30);
+    lv_obj_align_to(label, img,  LV_ALIGN_OUT_RIGHT_MID, 0, 0);
 
     //Options
+    //
+    //Create switch
     if ((SelectedDevice.type == TYPE_SWITCH) || (SelectedDevice.type == TYPE_DIMMER)
-     || (SelectedDevice.type == TYPE_PLUG) || (SelectedDevice.type == TYPE_COLOR)
-     || ( SelectedDevice.type == TYPE_SWITCH_SENSOR))
+     || (SelectedDevice.type == TYPE_PLUG) || (SelectedDevice.type == TYPE_COLOR) || (SelectedDevice.type == TYPE_LIGHT) 
+     || (SelectedDevice.type == TYPE_BLINDS))
     {
-        //Create switch
-        lv_obj_t * sw = lv_switch_create(cont);
+        lv_obj_t * sw = lv_switch_create(GridSmall);
         if (strcmp(SelectedDevice.data, "On") == 0)
         {
             lv_obj_add_state(sw, LV_STATE_CHECKED);
         }
         lv_obj_add_event_cb(sw, switch_event_handler, LV_EVENT_ALL, NULL);
+
     }
 
-    if (SelectedDevice.type == TYPE_DIMMER)
+    //Create a LED
+    if (SelectedDevice.type == TYPE_SWITCH_SENSOR) 
     {
-        /*Create a slider in the center of the display*/
-        lv_obj_t * slider = lv_slider_create(cont);
+        lv_obj_t * led  = lv_led_create(GridBig);
+        lv_obj_align(led, LV_ALIGN_CENTER, 0, 0);
+        if (strcmp(SelectedDevice.data, "On") == 0)
+        {
+            lv_led_on(led);
+        }
+        else
+        {
+            lv_led_off(led);
+        }
+    }
+
+    //Create a slider
+    if ((SelectedDevice.type == TYPE_DIMMER) || (SelectedDevice.type == TYPE_BLINDS))
+    {
+
+        lv_obj_t * slider = lv_slider_create(GridBig);
         lv_slider_set_value(slider, SelectedDevice.level, LV_ANIM_ON);
         lv_obj_set_width(slider, lv_pct(80));
         lv_obj_center(slider);
@@ -249,36 +304,38 @@ void device_panel_init(lv_obj_t* panel)
         lv_obj_align_to(slider_label, slider, LV_ALIGN_OUT_RIGHT_MID, 10, 0);
     }
 
+    //Create a color wheel
     if (SelectedDevice.type == TYPE_COLOR)
     {
         
-        /*Create a slider in the center of the display*/
-        lv_obj_t * slider = lv_slider_create(panel);
+        lv_obj_t * slider = lv_slider_create(GridBig);
         lv_slider_set_value(slider, SelectedDevice.level, LV_ANIM_ON);
-        lv_obj_set_size(slider, 10, lv_pct(40));
+        lv_obj_set_size(slider, 10, lv_pct(80));
         lv_obj_add_event_cb(slider, slider_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
-        //lv_obj_align_to(slider, cont, LV_ALIGN_BOTTOM_LEFT, 0, 0);
-        lv_obj_align_to(slider, cont, LV_ALIGN_BOTTOM_MID, -90, 0);
+        //lv_obj_align_to(slider, GridBig, LV_ALIGN_BOTTOM_LEFT, 0, 0);
+        lv_obj_align(slider, LV_ALIGN_LEFT_MID, 0, 0);
         slider_label = NULL; // Do not use the value display, not enought place
 
         /*Create a color picker*/
-        lv_obj_t * cw = lv_colorwheel_create(cont, true);
+        lv_obj_t * cw = lv_colorwheel_create(GridBig, true);
         lv_obj_set_style_arc_width(cw, 20, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_border_color(cw, lv_color_hex(0xFFFFFF), LV_PART_KNOB | LV_STATE_DEFAULT);
         lv_obj_set_style_border_opa(cw, 255, LV_PART_KNOB | LV_STATE_DEFAULT);
         lv_obj_set_style_border_width(cw, 2, LV_PART_KNOB | LV_STATE_DEFAULT);
         lv_obj_set_style_pad_all(cw, 0, LV_PART_KNOB | LV_STATE_DEFAULT);
+        lv_obj_align(cw, LV_ALIGN_RIGHT_MID, -10, 0);
 
-        lv_obj_set_size(cw, lv_pct(44), lv_pct(50));
+        lv_obj_set_size(cw, lv_pct(60), lv_pct(80));
         //lv_colorwheel_set_color(cw, rgb);
         lv_obj_add_event_cb(cw, colorwheel_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
         //lv_obj_center(cw);
     }
 
+    //Selector switch
     if (SelectedDevice.type == TYPE_SELECTOR || SelectedDevice.type == TYPE_SPEAKER)
     {
         /*Create a normal drop down list*/
-        lv_obj_t * dd = lv_dropdown_create(cont);
+        lv_obj_t * dd = lv_dropdown_create(GridBig);
         lv_dropdown_set_options(dd, SelectedDevice.levelname);
 
         //lv_obj_align(dd, LV_ALIGN_TOP_MID, 0, 20);
@@ -286,22 +343,59 @@ void device_panel_init(lv_obj_t* panel)
         lv_dropdown_set_selected(dd, SelectedDevice.level / 10);
     }
 
+    // Info device 
     if (SelectedDevice.type == TYPE_WARNING) 
     {
         lv_obj_add_flag(cont, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);       //Force new line
         lv_obj_add_flag(cont, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);       //Force new line
 
-        label = lv_label_create(panel);
+        //Display Text
+        label = lv_label_create(GridBig);
         lv_obj_set_style_text_font(label, &Montserrat_Bold_14, 0);
         lv_label_set_text(label, SelectedDevice.data);
-        lv_obj_align_to(label, cont,  LV_ALIGN_CENTER, 0, 0);
+        lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP); 
+        lv_obj_align(label,  LV_ALIGN_CENTER, 0, 0);
         lv_obj_set_style_text_color(label, color, 0);
+
+        lv_obj_t * led  = lv_led_create(GridSmall);
+        lv_obj_set_size(led, lv_pct(80), lv_pct(60));
+        lv_obj_align(led, LV_ALIGN_CENTER, 0, 0);
+        lv_led_on(led);
+
+        //Color the led according to alert Level
+        if (SelectedDevice.level == 1)
+        {
+            lv_led_set_color(led, LV_COLOR_MAKE(0x00, 0xFF, 0x00));
+        }
+        else if (SelectedDevice.level == 2)
+        {
+            lv_led_set_color(led, LV_COLOR_MAKE(0xFF, 0xFF, 0x00));
+        }
+        else if (SelectedDevice.level == 3)
+        {
+            lv_led_set_color(led, LV_COLOR_MAKE(0xFF, 0x00, 0x00));
+        }
+        else
+        {
+            lv_led_set_color(led, lv_palette_main(LV_PALETTE_GREY));
+        }
+
     }
 
+    // Other sensors
     if ((SelectedDevice.type == TYPE_TEMPERATURE)
     || (SelectedDevice.type == TYPE_HUMIDITY) || (SelectedDevice.type == TYPE_CONSUMPTION)
-    || (SelectedDevice.type == TYPE_LUX))
+    || (SelectedDevice.type == TYPE_LUX) || (SelectedDevice.type == TYPE_PERCENT_SENSOR))
     {
+
+        label = lv_label_create(GridSmall);
+        lv_obj_set_style_text_font(label, &Montserrat_Bold_14, 0);
+        lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP); 
+        lv_label_set_text(label, SelectedDevice.data);
+        lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
+        lv_obj_set_style_text_color(label, color, 0);
+
+#if LV_USE_CHART
         //Making a graph
         int min, max;
         pTab = GetGraphValue(SelectedDevice.type, SelectedDevice.idx, &min, &max);
@@ -309,8 +403,8 @@ void device_panel_init(lv_obj_t* panel)
         if (pTab)
         {
             lv_obj_t * chart;
-            chart = lv_chart_create(panel);
-            lv_obj_set_size(chart, lv_pct(70), lv_pct(45));
+            chart = lv_chart_create(GridBig);
+            lv_obj_set_size(chart, lv_pct(100), lv_pct(100));
             lv_obj_center(chart);
             lv_chart_set_type(chart, LV_CHART_TYPE_LINE);   /*Show lines and points too*/
 
@@ -323,8 +417,10 @@ void device_panel_init(lv_obj_t* panel)
             Serial.printf("Making chart with Range %d > %d\n",min , max);
 
             uint16_t i;
-            for(i = 0; i < 24; i++) {
+            for (i = 0; i < 24; i++)
+            {
                 lv_chart_set_next_value(chart, ser1, pTab[i]);
+                //Serial.printf("Using values %d", pTab[i] );
             }
 
             lv_chart_refresh(chart); /*Required after direct set*/
@@ -333,19 +429,18 @@ void device_panel_init(lv_obj_t* panel)
         {
             Serial.printf("Can't retreive graph value\n");
         }
+#endif
 
     }
 
 
-    lv_obj_add_flag(cont, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);       //Force new line
-
     // Back button
-    lv_obj_t * returnBtn = lv_btn_create(panel);
+    lv_obj_t * returnBtn = lv_btn_create(GridExit);
     lv_obj_add_event_cb(returnBtn, return_btn_event_handler, LV_EVENT_ALL, NULL);
-    //lv_obj_align(returnBtn, LV_ALIGN_CENTER, 0, 40);
-    //lv_obj_center(returnBtn);
+    lv_obj_align(returnBtn, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_center(returnBtn);
     //lv_obj_set_y(returnBtn, 200); // No effect
-    lv_obj_align_to(returnBtn, cont, LV_ALIGN_BOTTOM_MID, -10, -10);
+    //lv_obj_align_to(returnBtn, cont, LV_ALIGN_BOTTOM_MID, -10, -10);
 
     label = lv_label_create(returnBtn);
     lv_label_set_text(label, "Back");

@@ -8,6 +8,7 @@ void info_panel_init(lv_obj_t* panel);
 void power_panel_init(lv_obj_t* panel);
 void progress_panel_init(lv_obj_t* panel);
 void device_panel_init(lv_obj_t* panel);
+void Init_Info_Style(void);
 
 void Select_deviceHP(int device);
 void Select_deviceIDX(int idx);

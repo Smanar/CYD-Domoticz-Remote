@@ -128,6 +128,9 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
         case TYPE_LUX:
             url = url + "counter";
             break;
+        case TYPE_PERCENT_SENSOR:
+            url = url + "Percentage";
+            break;
     }
 
     double v;
@@ -143,10 +146,17 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
         int j = 0;
         for (auto i : JS)
         {
-            if ((s < 15 * 25) && (s % 15 == 0) && (j < 24))
+            //ATM we are using only the 24 last value every 4 values
+            if ((s < 4 * 26) && (s % 4 == 0) && (j < 24))
             {
-                v = i["te"];
-                if (v < 100) v = v *10;
+                if (type == TYPE_TEMPERATURE) v = i["te"];
+                if (type == TYPE_HUMIDITY) v = i["hu"];
+                if (type == TYPE_CONSUMPTION) v = i["u"];
+                if (type == TYPE_PERCENT_SENSOR) v = i["v"];
+
+                // Because of decimal values
+                if (type == TYPE_TEMPERATURE) v = v *10;
+
                 if (v > *max) *max = v;
                 if (v < *min) *min = v;
                 a[j] = int(v);
@@ -252,13 +262,16 @@ bool HttpInitDevice(Device *d, int id)
         {
             d->type = TYPE_HUMIDITY;
         }
-        else if (strcmp(type, "Usage") == 0)
+        else if ((strcmp(type, "Usage") == 0) || (strcmp(type, "P1 Smart Meter") == 0))
         {
             d->type = TYPE_CONSUMPTION;
         }
         else if (strcmp(type, "General") == 0)
         {
-            d->type = TYPE_WARNING;
+            d->type = TYPE_SWITCH_SENSOR;
+
+            if (strcmp(subtype,"Alert") == 0) d->type = TYPE_WARNING;
+            else if (strcmp(subtype,"Percentage") == 0) d->type = TYPE_PERCENT_SENSOR;
         }
         else if (strcmp(type, "Lux") == 0)
         {

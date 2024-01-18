@@ -5,9 +5,9 @@
 #include "lvgl.h"
 #include "../core/ip_engine.h"
 
-lv_obj_t * ipEntry;
-lv_obj_t * portEntry;
-lv_obj_t * label = NULL;
+static lv_obj_t * ipEntry;
+static lv_obj_t * portEntry;
+static lv_obj_t * label = NULL;
 
 void WS_init_inner(void);
 

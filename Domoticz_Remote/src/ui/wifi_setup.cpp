@@ -14,14 +14,6 @@ static void reset_btn_event_handler(lv_event_t * e) {
     }
 }
 
-static void refresh_btn_event_handler(lv_event_t * e){
-    lv_event_code_t code = lv_event_get_code(e);
-
-    if(code == LV_EVENT_CLICKED) {
-        wifi_init_inner();
-    }
-}
-
 static void ta_event_cb(lv_event_t * e) {
     lv_event_code_t code = lv_event_get_code(e);
     lv_obj_t * ta = lv_event_get_target(e);

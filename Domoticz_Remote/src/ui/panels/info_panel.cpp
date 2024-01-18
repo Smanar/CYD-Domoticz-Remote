@@ -1,13 +1,15 @@
+#include <HardwareSerial.h>
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
+
 #include "lvgl.h"
 #include "panel.h"
 #include "../../core/data_setup.h"
 #include "../../conf/global_config.h"
 #include "../../core/ip_engine.h"
-#include <HardwareSerial.h>
-#include <HTTPClient.h>
-#include <ArduinoJson.h>
 #include "../src/ui/navigation.h"
 
+static lv_style_t style_container;
 
 #define MAXDEVICE 500
 lv_obj_t * table;
@@ -23,7 +25,7 @@ static void TV_btn_event_handler(lv_event_t * e) {
 
     JsonArray JS;
     String url = "/json.htm?type=command&param=getdevices&filter=" + String(lv_label_get_text(label)) + "&used=true&order=Name";
-    if (!HTTPGETRequestWithReturn((char *)url.c_str(), &JS)) return;
+    if (!HTTPGETRequestWithReturn((char *)url.c_str(), &JS, true)) return;
     
     lv_table_set_row_cnt(table, JS.size()); // To prevent multiple memory re allocation
 
@@ -34,7 +36,7 @@ static void TV_btn_event_handler(lv_event_t * e) {
         {
             lv_table_set_cell_value(table, j, 0, i["Name"]); // Fisr column 
             lv_table_set_cell_value(table, j, 1, i["Data"]); // Second column
-            //lv_table_set_cell_user_data() // Not used in this version so need to use a table
+            //lv_table_set_cell_user_data() // Not used in this LVLG version so need to use a table
             MemIDX[j] = atoi(i["idx"]);
             j+=1;
         }
@@ -44,9 +46,19 @@ static void TV_btn_event_handler(lv_event_t * e) {
 
 }
 
+void Init_Info_Style(void)
+{
+    lv_style_init(&style_container);
+    lv_style_set_flex_flow(&style_container, LV_FLEX_FLOW_ROW_WRAP); // Place the children in a row with wrapping
+    lv_style_set_flex_main_place(&style_container, LV_FLEX_ALIGN_SPACE_EVENLY); // items are distributed so that the spacing between any two items (and the space to the edges) is equal
+    lv_style_set_layout(&style_container, LV_LAYOUT_FLEX); // Make Flex layout
+
+    lv_style_set_pad_ver(&style_container, 2);
+    lv_style_set_pad_left(&style_container, 2);
+}
+
 static void change_event_cb(lv_event_t * e)
 {
-    SetActivePanel(2); // Memorise previous page
 
     lv_obj_t * obj = lv_event_get_target(e);
     lv_event_code_t code = lv_event_get_code(e);
@@ -100,17 +112,7 @@ void info_panel_init(lv_obj_t* panel)
     lv_obj_set_style_bg_opa(panel, LV_OPA_TRANSP, 0);
     lv_obj_set_style_pad_all(panel, 0, 0);
 
-    //Container
-    static lv_style_t style_container;
-    lv_style_init(&style_container);
-    lv_style_set_flex_flow(&style_container, LV_FLEX_FLOW_ROW_WRAP); // Place the children in a row with wrapping
-    lv_style_set_flex_main_place(&style_container, LV_FLEX_ALIGN_SPACE_EVENLY); // items are distributed so that the spacing between any two items (and the space to the edges) is equal
-    lv_style_set_layout(&style_container, LV_LAYOUT_FLEX); // Make Flex layout
-
-
-    lv_style_set_pad_ver(&style_container, 2);
-    lv_style_set_pad_left(&style_container, 2);
-
+    //container
     lv_obj_t * cont = lv_obj_create(panel);
     lv_obj_set_size(cont, LV_PCT(100), LV_PCT(100));
     //lv_obj_center(cont);

@@ -4,12 +4,9 @@
 #include "navigation.h"
 #include <HTTPClient.h>
 
-static lv_style_t nav_button_style;
-static lv_style_t nav_button_text_style;
-
-lv_obj_t * tv;
-
-int actived_panel = 0;
+static lv_obj_t * tv;
+static int actived_panel = 0;
+static int ActiveLV = 0;
 
 int GetActivePanel(void)
 {
@@ -24,29 +21,37 @@ void SetActivePanel(int p)
 
 void RefreshHomePage(void)
 {
-    if (actived_panel < 3)
+    if ((ActiveLV == 1) && (actived_panel < 3))
     {
-        //lv_obj_set_tile_id(tv, 0, 0, LV_ANIM_OFF); // To prevent crash
-        lv_obj_t *obj = lv_tileview_get_tile_act(tv);
-        lv_coord_t tile_x = lv_obj_get_x(obj) / TFT_WIDTH;
-        //Serial.printf("TV selected: %d\n", tile_x);
-
-        // Use lv_tileview_get_tile_act(tv) instead ?
-
-        if (tile_x == 1) navigation_screen(1);
+        navigation_screen(1);
     }
+
 }
 
 void ReturnPreviouspage(void)
 {
-    Serial.printf("Display page: %d\n", actived_panel);
-    navigation_screen(actived_panel);
-    //navigation_screen(1);
+    Serial.printf("Display LV page: %d\n", ActiveLV);
+    navigation_screen(ActiveLV);
+}
+
+static void tv_event_cb(lv_event_t * e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+
+    if (code == LV_EVENT_VALUE_CHANGED) 
+    {
+        lv_obj_t *obj = lv_tileview_get_tile_act(tv);
+        int tile_x = lv_obj_get_x(obj) / TFT_WIDTH;
+        //Serial.printf("TV selected: %d\n", tile_x);
+
+        ActiveLV = tile_x;
+        actived_panel = ActiveLV;
+    }
 }
 
 void navigation_screen(unsigned char active_panel)
 {
-    
+    actived_panel = active_panel;
 
     lv_obj_clean(lv_scr_act());
     lv_obj_clear_flag(lv_scr_act(), LV_OBJ_FLAG_SCROLLABLE);
@@ -70,7 +75,9 @@ void navigation_screen(unsigned char active_panel)
 
                 lv_obj_set_tile_id(tv, active_panel, 0, LV_ANIM_OFF);
 
-                actived_panel = active_panel;
+                lv_obj_add_event_cb(tv, tv_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+
+                ActiveLV = active_panel;
             }
             break;
         case 3:
@@ -93,13 +100,9 @@ void navigation_screen(unsigned char active_panel)
             break;
     }
 
-
 }
 
-void nav_style_setup(){
-    lv_style_init(&nav_button_style);
-    lv_style_set_radius(&nav_button_style, 0);
+void nav_style_setup()
+{
 
-    lv_style_init(&nav_button_text_style);
-    lv_style_set_text_font(&nav_button_text_style, &lv_font_montserrat_10);
 }

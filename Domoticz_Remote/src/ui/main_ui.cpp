@@ -22,12 +22,11 @@ void main_ui_setup(){
     lv_msg_subscribe(DATA_REMOTE_STATE, on_state_change, NULL);
     on_state_change(NULL, NULL);
 
-    //defaut theme for button border
+    //defaut theme for button
     lv_style_init(&style_shadow);
     lv_style_set_shadow_width(&style_shadow,  8);
     lv_style_set_shadow_spread(&style_shadow,  4);
     lv_style_set_shadow_color(&style_shadow,  lv_palette_darken(LV_PALETTE_GREY, 2));
-
     lv_style_set_bg_color(&style_shadow, lv_palette_darken(LV_PALETTE_GREY, 4));
 
 }

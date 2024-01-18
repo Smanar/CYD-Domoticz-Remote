@@ -6,13 +6,12 @@
 #include "core/data_setup.h"
 #include "ui/main_ui.h"
 #include "ui/navigation.h"
+#include "ui/panels/panel.h"
 
-void wifi_init_inner();
-bool CheckJson();
 void Websocket_loop(void);
 
 //personnal devices
-static int t[] = {37, 81, 16, 36, 28, 35, 57, 14, 87};
+const static int t[] = {37, 81, 16, 36, 28, 35, 57, 14, 87};
 
 static void event_handler(lv_event_t * e){
     lv_event_code_t code = lv_event_get_code(e);
@@ -44,6 +43,23 @@ void setup() {
             global_config.ListDevices[i] = t[i];
         WriteGlobalConfig();
     #endif
+
+#ifdef BOARD_HAS_RGB_LED
+
+// Depend of device
+#define RGB_LED_R 4
+#define RGB_LED_G 16
+#define RGB_LED_B 17
+
+pinMode(RGB_LED_R, OUTPUT);
+pinMode(RGB_LED_G, OUTPUT);
+pinMode(RGB_LED_B, OUTPUT);
+
+digitalWrite(RGB_LED_R, true);
+digitalWrite(RGB_LED_G, true);
+digitalWrite(RGB_LED_B, true);
+
+#endif
     
     wifi_init(); // Wifi initialisation
     WS_init(); // Websocket initialisation
@@ -53,6 +69,7 @@ void setup() {
 
     //Set defaut Style
     nav_style_setup();
+    Init_Info_Style();
     
     main_ui_setup();
 

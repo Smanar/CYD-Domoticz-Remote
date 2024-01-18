@@ -63,7 +63,7 @@ static void button_draw_event_cb(lv_event_t* e)
 }
 #endif
 
-void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int h, lv_color_t color, int *d, const lv_img_dsc_t* icon)
+static void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int h, lv_color_t color, int *d, const lv_img_dsc_t* icon)
 {
 
     /*Create a container with ROW flex direction*/
@@ -98,7 +98,7 @@ void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int h, lv_c
 
 }
 
-void Widget_sensor(lv_obj_t* panel, char* desc, char* value, int x, int y, int w, int h, lv_color_t color, int *d, const lv_img_dsc_t *icon)
+static void Widget_sensor(lv_obj_t* panel, char* desc, char* value, int x, int y, int w, int h, lv_color_t color, int *d, const lv_img_dsc_t *icon)
 {
 
     /*Create a container*/
@@ -170,7 +170,7 @@ void home_panel_init(lv_obj_t* panel)
                 case TYPE_SWITCH_SENSOR:
                 case TYPE_LUX:
                 {
-                    Widget_sensor(panel, myDevices[i].name, myDevices[i].data, cx , cy , Size_w , Size_h, device_color, &myDevices[i].pointer, icon);
+                    Widget_sensor(panel, myDevices[i].name, myDevices[i].data, cx , cy , Size_w , Size_h, device_color, &myDevices[i].pointer,icon);
                 }
                 break;
                 case TYPE_SWITCH:

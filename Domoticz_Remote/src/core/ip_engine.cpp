@@ -21,7 +21,7 @@ bool HTTPGETRequest(char * url2)
 }
 
 
-bool HTTPGETRequestWithReturn(char * url2, JsonArray *JS)
+bool HTTPGETRequestWithReturn(char * url2, JsonArray *JS, bool NeedFilter)
 {
     HTTPClient client;
     String url = "http://" + String(global_config.ServerHost) + ":" + String(global_config.ServerPort) + url2;
@@ -40,17 +40,45 @@ bool HTTPGETRequestWithReturn(char * url2, JsonArray *JS)
         //if no need data return
         if (!JS) return true;
 
-        String payload = client.getString();
+        //Some security
+        double buffer = 60000;
+        if (int(buffer*1.2) > ESP.getMaxAllocHeap())
+        {
+            //Limited by PSRAM ?
+            Serial.printf("Not enought Heap memory to parse json, Available %d, needed %f\n", ESP.getMaxAllocHeap(), buffer*1.2f);
+            return false;
+        }
 
-        DynamicJsonDocument doc(100000);
-        //DynamicJsonDocument doc(65536);
-        auto a = deserializeJson(doc, payload);
+        DynamicJsonDocument doc(buffer);
+
+        //Need to use filter here, domotocz is too much talkative
+        // https://arduinojson.org/v6/example/filter/
+
+        if (NeedFilter)
+        {
+            // The filter: it contains "true" for each value we want to keep
+            StaticJsonDocument<200> filter;
+            filter["result"][0]["Data"] = true;
+            filter["result"][0]["idx"] = true;
+            filter["result"][0]["Name"] = true;
+
+            auto a = deserializeJson(doc, client.getString(), DeserializationOption::Filter(filter));
+
+            //char buffer[4096];
+            //serializeJsonPretty(doc, buffer);
+            //Serial.println(buffer);
+        }
+        else
+        {
+            auto a = deserializeJson(doc, client.getString());
+        }
 
         //Some debug
         //https://arduinojson.org/v6/how-to/determine-the-capacity-of-the-jsondocument/
         //Serial.printf("JSON PARSE: %s\n", a.c_str());
         //Serial.printf("xxx %d\n", JS->size());
-        //Serial.printf("Available Memory %d\n", ESP.getMaxAllocHeap()); // 45044 
+        //Serial.printf("Heap Memory Usable (Kb) %d , Max %d, Total %d\n", ESP.getMaxAllocHeap()/1000, ESP.getFreeHeap()/1000, ESP.getHeapSize()/1000); // 45044
+        //Serial.printf("RAM Memory Free (Kb) %d , Total %d\n", ESP.getFreePsram()/1000, ESP.getPsramSize()/1000); // 4 M
 
         *JS = doc["result"].as<JsonArray>();
 
