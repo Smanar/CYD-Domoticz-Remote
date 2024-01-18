@@ -25,3 +25,9 @@ There is different way to install the code on th device, but I think this one is
    
    
 For ther moment, need to edit code itself to set defaut devices, the edit box is here, but not possible to edit value.
+
+## Needed settings   
+
+The project is still WIP so some settings are still hard coded.   
+- Somes settings depend of hardware, tell me your hardware, I will search values to edit.
+- To go faster somes settings are hard coded here https://github.com/Smanar/CYD-Domoticz-Remote/blob/main/Domoticz_Remote/src/main.cpp#L34
