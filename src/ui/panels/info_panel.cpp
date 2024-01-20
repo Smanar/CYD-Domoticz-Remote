@@ -13,19 +13,21 @@ static lv_style_t style_container;
 
 #define MAXDEVICE 500
 lv_obj_t * table;
-uint16_t MemIDX[MAXDEVICE];
+static uint16_t MemIDX[MAXDEVICE];
 
 static void TV_btn_event_handler(lv_event_t * e) {
-    lv_obj_t * ta = lv_event_get_target(e);
-    lv_obj_t *label = lv_obj_get_child(ta, 0);
+    const lv_obj_t * ta = lv_event_get_target(e);
+    const lv_obj_t *label = lv_obj_get_child(ta, 0);
 
     //lv_table_clear_cell_ctrl(table,)
     //lv_obj_clean(table);
-    uint16_t r = lv_table_get_row_cnt(table);
+    //uint16_t r = lv_table_get_row_cnt(table);
 
     JsonArray JS;
-    String url = "/json.htm?type=command&param=getdevices&filter=" + String(lv_label_get_text(label)) + "&used=true&order=Name";
-    if (!HTTPGETRequestWithReturn((char *)url.c_str(), &JS, true)) return;
+    char buff[256] = {};
+    snprintf(buff, 256, "/json.htm?type=command&param=getdevices&filter=%s&used=true&order=Name",lv_label_get_text(label));
+
+    if (!HTTPGETRequestWithReturn(buff, &JS, true)) return;
     
     lv_table_set_row_cnt(table, JS.size()); // To prevent multiple memory re allocation
 
@@ -42,7 +44,7 @@ static void TV_btn_event_handler(lv_event_t * e) {
         }
     }
 
-    lv_table_set_row_cnt(table, j+1);
+    lv_table_set_row_cnt(table, j);
 
 }
 
@@ -126,25 +128,25 @@ void info_panel_init(lv_obj_t* panel)
     obj= lv_btn_create(cont);
     lv_obj_set_size(obj, LV_PCT(20), 20);
     label = lv_label_create(obj);
-    lv_label_set_text_fmt(label, "light");
+    lv_label_set_text_static(label, "light");
     lv_obj_center(label);
     lv_obj_add_event_cb(obj, TV_btn_event_handler, LV_EVENT_CLICKED, NULL);
     obj= lv_btn_create(cont);
     lv_obj_set_size(obj, LV_PCT(20), 20);
     label = lv_label_create(obj);
-    lv_label_set_text_fmt(label, "temp");
+    lv_label_set_text_static(label, "temp");
     lv_obj_center(label);
     lv_obj_add_event_cb(obj, TV_btn_event_handler, LV_EVENT_CLICKED, NULL);
     obj= lv_btn_create(cont);
     lv_obj_set_size(obj, LV_PCT(20), 20);
     label = lv_label_create(obj);
-    lv_label_set_text_fmt(label, "utility");
+    lv_label_set_text_static(label, "utility");
     lv_obj_center(label);
     lv_obj_add_event_cb(obj, TV_btn_event_handler, LV_EVENT_CLICKED, NULL);
     obj= lv_btn_create(cont);
     lv_obj_set_size(obj, LV_PCT(20), 20);
     label = lv_label_create(obj);
-    lv_label_set_text_fmt(label, "baro");
+    lv_label_set_text_static(label, "baro");
     lv_obj_center(label);
     lv_obj_add_event_cb(obj, TV_btn_event_handler, LV_EVENT_CLICKED, NULL);
 

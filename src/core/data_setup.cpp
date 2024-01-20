@@ -131,14 +131,18 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
         case TYPE_PERCENT_SENSOR:
             url = url + "Percentage";
             break;
+        default:
+            //not supported
+            return nullptr;
     }
 
-    double v;
     JsonArray JS;
     url = url + "&idx=" + String(idx) + "&range=day";
     if (HTTPGETRequestWithReturn((char *)url.c_str(), &JS))
     {
         if (!JS) return nullptr;
+
+        double v;
 
         // Value are not constant so can be evry 15 mn or 20 mn
         int s = JS.size();
@@ -187,6 +191,7 @@ bool HttpInitDevice(Device *d, int id)
 
     for (auto i : JS)  // Scan the array ( only 1)
     {
+        if (d->name) free(d->name);
         d->name = (char*)malloc(strlen(i["Name"]) + 1);
         strcpy(d->name, i["Name"]);
 
@@ -198,15 +203,18 @@ bool HttpInitDevice(Device *d, int id)
 
         strncpy(d->data, JSondata,20);
 
+        if (d->ID) free(d->ID);
         d->ID = (char*)malloc(strlen(i["ID"]) + 1);
         strcpy(d->ID, i["ID"]);
-        d->HardwareID = i["HardwareID"];
         d->idx = i["idx"];
         d->level = i["Level"];
 
         const char* type = i["Type"];
         const char* subtype = i["SubType"];
         const char* image = i["Image"];
+
+        //Set a defaut value
+        d->type = TYPE_VALUE_SENSOR;
 
         if (strcmp(type, "Light/Switch") == 0)
         {
@@ -216,7 +224,8 @@ bool HttpInitDevice(Device *d, int id)
             {
 
                 d->type = TYPE_SELECTOR;
-                const char *base64 = i["LevelNames"]; 
+                const char *base64 = i["LevelNames"];
+                if (d->levelname) free(d->levelname);
                 d->levelname = (char*)malloc(strlen(i["LevelNames"]) + 1);
 
                 unsigned int string_length = decode_base64((const unsigned char*)base64, (unsigned char *)d->levelname);
@@ -254,7 +263,7 @@ bool HttpInitDevice(Device *d, int id)
         {
             d->type = TYPE_COLOR;
         }
-        else if (strcmp(type, "Temp") == 0)
+        else if (strncmp(type, "Temp",4) == 0)
         {
             d->type = TYPE_TEMPERATURE;
         }
@@ -277,7 +286,10 @@ bool HttpInitDevice(Device *d, int id)
         {
             d->type = TYPE_LUX;
         }
-
+        else if (strcmp(type, "Setpoint") == 0)
+        {
+            d->type = TYPE_SETPOINT;
+        }
 
         // Correction by image
         if (image && strcmp(image,"WallSocket") == 0)

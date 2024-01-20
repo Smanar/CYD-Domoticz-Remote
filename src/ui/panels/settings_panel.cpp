@@ -34,7 +34,7 @@ static void light_mode_switch(lv_event_t * e){
 }
 
 static void theme_dropdown(lv_event_t * e){
-    lv_obj_t * dropdown = lv_event_get_target(e);
+    const lv_obj_t * dropdown = lv_event_get_target(e);
     auto selected = lv_dropdown_get_selected(dropdown);
     global_config.color_scheme = selected;
     set_color_scheme();
@@ -45,7 +45,7 @@ const char* brightness_options = "100%\n75%\n50%\n25%";
 const char  brightness_options_values[] = { 255, 192, 128, 64 };
 
 static void brightness_dropdown(lv_event_t * e){
-    lv_obj_t * dropdown = lv_event_get_target(e);
+    const lv_obj_t * dropdown = lv_event_get_target(e);
     auto selected = lv_dropdown_get_selected(dropdown);
     global_config.brightness = brightness_options_values[selected];
     set_screen_brightness();
@@ -56,7 +56,7 @@ const char* wake_timeout_options = "Disabled\n1m\n2m\n5m\n10m\n15m\n30m\n1h\n2h\
 const char  wake_timeout_options_values[] = { 0, 1, 2, 5, 10, 15, 30, 60, 120, 240 };
 
 static void wake_timeout_dropdown(lv_event_t * e){
-    lv_obj_t * dropdown = lv_event_get_target(e);
+    const lv_obj_t * dropdown = lv_event_get_target(e);
     auto selected = lv_dropdown_get_selected(dropdown);
     global_config.screenTimeout = wake_timeout_options_values[selected];
     set_screen_timer_period();
@@ -119,7 +119,7 @@ void settings_panel_init(lv_obj_t* panel)
     lv_obj_add_event_cb(btn, reset_wifi_click, LV_EVENT_CLICKED, NULL);
 
     lv_obj_t * label = lv_label_create(btn);
-    lv_label_set_text(label, "Restart");
+    lv_label_set_text_static(label, "Restart");
     lv_obj_center(label);
 
     create_settings_widget("Configure WiFi", btn, panel);
@@ -128,7 +128,7 @@ void settings_panel_init(lv_obj_t* panel)
     lv_obj_add_event_cb(btn, reset_calibration_click, LV_EVENT_CLICKED, NULL);
 
     label = lv_label_create(btn);
-    lv_label_set_text(label, "Restart");
+    lv_label_set_text_static(label, "Restart");
     lv_obj_center(label);
 
     create_settings_widget("Calibrate Touch", btn, panel);

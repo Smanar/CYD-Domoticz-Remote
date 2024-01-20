@@ -40,7 +40,7 @@ void wifi_pass_entry(const char* ssid){
     lv_obj_clean(lv_scr_act());
 
     lv_obj_t * label = lv_label_create(lv_scr_act());
-    lv_label_set_text(label, "Enter WiFi Password");
+    lv_label_set_text_static(label, "Enter WiFi Password");
     lv_obj_align(label, LV_ALIGN_TOP_LEFT, 10, 10 + 2);
 
     lv_obj_t * passEntry = lv_textarea_create(lv_scr_act());
@@ -75,7 +75,7 @@ void wifi_init_inner(){
         WiFi.begin(global_config.wifiSSID, global_config.wifiPassword);
         
         lv_obj_t * label = lv_label_create(lv_scr_act());
-        lv_label_set_text(label, "Connecting to WiFi");
+        lv_label_set_text_static(label, "Connecting to WiFi");
         lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
 
         lv_obj_t * resetBtn = lv_btn_create(lv_scr_act());
@@ -83,14 +83,14 @@ void wifi_init_inner(){
         lv_obj_align(resetBtn, LV_ALIGN_CENTER, 0, 40);
 
         label = lv_label_create(resetBtn);
-        lv_label_set_text(label, "Reset");
+        lv_label_set_text_static(label, "Reset");
         lv_obj_center(label);
 
         return;
     } 
 
     lv_obj_t * label = lv_label_create(lv_scr_act());
-    lv_label_set_text(label, "Scanning for networks...");
+    lv_label_set_text_static(label, "Scanning for networks...");
     lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
 
     lv_timer_handler();
@@ -108,7 +108,7 @@ void wifi_init_inner(){
     lv_obj_center(label);
 
     label = lv_label_create(lv_scr_act());
-    lv_label_set_text(label, "Select a network");
+    lv_label_set_text_static(label, "Select a network");
     lv_obj_align(label, LV_ALIGN_TOP_LEFT, 10, 10 + 2);
 
     lv_obj_t * list = lv_list_create(lv_scr_act());
@@ -133,6 +133,7 @@ void wifi_init_inner(){
 
         lv_obj_t * btn = lv_list_add_btn(list, LV_SYMBOL_WIFI, ssid_copy);
         lv_obj_add_event_cb(btn, wifi_btn_event_handler, LV_EVENT_ALL, (void*)ssid_copy);
+        free(ssid_copy);
     }
 }
 

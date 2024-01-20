@@ -47,9 +47,9 @@ void setup() {
 #ifdef BOARD_HAS_RGB_LED
 
 // Depend of device
-#define RGB_LED_R 4
-#define RGB_LED_G 16
-#define RGB_LED_B 17
+//#define RGB_LED_R 4
+//#define RGB_LED_G 16
+//#define RGB_LED_B 17
 
 pinMode(RGB_LED_R, OUTPUT);
 pinMode(RGB_LED_G, OUTPUT);

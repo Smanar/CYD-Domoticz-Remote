@@ -7,4 +7,4 @@ void Websocket_loop(void);
 void WS_Run(void);
 bool WS_Running(void);
 
-bool HTTPGETRequestWithReturn(char * url2, JsonArray *JS, bool filter = false);
+bool HTTPGETRequestWithReturn(const char * url2, JsonArray *JS, bool filter = false);

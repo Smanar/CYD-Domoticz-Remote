@@ -37,7 +37,7 @@ static void ta_event_cb(lv_event_t * e) {
         }
         else
         {
-            lv_label_set_text(label, "Failed to connect");
+            lv_label_set_text_static(label, "Failed to connect");
         }
     }
 }
@@ -56,7 +56,7 @@ void WS_init_inner(){
 
     if (global_config.ipConfigured) {
         label = lv_label_create(lv_scr_act());
-        lv_label_set_text(label, "Connecting to Domoticz");
+        lv_label_set_text_static(label, "Connecting to Domoticz");
         lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
 
         lv_obj_t * resetBtn = lv_btn_create(lv_scr_act());
@@ -64,14 +64,14 @@ void WS_init_inner(){
         lv_obj_align(resetBtn, LV_ALIGN_CENTER, 0, 40);
 
         lv_obj_t * btnLabel = lv_label_create(resetBtn);
-        lv_label_set_text(btnLabel, "Reset");
+        lv_label_set_text_static(btnLabel, "Reset");
         lv_obj_center(btnLabel);
         return;
     }
 
     lv_obj_t * keyboard = lv_keyboard_create(lv_scr_act());
     label = lv_label_create(lv_scr_act());
-    lv_label_set_text(label, "Enter Domoticz IP and Port");
+    lv_label_set_text_static(label, "Enter Domoticz IP and Port");
     lv_obj_align(label, LV_ALIGN_TOP_LEFT, 10, 10 + 2);
 
     ipEntry = lv_textarea_create(lv_scr_act());
@@ -120,8 +120,7 @@ void WS_init()
 
             last_data_update_ip = millis();
             retry_count++;
-            String retry_count_text = "Connecting to Domoticz (Try " + String(retry_count + 1) + ")";
-            lv_label_set_text(label, retry_count_text.c_str());
+            lv_label_set_text_fmt(label, "Connecting to Domoticz (Try %d)", retry_count);
         }
 
         Websocket_loop();

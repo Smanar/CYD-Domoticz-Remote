@@ -30,7 +30,7 @@ int Size_icon = Size_h / 2;
 static void btn_event_cb(lv_event_t * e)
 {
     lv_event_code_t code = lv_event_get_code(e);
-    lv_obj_t * btn = lv_event_get_target(e);
+    //lv_obj_t * btn = lv_event_get_target(e);
     //int *d = (int*)lv_event_get_param(e);
 
     int * btn_no; // create a user data type pointer
@@ -42,26 +42,6 @@ static void btn_event_cb(lv_event_t * e)
         Select_deviceHP(*btn_no);
     }
 }
-
-#if 0
-static void button_draw_event_cb(lv_event_t* e)
-{
-
-    lv_obj_draw_part_dsc_t * part_dsc = lv_event_get_draw_part_dsc(e);
-    if(part_dsc->class_p == &lv_obj_class &&
-            (part_dsc->part == LV_OBJ_DRAW_PART_RECTANGLE || part_dsc->part == LV_OBJ_DRAW_PART_BORDER_POST))
-    {
-        lv_obj_t * obj = lv_event_get_target(e);
-        lv_draw_rect_dsc_t draw_dsc;
-        lv_draw_rect_dsc_init(&draw_dsc);
-        draw_dsc.bg_opa = 0;
-        draw_dsc.border_width = 3;//lv_obj_get_style_border_width(obj, 0);
-        draw_dsc.border_color = LV_COLOR_MAKE(lv_rand(0,0xff), lv_rand(0,0xff), lv_rand(0,0xff));
-        //draw_dsc.border_side = LV_BORDER_SIDE_BOTTOM | LV_BORDER_SIDE_RIGHT;
-        lv_draw_rect(part_dsc->draw_ctx, &draw_dsc, part_dsc->draw_area);
-    }
-}
-#endif
 
 static void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int h, lv_color_t color, int *d, const lv_img_dsc_t* icon)
 {
@@ -125,9 +105,6 @@ static void Widget_sensor(lv_obj_t* panel, char* desc, char* value, int x, int y
      /*Create Value*/
      // Does _local_ is working here ?
     lv_obj_t * label = lv_label_create(Button_icon);
-
-    // Set a new style
-    //lv_style_set_text_font(&nav_button_text_style, &lv_font_montserrat_12);
     lv_obj_set_style_text_font(label, &Montserrat_Bold_14, 0);
     lv_label_set_text(label, value);
     lv_obj_align_to(label, img,  LV_ALIGN_OUT_RIGHT_MID, 0, 0);
@@ -154,7 +131,7 @@ void home_panel_init(lv_obj_t* panel)
         for (y=0; y<TOTAL_ICONY; y=y+1)
         {
             //Serial.printf("set widget x: %i , y : %i\n", (Size_w + TOTAL_OFFSET_X) * x, (Size_h + TOTAL_OFFSET_Y) * y);
-            lv_color_t device_color = Getcolor(myDevices[i].type);
+            const lv_color_t device_color = Getcolor(myDevices[i].type);
             const lv_img_dsc_t *icon = Geticon(myDevices[i].type);
 
             int cx = TOTAL_OFFSET_X + (Size_w + TOTAL_OFFSET_X) * x -4;

@@ -11,6 +11,7 @@ bool connect_ok = false;
 
 void Update_data(JsonObject RJson2);
 
+
 bool verify_ip(){
     return HTTPGETRequestWithReturn("/json.htm?type=command&param=getServerTime",NULL);
 }
@@ -20,8 +21,7 @@ bool HTTPGETRequest(char * url2)
     return HTTPGETRequestWithReturn(url2,NULL);
 }
 
-
-bool HTTPGETRequestWithReturn(char * url2, JsonArray *JS, bool NeedFilter)
+bool HTTPGETRequestWithReturn(const char * url2, JsonArray *JS, bool NeedFilter)
 {
     HTTPClient client;
     String url = "http://" + String(global_config.ServerHost) + ":" + String(global_config.ServerPort) + url2;
@@ -50,6 +50,7 @@ bool HTTPGETRequestWithReturn(char * url2, JsonArray *JS, bool NeedFilter)
         }
 
         DynamicJsonDocument doc(buffer);
+        DeserializationError err;
 
         //Need to use filter here, domotocz is too much talkative
         // https://arduinojson.org/v6/example/filter/
@@ -62,7 +63,7 @@ bool HTTPGETRequestWithReturn(char * url2, JsonArray *JS, bool NeedFilter)
             filter["result"][0]["idx"] = true;
             filter["result"][0]["Name"] = true;
 
-            auto a = deserializeJson(doc, client.getString(), DeserializationOption::Filter(filter));
+            err = deserializeJson(doc, client.getString(), DeserializationOption::Filter(filter));
 
             //char buffer[4096];
             //serializeJsonPretty(doc, buffer);
@@ -70,7 +71,13 @@ bool HTTPGETRequestWithReturn(char * url2, JsonArray *JS, bool NeedFilter)
         }
         else
         {
-            auto a = deserializeJson(doc, client.getString());
+            err = deserializeJson(doc, client.getString());
+        }
+
+        if (err)
+        {
+            Serial.println("Can't deserializeJson JSON\n");
+            return false;
         }
 
         //Some debug
@@ -102,7 +109,7 @@ bool HTTPGETRequestWithReturn(char * url2, JsonArray *JS, bool NeedFilter)
 
 
 
-void hexdump(const void *mem, uint32_t len, uint8_t cols = 16) {
+static void hexdump(const void *mem, uint32_t len, uint8_t cols = 16) {
 	const uint8_t* src = (const uint8_t*) mem;
 	Serial.printf("\n[HEXDUMP] Address: 0x%08X len: 0x%X (%d)", (ptrdiff_t)src, len, len);
 	for(uint32_t i = 0; i < len; i++) {
@@ -115,7 +122,7 @@ void hexdump(const void *mem, uint32_t len, uint8_t cols = 16) {
 	Serial.printf("\n");
 }
 
-void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
+static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
 {
 	switch(type)
     {

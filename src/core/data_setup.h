@@ -1,7 +1,6 @@
 #ifndef DATA_SETUP_H
 #define DATA_SETUP_H
 
-
 enum {
     TYPE_UNKNOW,
     TYPE_SWITCH,
@@ -11,6 +10,7 @@ enum {
     TYPE_SELECTOR,
     TYPE_SWITCH_SENSOR,
     TYPE_PERCENT_SENSOR,
+    TYPE_VALUE_SENSOR,
     TYPE_COLOR,
     TYPE_PLUG,
     TYPE_HUMIDITY,
@@ -18,17 +18,17 @@ enum {
     TYPE_LIGHT,
     TYPE_DIMMER,
     TYPE_BLINDS,
-    TYPE_LUX
+    TYPE_LUX,
+    TYPE_SETPOINT
 };
 
 typedef struct _Device {
     char* name;
     char * ID;
-    int  HardwareID = 0;
     char data[20];
     int level = 0;
     int  idx = 0;
-    int type = 0;
+    int type = TYPE_VALUE_SENSOR;
     bool used = false;
     char * levelname;
 
