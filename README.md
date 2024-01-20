@@ -1,5 +1,7 @@
 WIP project to control Domoticz with a CYD.
 
+There is a video here https://www.youtube.com/watch?v=1Lc6MlZjePM
+
 ## Description   
 
 To make short I was searching a small wall mounted touchscreen to control my home, with low consumption enought to be powered all the time.   
