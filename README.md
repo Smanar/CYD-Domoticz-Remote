@@ -24,8 +24,8 @@ There is different way to install the code on th device, but I think this one is
 - Take a look in the platformio.ini file (you can found usefull information/setting in it).   
 - Configure your device. ATM the project is configured for the 2432S028R, so you need to create a board configuration file in the "boards" folder (https://github.com/Smanar/CYD-Domoticz-Remote/tree/main/boards) and set it in the platformio.ini file (l14). You can find information to make it on google, for exemple on the first link of this part, else just ask me, I can try to make one.   
 - ???
-- Just launch a compilation (Build) and upload (Upload) the code on the device using the USB cable. Don't forget to short press the button (Boot) on the device to autorie tha action.
-- On first launch, configure the Wifi, the domoticz IP and port, and on setting select the devices you want o display on the Homepage.
+- Just launch a compilation (Build) and upload (Upload) the code on the device using the USB cable. Don't forget to press the button (Boot) on the device to autorise the action.
+- On first launch, configure the Wifi, the domoticz IP and port, and on setting select the devices you want o display on the Homepage. (Take care this part is hardcoded ATM, see below)   
    
    
 For ther moment, need to edit code itself to set defaut devices, the edit box is here, but not possible to edit value.
