@@ -21,6 +21,8 @@ There is different way to install the code on th device, but I think this one is
 - Donwload Visual Studio Code https://code.visualstudio.com/    
 - Install PlatformIO on it https://docs.platformio.org/en/latest/integration/ide/vscode.html#installation   
 - Download the project and open it with Visual Studio Code.
+- Take a look in the platformio.ini file.
+- Configure your device. ATM the project is configured for the 2432S028R, so you need to create a board configuration file in the "boards" folder and set it in the platformio.ini file (l14). You can find information to make it on google, for exemple on the first link of this part, else you ask me, I can try to make one.   
 - ???
 - Just launch a compilation (Build) and upload (Upload) the code on the device using the USB cable. Don't forget to short press the button (Boot) on the device to autorie tha action.
 - On first launch, configure the Wifi, the domoticz IP and port, and on setting select the devices you want o display on the Homepage.
