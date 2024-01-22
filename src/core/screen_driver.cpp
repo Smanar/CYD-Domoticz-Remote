@@ -188,7 +188,11 @@ void set_color_scheme(){
 }
 
 void set_invert_display(){
+    #if INVERT_COLORS
+    tft.invertDisplay(!global_config.invertColors);
+    #else
     tft.invertDisplay(global_config.invertColors);
+    #endif
 }
 
 void screen_setup()

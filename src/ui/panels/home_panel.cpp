@@ -12,19 +12,14 @@ LV_FONT_DECLARE(Montserrat_Bold_14)
 extern Device myDevices[];
 extern lv_style_t style_shadow;
 
-// My Resolution is 240x320
-#define TOTAL_WIDTH 320
-#define TOTAL_HEIGHT 240
-#define TOTAL_ICONX 3
-#define TOTAL_ICONY 3
+//Calculate values to use to display the homepage (even number)
 #define TOTAL_OFFSET_X 10
 #define TOTAL_OFFSET_Y 10
-
-//Calculate widgets size, 3 * 3
-int Size_w = int(TOTAL_WIDTH / TOTAL_ICONX) -  TOTAL_OFFSET_X;
-int Size_h = int(TOTAL_HEIGHT / TOTAL_ICONY) - TOTAL_OFFSET_Y;
+//Calculate widgets size
+int Size_w = int(TFT_HEIGHT/TOTAL_ICONX) -  TOTAL_OFFSET_X;
+int Size_h = int(TFT_WIDTH/TOTAL_ICONY) - TOTAL_OFFSET_Y;
 //Icon size
-int Size_icon = Size_h / 2;
+int Size_icon = Size_h/2;
 
 
 static void btn_event_cb(lv_event_t * e)
@@ -35,7 +30,6 @@ static void btn_event_cb(lv_event_t * e)
 
     int * btn_no; // create a user data type pointer
     btn_no = (int*)lv_event_get_user_data(e); // cast the return pointer to data type pointer
-
 
     if(code == LV_EVENT_CLICKED) {
         //Serial.printf("Clic sur boutton: %d", * btn_no);
@@ -130,12 +124,11 @@ void home_panel_init(lv_obj_t* panel)
     {
         for (y=0; y<TOTAL_ICONY; y=y+1)
         {
-            //Serial.printf("set widget x: %i , y : %i\n", (Size_w + TOTAL_OFFSET_X) * x, (Size_h + TOTAL_OFFSET_Y) * y);
             const lv_color_t device_color = Getcolor(myDevices[i].type);
             const lv_img_dsc_t *icon = Geticon(myDevices[i].type);
 
-            int cx = TOTAL_OFFSET_X + (Size_w + TOTAL_OFFSET_X) * x -4;
-            int cy = TOTAL_OFFSET_Y + (Size_h + TOTAL_OFFSET_Y) * y -4;
+            int cx = TOTAL_OFFSET_X / 2 + (Size_w + TOTAL_OFFSET_X) * x;
+            int cy = TOTAL_OFFSET_Y / 2 + (Size_h + TOTAL_OFFSET_Y) * y;
 
             myDevices[i].pointer = i;
 

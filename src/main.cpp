@@ -10,9 +10,6 @@
 
 void Websocket_loop(void);
 
-//personnal devices
-const static int t[] = {37, 81, 16, 36, 28, 35, 57, 14, 87};
-
 static void event_handler(lv_event_t * e){
     lv_event_code_t code = lv_event_get_code(e);
 
@@ -31,25 +28,21 @@ void setup() {
     Serial.println("Screen init done");
 
     //Personnal Settings to don't have to set them at every reset, need to be removed
-    #if 1
+    #if FORCE_CONFIG
         strcpy(global_config.wifiPassword, "xxxxxxxxxxxxxxxx");
         strcpy(global_config.wifiSSID, "xxxxxxxxxxxxxxx");
         strcpy(global_config.ServerHost, "192.168.1.1");
         global_config.ServerPort = 8080;
         global_config.wifiConfigured = true;
         global_config.ipConfigured = true;
-        global_config.invertColors = true;
-        for (int i=0; i<9; i++)
+
+        const static int t[] = {37, 81, 16, 36, 28, 35, 57, 14, 87};
+        for (int i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++)
             global_config.ListDevices[i] = t[i];
         WriteGlobalConfig();
     #endif
 
 #ifdef BOARD_HAS_RGB_LED
-
-// Depend of device
-//#define RGB_LED_R 4
-//#define RGB_LED_G 16
-//#define RGB_LED_B 17
 
 pinMode(RGB_LED_R, OUTPUT);
 pinMode(RGB_LED_G, OUTPUT);

@@ -64,10 +64,6 @@ bool HTTPGETRequestWithReturn(const char * url2, JsonArray *JS, bool NeedFilter)
             filter["result"][0]["Name"] = true;
 
             err = deserializeJson(doc, client.getString(), DeserializationOption::Filter(filter));
-
-            //char buffer[4096];
-            //serializeJsonPretty(doc, buffer);
-            //Serial.println(buffer);
         }
         else
         {
@@ -79,6 +75,11 @@ bool HTTPGETRequestWithReturn(const char * url2, JsonArray *JS, bool NeedFilter)
             Serial.println("Can't deserializeJson JSON\n");
             return false;
         }
+
+        // Some debug
+        //char buffer2[4096];
+        //serializeJsonPretty(doc, buffer2);
+        //Serial.println(buffer2);
 
         //Some debug
         //https://arduinojson.org/v6/how-to/determine-the-capacity-of-the-jsondocument/

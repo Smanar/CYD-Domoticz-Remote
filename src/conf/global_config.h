@@ -5,8 +5,6 @@
 
 #define CONFIG_VERSION 3
 
-#define MAXDEVICES 9
-
 typedef struct _GLOBAL_CONFIG {
     unsigned char version;
     union {
@@ -32,7 +30,7 @@ typedef struct _GLOBAL_CONFIG {
     char ServerHost[64];
     unsigned short ServerPort;
 
-    int ListDevices[MAXDEVICES];
+    int ListDevices[TOTAL_ICONX*TOTAL_ICONY];
     
     unsigned char color_scheme;
     unsigned char brightness;

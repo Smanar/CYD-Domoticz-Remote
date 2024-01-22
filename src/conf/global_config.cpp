@@ -40,7 +40,9 @@ void VerifyVersion(){
 void LoadGlobalConfig() {
     global_config.version = CONFIG_VERSION;
     global_config.brightness = 255;
-    global_config.screenTimeout = 5;
+    global_config.screenTimeout = 0;
+
+    for (int i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++) { global_config.ListDevices[i] = i;}
 
     VerifyVersion();
     Preferences preferences;

@@ -34,6 +34,8 @@ static void ta_event_cb(lv_event_t * e) {
         {
             global_config.ipConfigured = true;
             WriteGlobalConfig();
+
+            ESP.restart();
         }
         else
         {

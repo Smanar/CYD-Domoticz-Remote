@@ -14,10 +14,9 @@ Device myDevices[9];
 
 void RefreshHomePage(void);
 
-
 void Init_data(void)
 {
-    for (int i = 0; i < MAXDEVICES; i = i + 1)
+    for (int i = 0; i < (TOTAL_ICONX*TOTAL_ICONY); i = i + 1)
     {
         if (i < SIZEOF(global_config.ListDevices))
         {
@@ -79,7 +78,7 @@ void Update_data(JsonObject RJson2)
     Serial.printf("Update HP device id: %d\n", ID);
 
     //some cleaning
-    if (strncmp(JSondata, "Humidity ", 9) == 0) JSondata+=9;
+    if (JSondata && strncmp(JSondata, "Humidity ", 9) == 0) JSondata+=9;
 
     bool NeedUpdate = false;
 
@@ -187,6 +186,7 @@ bool HttpInitDevice(Device *d, int id)
     String url = "/json.htm?type=command&param=getdevices&rid=" + String(id);
 
     if (!HTTPGETRequestWithReturn((char *)url.c_str(), &JS)) return false;
+
     if (!JS) return false;
 
     for (auto i : JS)  // Scan the array ( only 1)
@@ -196,22 +196,32 @@ bool HttpInitDevice(Device *d, int id)
         strcpy(d->name, i["Name"]);
 
         const char* JSondata = NULL;
+        const char* type = NULL;
+        const char* subtype = NULL;
+        const char* image = NULL;
+
+        type = i["Type"];
+        subtype = i["SubType"];
+        image = i["Image"];
         JSondata = i["Data"];
 
+        if (!type || !subtype || !JSondata)
+        {
+            Serial.println("Json incomplete");
+            return false;
+        }
+
         //do some cleaning
-        if (strncmp(JSondata, "Humidity ", 9) == 0) JSondata+=9;
+        if (JSondata && strncmp(JSondata, "Humidity ", 9) == 0) JSondata+=9; // <<< Guru Meditation
 
         strncpy(d->data, JSondata,20);
 
         if (d->ID) free(d->ID);
         d->ID = (char*)malloc(strlen(i["ID"]) + 1);
         strcpy(d->ID, i["ID"]);
+
         d->idx = i["idx"];
         d->level = i["Level"];
-
-        const char* type = i["Type"];
-        const char* subtype = i["SubType"];
-        const char* image = i["Image"];
 
         //Set a defaut value
         d->type = TYPE_VALUE_SENSOR;
@@ -263,7 +273,7 @@ bool HttpInitDevice(Device *d, int id)
         {
             d->type = TYPE_COLOR;
         }
-        else if (strncmp(type, "Temp",4) == 0)
+        else if (type && strncmp(type, "Temp",4) == 0)
         {
             d->type = TYPE_TEMPERATURE;
         }
@@ -291,18 +301,21 @@ bool HttpInitDevice(Device *d, int id)
             d->type = TYPE_SETPOINT;
         }
 
-        // Correction by image
-        if (image && strcmp(image,"WallSocket") == 0)
+        if (image)
         {
-            d->type = TYPE_PLUG;
-        }
-        else if (image && strcmp(image,"Speaker") == 0)
-        {
-            d->type = TYPE_SPEAKER;
-        }
-        else if (image && strcmp(image,"blinds") == 0)
-        {
-            d->type = TYPE_BLINDS;
+            // Correction by image
+            if (image && strcmp(image,"WallSocket") == 0)
+            {
+                d->type = TYPE_PLUG;
+            }
+            else if (image && strcmp(image,"Speaker") == 0)
+            {
+                d->type = TYPE_SPEAKER;
+            }
+            else if (image && strcmp(image,"blinds") == 0)
+            {
+                d->type = TYPE_BLINDS;
+            }
         }
 
     }

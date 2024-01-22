@@ -26,6 +26,7 @@ static void ta_event_cb(lv_event_t * e) {
         {
             global_config.wifiConfigured = true;
             strcpy(global_config.wifiPassword, txt);
+            Serial.println(txt);
             WriteGlobalConfig();
             wifi_init_inner();
         }
@@ -56,13 +57,14 @@ void wifi_pass_entry(const char* ssid){
 
 static void wifi_btn_event_handler(lv_event_t * e){
     lv_event_code_t code = lv_event_get_code(e);
+    lv_obj_t * obj = lv_event_get_target(e);
 
     if(code == LV_EVENT_CLICKED) {
         delay(100);
-        char* ssid = (char*)e->user_data;
-        strcpy(global_config.wifiSSID, ssid);
-        Serial.println(ssid);
-        wifi_pass_entry(ssid);
+        lv_obj_t * list_btn = (lv_obj_t *)lv_event_get_user_data(e);
+        strcpy(global_config.wifiSSID, lv_list_get_btn_text(obj, list_btn));
+        Serial.println(global_config.wifiSSID);
+        wifi_pass_entry(lv_list_get_btn_text(obj, list_btn));
     }
 }
 
@@ -132,7 +134,7 @@ void wifi_init_inner(){
         ssid_copy[j] = '\0';
 
         lv_obj_t * btn = lv_list_add_btn(list, LV_SYMBOL_WIFI, ssid_copy);
-        lv_obj_add_event_cb(btn, wifi_btn_event_handler, LV_EVENT_ALL, (void*)ssid_copy);
+        lv_obj_add_event_cb(btn, wifi_btn_event_handler, LV_EVENT_ALL, (void*)btn);
         free(ssid_copy);
     }
 }

@@ -37,7 +37,7 @@ static void colorwheel_event_cb(lv_event_t * e)
 
         char buff[256] = {};
         snprintf(buff, 256, "/json.htm?type=command&param=setcolbrightnessvalue&idx=%d&color={\"m\":3,\"t\":0,\"r\":%d,\"g\":%d,\"b\":%d,\"cw\":0,\"ww\":0}&brightness=%d",
-                        SelectedDevice.idx, c.ch.red, c.ch.green, c.ch.blue, 100);
+                        SelectedDevice.idx, c.ch.red, c.ch.green, c.ch.blue, SelectedDevice.level);
         HTTPGETRequest(buff);
     }
 }
