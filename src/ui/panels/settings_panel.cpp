@@ -9,8 +9,8 @@ void Init_data(void);
 
 static int GetIntTok(const char * str, int t, const char c)
 {
-    int str_length = strlen(str);
-    int i, v, tot = 0;
+    int i, str_length = strlen(str);
+    int v = 0, tot = 0;
  
     for (i = 0; i<str_length; i++) {
         if ((str[i] == c) || (str[i] == '\0'))
@@ -45,6 +45,10 @@ static void reset_wifi_click(lv_event_t * e){
     global_config.ipConfigured = false;
     WriteGlobalConfig();
     ESP.restart();
+}
+
+static void exit_click(lv_event_t * e){
+    navigation_screen(0);
 }
 
 static void light_mode_switch(lv_event_t * e){
@@ -128,6 +132,7 @@ static void edit_device_list_switch(lv_event_t * e)
     }
     else if (code == LV_EVENT_DEFOCUSED)
     {
+        lv_obj_set_height(display, LV_VER_RES);
         lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
     }
     else if(code == LV_EVENT_READY || code == LV_EVENT_CANCEL) {
@@ -137,11 +142,10 @@ static void edit_device_list_switch(lv_event_t * e)
         lv_obj_clear_state(ta, LV_STATE_FOCUSED);
         lv_indev_reset(NULL, ta);   /*To forget the last clicked object to make it focusable again*/
         const char * str = lv_textarea_get_text(ta);
+
         for (int i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++)
         {
             global_config.ListDevices[i] = GetIntTok(lv_textarea_get_text(ta), i,';');
-            Serial.printf(">>> %d\n", GetIntTok(lv_textarea_get_text(ta), i,','));
-            Serial.printf(">>> %d\n", global_config.ListDevices[i]);
         }
         WriteGlobalConfig();
         Init_data();
@@ -185,6 +189,8 @@ void settings_panel_init(lv_obj_t* panel)
 {
     y_offset = 0;
     kb = nullptr;
+
+    lv_obj_add_flag(panel, LV_OBJ_FLAG_SCROLLABLE);
 
     lv_obj_t * btn = lv_btn_create(panel);
     lv_obj_add_event_cb(btn, reset_wifi_click, LV_EVENT_CLICKED, NULL);
@@ -264,4 +270,12 @@ void settings_panel_init(lv_obj_t* panel)
     lv_textarea_set_one_line(textarea, true);
     lv_obj_set_width(textarea, lv_pct(60));
     create_settings_widget("Dft devices", textarea, panel);
+
+    btn = lv_btn_create(panel);
+    lv_obj_add_event_cb(btn, exit_click, LV_EVENT_CLICKED, NULL);
+    label = lv_label_create(btn);
+    lv_label_set_text_static(label, "Quit");
+    lv_obj_center(label);
+    create_settings_widget("Exit Option", btn, panel);
+
 }

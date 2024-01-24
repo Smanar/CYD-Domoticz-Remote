@@ -66,8 +66,10 @@ void navigation_screen(unsigned char active_panel)
                 //Titleview mode
                 tv = lv_tileview_create(lv_scr_act());
                 lv_obj_set_scrollbar_mode(tv, LV_SCROLLBAR_MODE_OFF);
-                lv_obj_t * setting = lv_tileview_add_tile(tv, 0, 0, LV_DIR_RIGHT);
-                settings_panel_init(setting);
+                //lv_obj_t * setting = lv_tileview_add_tile(tv, 0, 0, LV_DIR_RIGHT);
+                //settings_panel_init(setting);
+                lv_obj_t * tools = lv_tileview_add_tile(tv, 0, 0, LV_DIR_RIGHT);
+                tools_panel_init(tools);
                 lv_obj_t * home = lv_tileview_add_tile(tv, 1, 0, LV_DIR_LEFT | LV_DIR_RIGHT);
                 home_panel_init(home);
                 lv_obj_t * info = lv_tileview_add_tile(tv, 2, 0, LV_DIR_LEFT );
@@ -80,8 +82,8 @@ void navigation_screen(unsigned char active_panel)
                 ActiveLV = active_panel;
             }
             break;
-        case 3:
-            //Device panel
+        case 3: //Device panel
+        case 4: //Settings panel
             {
                 lv_obj_t * panel = lv_obj_create(lv_scr_act());
                 lv_obj_set_size(panel, TFT_HEIGHT, TFT_WIDTH);
@@ -89,13 +91,9 @@ void navigation_screen(unsigned char active_panel)
                 lv_obj_set_style_border_width(panel, 0, 0);
                 lv_obj_set_style_bg_opa(panel, LV_OPA_TRANSP, 0);
                 lv_obj_set_style_pad_all(panel, 0, 0);
-                device_panel_init(panel);
-            }
-            break;
-        case 4:
-            //
-            {
                 
+                if (active_panel == 3) device_panel_init(panel);
+                if (active_panel == 4) settings_panel_init(panel);
             }
             break;
     }

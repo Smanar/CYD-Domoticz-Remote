@@ -1,13 +1,12 @@
 #include <HTTPClient.h>
 #include <WebSocketsClient.h>
-//#include <ArduinoJson.h>
 #include <WebSocketsClient.h>
 
 #include "../conf/global_config.h"
 #include "ip_engine.h"
 
-WebSocketsClient WSclient;
-bool connect_ok = false;
+static WebSocketsClient WSclient;
+static bool connect_ok = false;
 
 void Update_data(JsonObject RJson2);
 
@@ -142,6 +141,8 @@ static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
             if (length > 0)
             {
                 DynamicJsonDocument doc(4096);
+                //StaticJsonDocument<256> doc; // Si < 1ko
+
                 DeserializationError err = deserializeJson(doc, payload, length);
 
                 if (!err)
@@ -169,12 +170,9 @@ static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
                             JsonArray result = doc2.as<JsonObject>()["result"];
                             if (result)
                             {
-
                                 for (JsonObject a : result) {
                                     Update_data(a);
                                 }
-
-
                             }
 
                         }

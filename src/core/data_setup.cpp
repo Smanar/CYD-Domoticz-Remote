@@ -25,6 +25,7 @@ void Init_data(void)
             {
                 myDevices[i].used = true;
                 Serial.printf("Initialise Domoticz device id: %d , Name : %s\n", global_config.ListDevices[i], myDevices[i].name);
+                delay(100);
             }
         }
         else
@@ -189,7 +190,7 @@ bool HttpInitDevice(Device *d, int id)
 
     if (!JS) return false;
 
-    for (auto i : JS)  // Scan the array ( only 1)
+    for (auto i : JS)  // Scan the array (only 1)
     {
         if (d->name) free(d->name);
         d->name = (char*)malloc(strlen(i["Name"]) + 1);
