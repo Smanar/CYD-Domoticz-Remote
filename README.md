@@ -34,8 +34,8 @@ For ther moment, need to edit code itself to set defaut devices, the edit box is
 
 The project is still WIP so some settings are still hard coded.   
 - Somes settings depend of hardware, tell me your hardware, I will search values to edit.
-- To go faster somes settings are hard coded here https://github.com/Smanar/CYD-Domoticz-Remote/blob/main/Domoticz_Remote/src/main.cpp#L34
-- The devices you want by defaut on the homepage are here https://github.com/Smanar/CYD-Domoticz-Remote/blob/main/Domoticz_Remote/src/main.cpp#L14   
+- To go faster can use somes hard coded settings here https://github.com/Smanar/CYD-Domoticz-Remote/blob/main/Domoticz_Remote/src/main.cpp#L31
+- By defaut, defaut devices diplayed on Homepage will be 1,2,3,4,5,6,7,8,9 so you need to change them on the setting panel.
 
 ## Actuals issues   
 - Memory ^^, lot of feature are still in Beta test. For exemple Domoticz JSON are too big to be handled by the device, it cause problem for chart for exemple.
