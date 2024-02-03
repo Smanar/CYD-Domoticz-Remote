@@ -7,6 +7,8 @@
     "extra_flags": [
       "-DARDUINO_ESP32_DEV",
       "-DILI9341_2_DRIVER=1",
+      "-DTFT_RGB_ORDER=0",
+      "-DTFT_INVERSION_ON=1",
       "-DTFT_WIDTH=240",
       "-DTFT_HEIGHT=320",
       "-DTFT_BL=21",
@@ -17,6 +19,8 @@
       "-DTFT_CS=15",
       "-DTFT_DC=2",
       "-DTFT_RST=-1",
+      "-DTFT_BUSY=-1",
+      "-DTFT_ROTATION=4",
       "-DLOAD_GCLD=1",
       "-DLOAD_FONT2=1",
       "-DLOAD_GFXFF=1",
