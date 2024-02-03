@@ -1,5 +1,3 @@
-#include <TFT_eSPI.h>
-
 #include "http_setup.h"
 #include "../conf/global_config.h"
 #include "lvgl.h"

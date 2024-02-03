@@ -1,6 +1,6 @@
 #include "screen_driver.h"
 #include <SPI.h>
-#include <TFT_eSPI.h>
+
 #include "../conf/global_config.h"
 #include "lvgl.h"
 
@@ -12,7 +12,116 @@ uint32_t LV_EVENT_GET_COMP_CHILD;
 static lv_disp_draw_buf_t draw_buf;
 static lv_color_t buf[TFT_WIDTH * TFT_HEIGHT / 10];
 
-TFT_eSPI tft = TFT_eSPI();
+#ifdef TFT_ESPI
+    static TFT_eSPI tft = TFT_eSPI();
+#endif
+
+#ifdef LOVYANGFX
+//#define LGFX_USE_V1
+//https://macsbug.wordpress.com/2022/08/20/web-radio-esp32-2432s028-i2s/
+
+
+
+class LGFX : public lgfx::LGFX_Device
+{
+    lgfx::Panel_ILI9341 _panel_instance;
+    lgfx::Bus_SPI       _bus_instance;
+    lgfx::Light_PWM     _light_instance;
+    lgfx::Touch_XPT2046 _touch_instance;
+  public:
+    LGFX(void)
+    {
+      {
+        auto cfg = _bus_instance.config();
+
+        cfg.spi_host         = HSPI_HOST;// VSPI_HOST or HSPI_HOST (SPI2_HOST)
+        cfg.spi_mode         = 0;
+        cfg.freq_write       = SPI_FREQUENCY;
+        cfg.freq_read        = SPI_READ_FREQUENCY;
+        cfg.spi_3wire        = false;
+        cfg.use_lock         = true;
+        cfg.dma_channel      = 1;
+        cfg.pin_sclk         = TFT_SCLK;
+        cfg.pin_mosi         = TFT_MOSI;
+        cfg.pin_miso         = TFT_MISO;
+        cfg.pin_dc           = TFT_DC;
+
+        _bus_instance.config(cfg);
+        _panel_instance.setBus(&_bus_instance);
+      }
+
+      {
+        auto cfg = _panel_instance.config();
+
+        cfg.pin_cs           =    TFT_CS;
+        cfg.pin_rst          =    TFT_RST;
+        cfg.pin_busy         =    TFT_BUSY;
+        cfg.memory_width     =    TFT_WIDTH;
+        cfg.memory_height    =    TFT_HEIGHT;
+        cfg.panel_width      =    TFT_WIDTH;
+        cfg.panel_height     =    TFT_HEIGHT;
+        cfg.offset_x         =     0;
+        cfg.offset_y         =     0;
+        cfg.offset_rotation  =     TFT_ROTATION;
+        cfg.dummy_read_pixel =     8;
+        cfg.dummy_read_bits  =     1;
+        cfg.readable         = true;
+        cfg.invert           = TFT_INVERSION_ON;
+        cfg.rgb_order        = !TFT_RGB_ORDER;
+        cfg.dlen_16bit       = false;
+        cfg.bus_shared       = false;
+
+        _panel_instance.config(cfg);
+      }
+
+      {
+        auto cfg = _light_instance.config();
+
+        cfg.pin_bl = TFT_BL;
+        cfg.invert = false;
+        cfg.freq   = 44100;           
+        cfg.pwm_channel = 7;
+
+        _light_instance.config(cfg);
+        _panel_instance.setLight(&_light_instance);
+      }
+
+      {
+        auto cfg = _touch_instance.config();
+
+        cfg.x_min      =  300;
+        cfg.x_max      = 3900;
+        cfg.y_min      = 3700;
+        cfg.y_max      =  200;
+        cfg.pin_int    = -1;
+        cfg.bus_shared = false;
+        cfg.offset_rotation = 0;
+
+        cfg.spi_host = HSPI_HOST;
+        cfg.freq = 1000000;
+        cfg.pin_sclk = 25;
+        cfg.pin_mosi = 32;
+        cfg.pin_miso = 39;
+        cfg.pin_cs   = 33;
+
+        _touch_instance.config(cfg);
+        _panel_instance.setTouch(&_touch_instance);
+      }
+
+      setPanel(&_panel_instance);
+    }
+};
+
+    LGFX tft;
+    static LGFX_Sprite sprite(&tft);
+#endif
+
+//Adapt
+//#define LGFX_AUTODETECT
+//#include <LovyanGFX.hpp>
+//#include <LGFX_TFT_eSPI.hpp>
+//static TFT_eSPI tft;               // TFT_eSPI is an alias for LGFX.
+//static TFT_eSprite sprite(&tft);   // TFT_eSprite is alias for LGFX_Sprite
 
 bool isScreenInSleep = false;
 lv_timer_t *screenSleepTimer;
@@ -43,22 +152,22 @@ void touchscreen_calibrate(bool force)
 
     while (touchscreen.touched())
         ;
-    tft.drawFastHLine(0, 10, 20, ILI9341_WHITE);
-    tft.drawFastVLine(10, 0, 20, ILI9341_WHITE);
+    tft.drawFastHLine(0, 10, 20, TFT_WHITE);
+    tft.drawFastVLine(10, 0, 20, TFT_WHITE);
     while (!touchscreen.touched())
         ;
     delay(50);
     p = touchscreen.getPoint();
     x1 = p.x;
     y1 = p.y;
-    tft.drawFastHLine(0, 10, 20, ILI9341_BLACK);
-    tft.drawFastVLine(10, 0, 20, ILI9341_BLACK);
+    tft.drawFastHLine(0, 10, 20, TFT_BLACK);
+    tft.drawFastVLine(10, 0, 20, TFT_BLACK);
     delay(500);
 
     while (touchscreen.touched())
         ;
-    tft.drawFastHLine(300, 230, 20, ILI9341_WHITE);
-    tft.drawFastVLine(310, 220, 20, ILI9341_WHITE);
+    tft.drawFastHLine(300, 230, 20, TFT_WHITE);
+    tft.drawFastVLine(310, 220, 20, TFT_WHITE);
 
     while (!touchscreen.touched())
         ;
@@ -66,8 +175,8 @@ void touchscreen_calibrate(bool force)
     p = touchscreen.getPoint();
     x2 = p.x;
     y2 = p.y;
-    tft.drawFastHLine(300, 230, 20, ILI9341_BLACK);
-    tft.drawFastVLine(310, 220, 20, ILI9341_BLACK);
+    tft.drawFastHLine(300, 230, 20, TFT_BLACK);
+    tft.drawFastVLine(310, 220, 20, TFT_BLACK);
 
     int16_t xDist = 320 - 40;
     int16_t yDist = 240 - 40;
@@ -142,6 +251,7 @@ void set_screen_timer_period()
     screen_timer_period(global_config.screenTimeout * 1000 * 60);
 }
 
+
 void screen_lv_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
 {
     uint32_t w = (area->x2 - area->x1 + 1);
@@ -149,7 +259,11 @@ void screen_lv_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *col
 
     tft.startWrite();
     tft.setAddrWindow(area->x1, area->y1, w, h);
+#ifdef TFT_ESPI
     tft.pushColors((uint16_t *)&color_p->full, w * h, true);
+#else
+    tft.pushPixels((uint16_t *)&color_p->full, w * h, true);
+#endif
     tft.endWrite();
 
     lv_disp_flush_ready(disp);
@@ -188,11 +302,7 @@ void set_color_scheme(){
 }
 
 void set_invert_display(){
-    #if INVERT_COLORS
-    tft.invertDisplay(!global_config.invertColors);
-    #else
     tft.invertDisplay(global_config.invertColors);
-    #endif
 }
 
 void screen_setup()
@@ -204,7 +314,11 @@ void screen_setup()
     lv_init();
 
     tft.init();
+#ifdef TFT_ESPI
     tft.setRotation(global_config.rotateScreen ? 3 : 1);
+#else
+    //tft.setRotation(4);
+#endif
     tft.fillScreen(TFT_BLACK);
     set_screen_brightness();
     set_invert_display();
@@ -219,8 +333,13 @@ void screen_setup()
     /*Initialize the display*/
     static lv_disp_drv_t disp_drv;
     lv_disp_drv_init(&disp_drv);
+#ifdef TFT_ESPI
     disp_drv.hor_res = TFT_HEIGHT;
     disp_drv.ver_res = TFT_WIDTH;
+#else
+    disp_drv.hor_res = TFT_WIDTH;
+    disp_drv.ver_res = TFT_HEIGHT;
+#endif
     disp_drv.flush_cb = screen_lv_flush;
     disp_drv.draw_buf = &draw_buf;
     lv_disp_drv_register(&disp_drv);

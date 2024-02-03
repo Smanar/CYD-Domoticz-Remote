@@ -1,5 +1,3 @@
-#include <TFT_eSPI.h>
-
 #include "../src/conf/global_config.h"
 #include "data_setup.h"
 #include "../ui/http_setup.h"

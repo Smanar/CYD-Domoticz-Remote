@@ -8,7 +8,16 @@
 #define CPU_FREQ_LOW 80
 
 #include <XPT2046_Touchscreen.h>
-#include <TFT_eSPI.h>
+
+#ifdef TFT_ESPI
+    #include <TFT_eSPI.h>
+#endif
+
+#ifdef LOVYANGFX
+    //#define LGFX_AUTODETECT
+    #define LGFX_USE_V1
+    #include <LovyanGFX.hpp>
+#endif
 
 #define XPT2046_IRQ 36
 #define XPT2046_MOSI 32
@@ -29,7 +38,5 @@ void set_invert_display();
 void screen_timer_wake();
 void set_screen_timer_period();
 void set_screen_brightness();
-
-extern TFT_eSPI tft;
 
 #endif // _SCREEN_DRIVER_INIT

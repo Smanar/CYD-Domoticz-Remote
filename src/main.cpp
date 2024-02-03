@@ -29,7 +29,7 @@ void setup() {
 
     //Personnal Settings to don't have to set them at every reset, need to be removed
     #if FORCE_CONFIG
-        strcpy(global_config.wifiPassword, "xxxxxxxxxxxxxxxx");
+        strcpy(global_config.wifiPassword, "xxxxxxxxxxxxxxxxxxx");
         strcpy(global_config.wifiSSID, "xxxxxxxxxxxxxxx");
         strcpy(global_config.ServerHost, "192.168.1.1");
         global_config.ServerPort = 8080;
