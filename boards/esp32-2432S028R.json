@@ -8,7 +8,7 @@
       "-DARDUINO_ESP32_DEV",
       "-DILI9341_2_DRIVER=1",
       "-DTFT_RGB_ORDER=0",
-      "-DTFT_INVERSION_ON=1",
+      "-DTFT_INVERSION_ON=0",
       "-DTFT_WIDTH=240",
       "-DTFT_HEIGHT=320",
       "-DTFT_BL=21",

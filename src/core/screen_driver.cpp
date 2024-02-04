@@ -13,14 +13,14 @@ static lv_disp_draw_buf_t draw_buf;
 static lv_color_t buf[TFT_WIDTH * TFT_HEIGHT / 10];
 
 #ifdef TFT_ESPI
+    #include <TFT_eSPI.h>
     static TFT_eSPI tft = TFT_eSPI();
 #endif
 
 #ifdef LOVYANGFX
+
 //#define LGFX_USE_V1
-//https://macsbug.wordpress.com/2022/08/20/web-radio-esp32-2432s028-i2s/
-
-
+#include <LovyanGFX.hpp>
 
 class LGFX : public lgfx::LGFX_Device
 {
@@ -56,10 +56,10 @@ class LGFX : public lgfx::LGFX_Device
         cfg.pin_cs           =    TFT_CS;
         cfg.pin_rst          =    TFT_RST;
         cfg.pin_busy         =    TFT_BUSY;
-        cfg.memory_width     =    TFT_WIDTH;
-        cfg.memory_height    =    TFT_HEIGHT;
-        cfg.panel_width      =    TFT_WIDTH;
-        cfg.panel_height     =    TFT_HEIGHT;
+        cfg.memory_width     =    TFT_HEIGHT;
+        cfg.memory_height    =    TFT_WIDTH;
+        cfg.panel_width      =    TFT_HEIGHT;
+        cfg.panel_height     =    TFT_WIDTH;
         cfg.offset_x         =     0;
         cfg.offset_y         =     0;
         cfg.offset_rotation  =     TFT_ROTATION;
@@ -142,8 +142,8 @@ void touchscreen_calibrate(bool force)
         }
 
     tft.fillScreen(TFT_BLACK);
-    tft.setCursor(20, 140);
-    tft.setTextColor(TFT_WHITE, TFT_BLACK);
+    tft.setCursor(20, 140,2); // Not working without font ???
+    tft.setTextColor(TFT_WHITE,TFT_BLACK);
     tft.setTextSize(2);
     tft.println("Calibrate Screen");
 
@@ -302,7 +302,7 @@ void set_color_scheme(){
 }
 
 void set_invert_display(){
-    tft.invertDisplay(global_config.invertColors);
+    tft.invertDisplay(!global_config.invertColors);
 }
 
 void screen_setup()
@@ -333,17 +333,11 @@ void screen_setup()
     /*Initialize the display*/
     static lv_disp_drv_t disp_drv;
     lv_disp_drv_init(&disp_drv);
-#ifdef TFT_ESPI
     disp_drv.hor_res = TFT_HEIGHT;
     disp_drv.ver_res = TFT_WIDTH;
-#else
-    disp_drv.hor_res = TFT_WIDTH;
-    disp_drv.ver_res = TFT_HEIGHT;
-#endif
     disp_drv.flush_cb = screen_lv_flush;
     disp_drv.draw_buf = &draw_buf;
     lv_disp_drv_register(&disp_drv);
-
 
     /*Initialize the (dummy) input device driver*/
     static lv_indev_drv_t indev_drv;

@@ -9,23 +9,12 @@
 
 #include <XPT2046_Touchscreen.h>
 
-#ifdef TFT_ESPI
-    #include <TFT_eSPI.h>
-#endif
-
-#ifdef LOVYANGFX
-    //#define LGFX_AUTODETECT
-    #define LGFX_USE_V1
-    #include <LovyanGFX.hpp>
-#endif
-
 #define XPT2046_IRQ 36
 #define XPT2046_MOSI 32
 #define XPT2046_MISO 39
 #define XPT2046_CLK 25
 #define XPT2046_CS 33
 
-TS_Point touchscreen_point();
 void touchscreen_calibrate(bool force = false);
 void screen_setBrightness(byte brightness);
 void screen_timer_setup();
