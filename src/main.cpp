@@ -1,3 +1,4 @@
+#include <Esp.h>
 #include "conf/global_config.h"
 #include "core/screen_driver.h"
 #include "ui/wifi_setup.h"

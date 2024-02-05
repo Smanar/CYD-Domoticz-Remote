@@ -1,5 +1,6 @@
 #pragma once
-// Adapted from https://github.com/xperiments-in/xtouch/blob/main/src/devices/2.8/screen.h
+
+#include <Esp.h>
 
 #ifndef _SCREEN_DRIVER_INIT
 #define _SCREEN_DRIVER_INIT
@@ -7,13 +8,6 @@
 #define CPU_FREQ_HIGH 240
 #define CPU_FREQ_LOW 80
 
-#include <XPT2046_Touchscreen.h>
-
-#define XPT2046_IRQ 36
-#define XPT2046_MOSI 32
-#define XPT2046_MISO 39
-#define XPT2046_CLK 25
-#define XPT2046_CS 33
 
 void touchscreen_calibrate(bool force = false);
 void screen_setBrightness(byte brightness);
