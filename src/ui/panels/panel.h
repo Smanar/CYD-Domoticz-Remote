@@ -1,3 +1,4 @@
+#include <Esp.h>
 #include "lvgl.h"
 
 #define SIZEOF(arr) (sizeof(arr) / sizeof(*arr))

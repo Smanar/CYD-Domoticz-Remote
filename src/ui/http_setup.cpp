@@ -102,7 +102,6 @@ void WS_init()
 {
 
     WS_init_inner();
-
     WS_Run();
 
     while (!WS_Running())

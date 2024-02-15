@@ -78,7 +78,7 @@ static void slider_event_cb2(lv_event_t * e)
     }
 }
 
-static void  switch_event_handler(lv_event_t * e)
+static void switch_event_handler(lv_event_t * e)
 {
     lv_event_code_t code = lv_event_get_code(e);
     lv_obj_t * obj = lv_event_get_target(e);
@@ -86,6 +86,31 @@ static void  switch_event_handler(lv_event_t * e)
     if (code == LV_EVENT_VALUE_CHANGED) {
         char buff[256] = {};
         lv_snprintf(buff, 256, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=%s", SelectedDevice.idx, lv_obj_has_state(obj, LV_STATE_CHECKED) ? "On" : "Off");
+        HTTPGETRequest(buff);
+    }
+}
+
+static void Blinds_btn_event_handler(lv_event_t * e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    //lv_obj_t * obj = lv_event_get_target(e);
+    int b = (int)lv_event_get_user_data(e);
+
+    if(code == LV_EVENT_CLICKED)
+    {
+        char buff[256] = {};
+        if (b == 1)
+        {
+            lv_snprintf(buff, 256, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=Open", SelectedDevice.idx);
+        }
+        else if (b == 2)
+        {
+            lv_snprintf(buff, 256, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=Stop", SelectedDevice.idx);
+        }
+        else
+        {
+            lv_snprintf(buff, 256, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=Close", SelectedDevice.idx);
+        }
         HTTPGETRequest(buff);
     }
 }
@@ -146,6 +171,7 @@ lv_color_t Getcolor(int type)
         case TYPE_PLUG:
         case TYPE_COLOR:
         case TYPE_LIGHT:
+        case TYPE_BLINDS:
             return LV_COLOR_MAKE(0xFF, 0x2F, 0x2F); 
         break;
         default:
@@ -163,6 +189,7 @@ LV_IMG_DECLARE(speaker35x35)
 LV_IMG_DECLARE(humidity35x35)
 LV_IMG_DECLARE(power35x35)
 LV_IMG_DECLARE(sensor35x35)
+LV_IMG_DECLARE(blinds35x35)
 
 // To convert image https://lvgl.io/tools/imageconverter
 const lv_img_dsc_t *Geticon(int type)
@@ -192,8 +219,9 @@ const lv_img_dsc_t *Geticon(int type)
         case TYPE_SWITCH:
         case TYPE_COLOR:
         case TYPE_LIGHT:
-        case TYPE_BLINDS:
             return &lampe35x35; 
+        case TYPE_BLINDS:
+            return &blinds35x35; 
         case TYPE_SWITCH_SENSOR:
         case TYPE_LUX:
         case TYPE_PERCENT_SENSOR:
@@ -281,8 +309,7 @@ void device_panel_init(lv_obj_t* panel)
     //
     //Create switch
     if ((SelectedDevice.type == TYPE_SWITCH) || (SelectedDevice.type == TYPE_DIMMER)
-     || (SelectedDevice.type == TYPE_PLUG) || (SelectedDevice.type == TYPE_COLOR) || (SelectedDevice.type == TYPE_LIGHT) 
-     || (SelectedDevice.type == TYPE_BLINDS))
+     || (SelectedDevice.type == TYPE_PLUG) || (SelectedDevice.type == TYPE_COLOR) || (SelectedDevice.type == TYPE_LIGHT))
     {
         lv_obj_t * sw = lv_switch_create(GridSmall);
         if (strcmp(SelectedDevice.data, "On") == 0)
@@ -291,6 +318,32 @@ void device_panel_init(lv_obj_t* panel)
         }
         lv_obj_add_event_cb(sw, switch_event_handler, LV_EVENT_ALL, NULL);
 
+    }
+
+    //Create blinds buttons
+    if (SelectedDevice.type == TYPE_BLINDS)
+    {
+        lv_obj_t * obj= lv_btn_create(GridSmall);
+        lv_obj_set_size(obj, LV_PCT(100), LV_PCT(30));
+        label = lv_label_create(obj);
+        lv_label_set_text_static(label, LV_SYMBOL_UP);
+        lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
+        lv_obj_set_pos(obj, 0, 0);
+        lv_obj_add_event_cb(obj, Blinds_btn_event_handler, LV_EVENT_CLICKED, (void *)1);
+        obj= lv_btn_create(GridSmall);
+        lv_obj_set_size(obj, LV_PCT(100), LV_PCT(30));
+        label = lv_label_create(obj);
+        lv_label_set_text_static(label, LV_SYMBOL_STOP);
+        lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
+        lv_obj_set_pos(obj, 0, LV_PCT(33));
+        lv_obj_add_event_cb(obj, Blinds_btn_event_handler, LV_EVENT_CLICKED, (void *)2);
+        obj= lv_btn_create(GridSmall);
+        lv_obj_set_size(obj, LV_PCT(100), LV_PCT(30));
+        label = lv_label_create(obj);
+        lv_label_set_text_static(label, LV_SYMBOL_DOWN);
+        lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
+        lv_obj_set_pos(obj, 0, LV_PCT(66));
+        lv_obj_add_event_cb(obj, Blinds_btn_event_handler, LV_EVENT_CLICKED, (void *)3);
     }
 
     //Create a LED
@@ -322,13 +375,13 @@ void device_panel_init(lv_obj_t* panel)
         /*Create a label below the slider*/
         slider_label = lv_label_create(lv_scr_act());
         lv_label_set_text_fmt(slider_label, "%d%",SelectedDevice.level);
-        lv_obj_align_to(slider_label, slider, LV_ALIGN_OUT_RIGHT_MID, 10, 0);
+        lv_obj_align_to(slider_label, slider, LV_ALIGN_OUT_BOTTOM_MID, 0, 15);
     }
 
-    //Create a color wheel
+    //Create a color wheel + slider
     if (SelectedDevice.type == TYPE_COLOR)
     {
-        
+        /*Create a slider*/
         lv_obj_t * slider = lv_slider_create(GridBig);
         lv_slider_set_value(slider, SelectedDevice.level, LV_ANIM_ON);
         lv_obj_set_size(slider, 10, lv_pct(80));

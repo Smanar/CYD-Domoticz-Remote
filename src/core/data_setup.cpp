@@ -260,6 +260,10 @@ bool HttpInitDevice(Device *d, int id)
                 {
                     d->type = TYPE_LIGHT;
                 }
+                else if ((strcmp(switchtype,"Venetian Blinds EU") == 0) || (strcmp(switchtype,"Venetian Blinds US") == 0) || (strcmp(switchtype,"Blinds Percentage") == 0))
+                {
+                    d->type = TYPE_BLINDS;
+                }
                 else // Just passive sensor
                 {
                     d->type = TYPE_SWITCH_SENSOR;
@@ -310,10 +314,6 @@ bool HttpInitDevice(Device *d, int id)
             else if (image && strcmp(image,"Speaker") == 0)
             {
                 d->type = TYPE_SPEAKER;
-            }
-            else if (image && strcmp(image,"blinds") == 0)
-            {
-                d->type = TYPE_BLINDS;
             }
         }
 

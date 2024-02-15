@@ -150,6 +150,7 @@ void home_panel_init(lv_obj_t* panel)
                 case TYPE_PLUG:
                 case TYPE_COLOR:
                 case TYPE_LIGHT:
+                case TYPE_BLINDS:
                 case TYPE_WARNING: // This one is a sensor, but too much text to be displayed on homepage
                 {
                     Widget_button(panel, myDevices[i].name, cx, cy, Size_w , Size_h, device_color, &myDevices[i].pointer, icon); 

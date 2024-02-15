@@ -214,6 +214,7 @@ void WS_Run(void)
     connect_ok = false;
 
     Serial.println("Connecting to Webserver");
+    //Serial.printf("Connecting to %s%s:%d\n",global_config.ServerHost, "/json", global_config.ServerPort);
 
     // server address, port and URL
     WSclient.begin(global_config.ServerHost, global_config.ServerPort, "/json", "domoticz");
