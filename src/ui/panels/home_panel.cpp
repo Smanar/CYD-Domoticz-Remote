@@ -134,11 +134,14 @@ void home_panel_init(lv_obj_t* panel)
 
             switch (myDevices[i].type)
             {
+                case TYPE_UNKNOWN: // Unknown type
+                break;
                 case TYPE_TEMPERATURE:
                 case TYPE_HUMIDITY:
                 case TYPE_CONSUMPTION:
                 case TYPE_SWITCH_SENSOR:
                 case TYPE_LUX:
+                case TYPE_VALUE_SENSOR:
                 {
                     Widget_sensor(panel, myDevices[i].name, myDevices[i].data, cx , cy , Size_w , Size_h, device_color, &myDevices[i].pointer,icon);
                 }
@@ -152,11 +155,13 @@ void home_panel_init(lv_obj_t* panel)
                 case TYPE_LIGHT:
                 case TYPE_BLINDS:
                 case TYPE_WARNING: // This one is a sensor, but too much text to be displayed on homepage
+                case TYPE_TEXT: // This one is a sensor, but too much text to be displayed on homepage
                 {
                     Widget_button(panel, myDevices[i].name, cx, cy, Size_w , Size_h, device_color, &myDevices[i].pointer, icon); 
                 }
                 break;
                 default:
+                    Serial.printf("Undefinied widget for HomePage: %d\n", myDevices[i].type);
                 break;
             }
 

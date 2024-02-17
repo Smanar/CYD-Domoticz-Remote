@@ -8,7 +8,7 @@
 
 #define SIZEOF(arr) (sizeof(arr) / sizeof(*arr))
 
-Device myDevices[9];
+Device myDevices[TOTAL_ICONX*TOTAL_ICONY];
 
 void RefreshHomePage(void);
 
@@ -114,8 +114,11 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
 	static int a[24];
     *min = 0xFFFF;
     *max = 0;
-
+#ifdef OLD_DOMOTICZ
+    String url = "/json.htm?type=graph&sensor=";
+#else
     String url = "/json.htm?type=command&param=graph&sensor=";
+#endif
     switch (type)
     {
         case TYPE_TEMPERATURE:
@@ -182,7 +185,11 @@ bool HttpInitDevice(Device *d, int id)
 {
 
     JsonArray JS;
+#ifdef OLD_DOMOTICZ
+    String url = "/json.htm?type=devices&rid=" + String(id);
+#else
     String url = "/json.htm?type=command&param=getdevices&rid=" + String(id);
+#endif
 
     if (!HTTPGETRequestWithReturn((char *)url.c_str(), &JS)) return false;
 
@@ -191,7 +198,9 @@ bool HttpInitDevice(Device *d, int id)
     for (auto i : JS)  // Scan the array (only 1)
     {
         if (d->name) free(d->name);
+
         d->name = (char*)malloc(strlen(i["Name"]) + 1);
+
         strcpy(d->name, i["Name"]);
 
         const char* JSondata = NULL;
@@ -223,7 +232,7 @@ bool HttpInitDevice(Device *d, int id)
         d->level = i["Level"];
 
         //Set a defaut value
-        d->type = TYPE_VALUE_SENSOR;
+        d->type = TYPE_UNKNOWN;
 
         if (strcmp(type, "Light/Switch") == 0)
         {
@@ -256,7 +265,7 @@ bool HttpInitDevice(Device *d, int id)
                 {
                     d->type = TYPE_DIMMER;
                 }
-                else if (strcmp(switchtype,"On/Off") == 0)
+                else if ((strcmp(switchtype,"On/Off") == 0) || (strcmp(switchtype,"Push On Button") == 0) || (strcmp(switchtype,"Push Off Button") == 0))
                 {
                     d->type = TYPE_LIGHT;
                 }
@@ -294,6 +303,7 @@ bool HttpInitDevice(Device *d, int id)
 
             if (strcmp(subtype,"Alert") == 0) d->type = TYPE_WARNING;
             else if (strcmp(subtype,"Percentage") == 0) d->type = TYPE_PERCENT_SENSOR;
+            else if (strcmp(subtype,"Text") == 0) d->type = TYPE_TEXT;
         }
         else if (strcmp(type, "Lux") == 0)
         {

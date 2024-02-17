@@ -160,6 +160,7 @@ lv_color_t Getcolor(int type)
             return LV_COLOR_MAKE(0x00, 0x7F, 0xFF);
         break;
         case TYPE_WARNING:
+        case TYPE_TEXT:
             return LV_COLOR_MAKE(0x00, 0xFF, 0x00);
         break;
         case TYPE_SPEAKER:
@@ -190,6 +191,7 @@ LV_IMG_DECLARE(humidity35x35)
 LV_IMG_DECLARE(power35x35)
 LV_IMG_DECLARE(sensor35x35)
 LV_IMG_DECLARE(blinds35x35)
+LV_IMG_DECLARE(unknown35x35)
 
 // To convert image https://lvgl.io/tools/imageconverter
 const lv_img_dsc_t *Geticon(int type)
@@ -232,7 +234,7 @@ const lv_img_dsc_t *Geticon(int type)
         break;
     }
 
-    return &sensor35x35;
+    return &unknown35x35;
 }
 
 void device_panel_init(lv_obj_t* panel)
@@ -418,8 +420,8 @@ void device_panel_init(lv_obj_t* panel)
         lv_dropdown_set_selected(dd, SelectedDevice.level / 10);
     }
 
-    // Info device 
-    if (SelectedDevice.type == TYPE_WARNING) 
+    // Info and Text device
+    if ((SelectedDevice.type == TYPE_WARNING) ||(SelectedDevice.type == TYPE_TEXT))
     {
         lv_obj_add_flag(cont, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);       //Force new line
         lv_obj_add_flag(cont, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);       //Force new line
@@ -431,7 +433,11 @@ void device_panel_init(lv_obj_t* panel)
         lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP); 
         lv_obj_align(label,  LV_ALIGN_CENTER, 0, 0);
         lv_obj_set_style_text_color(label, color, 0);
+    }
 
+    // Info device 
+    if (SelectedDevice.type == TYPE_WARNING) 
+    {
         lv_obj_t * led  = lv_led_create(GridSmall);
         lv_obj_set_size(led, lv_pct(80), lv_pct(60));
         lv_obj_align(led, LV_ALIGN_CENTER, 0, 0);
@@ -500,8 +506,9 @@ void device_panel_init(lv_obj_t* panel)
         {
             lv_obj_t * chart;
             chart = lv_chart_create(GridBig);
-            lv_obj_set_size(chart, lv_pct(100), lv_pct(100));
-            lv_obj_center(chart);
+            lv_obj_set_size(chart, lv_pct(100)-15, lv_pct(100));
+            //lv_obj_center(chart);
+            lv_obj_align(chart, LV_ALIGN_CENTER, 0, 0);
             lv_chart_set_type(chart, LV_CHART_TYPE_LINE);   /*Show lines and points too*/
 
             lv_chart_set_range(chart, LV_CHART_AXIS_PRIMARY_Y, min , max );
@@ -509,6 +516,10 @@ void device_panel_init(lv_obj_t* panel)
             lv_chart_set_point_count(chart, 24);
 
             lv_chart_series_t * ser1 = lv_chart_add_series(chart, lv_palette_main(LV_PALETTE_GREEN), LV_CHART_AXIS_PRIMARY_Y);
+
+            // Make a scale
+            lv_chart_set_axis_tick(chart, LV_CHART_AXIS_PRIMARY_Y, 3, 2, 3, 1, true, 25);
+            lv_obj_set_style_text_font(chart, &lv_font_montserrat_10, 0);
 
             Serial.printf("Making chart with Range %d > %d\n",min , max);
 

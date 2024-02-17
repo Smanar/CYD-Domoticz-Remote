@@ -30,7 +30,7 @@ void RefreshHomePage(void)
 
 void ReturnPreviouspage(void)
 {
-    Serial.printf("Display LV page: %d\n", ActiveLV);
+    //Serial.printf("Display LV page: %d\n", ActiveLV);
     navigation_screen(ActiveLV);
 }
 

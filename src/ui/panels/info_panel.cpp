@@ -25,7 +25,12 @@ static void TV_btn_event_handler(lv_event_t * e) {
 
     JsonArray JS;
     char buff[256] = {};
+
+#ifdef OLD_DOMOTICZ
+    snprintf(buff, 256, "/json.htm?type=devices&filter=%s&used=true&order=Name",lv_label_get_text(label));
+#else
     snprintf(buff, 256, "/json.htm?type=command&param=getdevices&filter=%s&used=true&order=Name",lv_label_get_text(label));
+#endif
 
     if (!HTTPGETRequestWithReturn(buff, &JS, true)) return;
     
