@@ -15,12 +15,14 @@ enum {
     TYPE_PLUG,
     TYPE_HUMIDITY,
     TYPE_CONSUMPTION,
+    TYPE_POWER,
     TYPE_LIGHT,
     TYPE_DIMMER,
     TYPE_BLINDS,
     TYPE_LUX,
     TYPE_SETPOINT,
-    TYPE_TEXT
+    TYPE_TEXT,
+    TYPE_PUSH
 };
 
 typedef struct _Device {

@@ -9,7 +9,6 @@
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 
-LV_FONT_DECLARE(Montserrat_Bold_14)
 
 static lv_obj_t * slider_label;
 
@@ -90,31 +89,17 @@ static void switch_event_handler(lv_event_t * e)
     }
 }
 
-static void Blinds_btn_event_handler(lv_event_t * e)
+static void btn_event_handler(lv_event_t * e)
 {
     lv_event_code_t code = lv_event_get_code(e);
-    //lv_obj_t * obj = lv_event_get_target(e);
-    int b = (int)lv_event_get_user_data(e);
+    char * s = (char *)lv_event_get_user_data(e);
 
-    if(code == LV_EVENT_CLICKED)
-    {
+    if (code == LV_EVENT_CLICKED) {
         char buff[256] = {};
-        if (b == 1)
-        {
-            lv_snprintf(buff, 256, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=Open", SelectedDevice.idx);
-        }
-        else if (b == 2)
-        {
-            lv_snprintf(buff, 256, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=Stop", SelectedDevice.idx);
-        }
-        else
-        {
-            lv_snprintf(buff, 256, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=Close", SelectedDevice.idx);
-        }
+        lv_snprintf(buff, 256, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=%s", SelectedDevice.idx, s);
         HTTPGETRequest(buff);
     }
 }
-
 
 static void dd_event_handler(lv_event_t * e)
 {
@@ -206,6 +191,7 @@ const lv_img_dsc_t *Geticon(int type)
             return &humidity35x35;
         break;
         case TYPE_CONSUMPTION:
+        case TYPE_POWER:
             return &power35x35;
         break;
         case TYPE_WARNING:
@@ -221,6 +207,7 @@ const lv_img_dsc_t *Geticon(int type)
         case TYPE_SWITCH:
         case TYPE_COLOR:
         case TYPE_LIGHT:
+        case TYPE_PUSH:
             return &lampe35x35; 
         case TYPE_BLINDS:
             return &blinds35x35; 
@@ -250,7 +237,11 @@ void device_panel_init(lv_obj_t* panel)
     /*Create a container with grid*/
     lv_obj_t * cont = lv_obj_create(panel);
     lv_obj_set_grid_dsc_array(cont, col_dsc, row_dsc);
+#if TOTAL_ICONX == 3
     lv_obj_set_size(cont, lv_pct(90), lv_pct(90));
+#else
+    lv_obj_set_size(cont, lv_pct(80), lv_pct(80));
+#endif
     //lv_obj_set_size(cont, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
     lv_obj_center(cont);
 
@@ -294,7 +285,7 @@ void device_panel_init(lv_obj_t* panel)
     // Icon
     lv_obj_t *img = lv_img_create(GridTop);
     lv_img_set_src(img, icon);
-    lv_obj_align(img, LV_ALIGN_LEFT_MID , 0, 0);
+    //lv_obj_align(img, LV_ALIGN_LEFT_MID , 0, 0);
     //lv_obj_set_size(img, Size_icon, Size_icon);
     lv_obj_set_style_img_recolor_opa(img, 50, 0);
     lv_obj_set_style_img_recolor(img, color, 0);
@@ -302,7 +293,7 @@ void device_panel_init(lv_obj_t* panel)
     label = lv_label_create(GridTop);
     lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP); 
     lv_label_set_text(label, SelectedDevice.name);
-    lv_obj_align(label, LV_ALIGN_RIGHT_MID, 0, 0);
+    //lv_obj_align(label, LV_ALIGN_RIGHT_MID, 0, 0);
     lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_size(label, TFT_WIDTH - 50, 30);
     lv_obj_align_to(label, img,  LV_ALIGN_OUT_RIGHT_MID, 0, 0);
@@ -322,6 +313,26 @@ void device_panel_init(lv_obj_t* panel)
 
     }
 
+    //Create a push switch
+    if (SelectedDevice.type == TYPE_PUSH)
+    {
+        lv_obj_t * sw = lv_btn_create(GridBig);
+        lv_obj_set_size(sw, LV_PCT(80), LV_PCT(50));
+        label = lv_label_create(sw);
+        if (strcmp(SelectedDevice.data, "On") == 0)
+        {
+            lv_label_set_text_static(label, "ON");
+            lv_obj_add_event_cb(sw, btn_event_handler, LV_EVENT_ALL,(void *)"On");
+        }
+        else
+        {
+            lv_label_set_text_static(label, "OFF");
+            lv_obj_add_event_cb(sw, btn_event_handler, LV_EVENT_ALL,(void *)"Off");
+        }
+        lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
+        //lv_obj_set_pos(obj, 0, 0);
+    }
+
     //Create blinds buttons
     if (SelectedDevice.type == TYPE_BLINDS)
     {
@@ -331,21 +342,29 @@ void device_panel_init(lv_obj_t* panel)
         lv_label_set_text_static(label, LV_SYMBOL_UP);
         lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
         lv_obj_set_pos(obj, 0, 0);
-        lv_obj_add_event_cb(obj, Blinds_btn_event_handler, LV_EVENT_CLICKED, (void *)1);
+#ifdef OLD_DOMOTICZ
+        lv_obj_add_event_cb(obj, btn_event_handler, LV_EVENT_CLICKED, (char *)"On");
+#else
+        lv_obj_add_event_cb(obj, btn_event_handler, LV_EVENT_CLICKED, (char *)"Open");
+#endif
         obj= lv_btn_create(GridSmall);
         lv_obj_set_size(obj, LV_PCT(100), LV_PCT(30));
         label = lv_label_create(obj);
         lv_label_set_text_static(label, LV_SYMBOL_STOP);
         lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
         lv_obj_set_pos(obj, 0, LV_PCT(33));
-        lv_obj_add_event_cb(obj, Blinds_btn_event_handler, LV_EVENT_CLICKED, (void *)2);
+        lv_obj_add_event_cb(obj, btn_event_handler, LV_EVENT_CLICKED, (char *)"Stop");
         obj= lv_btn_create(GridSmall);
         lv_obj_set_size(obj, LV_PCT(100), LV_PCT(30));
         label = lv_label_create(obj);
         lv_label_set_text_static(label, LV_SYMBOL_DOWN);
         lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
         lv_obj_set_pos(obj, 0, LV_PCT(66));
-        lv_obj_add_event_cb(obj, Blinds_btn_event_handler, LV_EVENT_CLICKED, (void *)3);
+#ifdef OLD_DOMOTICZ
+        lv_obj_add_event_cb(obj, btn_event_handler, LV_EVENT_CLICKED, (char *)"Off");
+#else
+        lv_obj_add_event_cb(obj, btn_event_handler, LV_EVENT_CLICKED, (char *)"Close");
+#endif
     }
 
     //Create a LED
@@ -428,7 +447,7 @@ void device_panel_init(lv_obj_t* panel)
 
         //Display Text
         label = lv_label_create(GridBig);
-        lv_obj_set_style_text_font(label, &Montserrat_Bold_14, 0);
+        lv_obj_set_style_text_font(label, &font1, 0);
         lv_label_set_text(label, SelectedDevice.data);
         lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP); 
         lv_obj_align(label,  LV_ALIGN_CENTER, 0, 0);
@@ -467,9 +486,9 @@ void device_panel_init(lv_obj_t* panel)
     if (SelectedDevice.type == TYPE_SETPOINT)
     {
         lv_obj_t * slider = lv_slider_create(GridBig);
-        lv_slider_set_value(slider, atof(SelectedDevice.data) *10, LV_ANIM_ON);
         lv_obj_set_width(slider, lv_pct(80));
         lv_slider_set_range(slider, 0, 400);
+        lv_slider_set_value(slider, atof(SelectedDevice.data) *10, LV_ANIM_ON);
         lv_obj_center(slider);
         lv_obj_add_event_cb(slider, slider_event_cb2, LV_EVENT_VALUE_CHANGED, NULL);
         
@@ -479,18 +498,18 @@ void device_panel_init(lv_obj_t* panel)
 
         /*Create a label below the slider*/
         slider_label = lv_label_create(lv_scr_act());
-        lv_label_set_text_fmt(slider_label, "%.1f",atof(SelectedDevice.data)/10.f);
+        lv_label_set_text_fmt(slider_label, "%.1f",atof(SelectedDevice.data)/1.f);
         lv_obj_align_to(slider_label, slider, LV_ALIGN_OUT_RIGHT_MID, 10, 0);
     }
 
     // Other sensors
     if ((SelectedDevice.type == TYPE_TEMPERATURE) || (SelectedDevice.type == TYPE_VALUE_SENSOR)
-    || (SelectedDevice.type == TYPE_HUMIDITY) || (SelectedDevice.type == TYPE_CONSUMPTION)
+    || (SelectedDevice.type == TYPE_HUMIDITY) || (SelectedDevice.type == TYPE_CONSUMPTION) || (SelectedDevice.type == TYPE_POWER)
     || (SelectedDevice.type == TYPE_LUX) || (SelectedDevice.type == TYPE_PERCENT_SENSOR))
     {
 
         label = lv_label_create(GridSmall);
-        lv_obj_set_style_text_font(label, &Montserrat_Bold_14, 0);
+        lv_obj_set_style_text_font(label, &font1, 0);
         lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP);
         lv_obj_set_size(label, lv_pct(100), lv_pct(100));
         lv_label_set_text(label, SelectedDevice.data);
@@ -519,7 +538,7 @@ void device_panel_init(lv_obj_t* panel)
 
             // Make a scale
             lv_chart_set_axis_tick(chart, LV_CHART_AXIS_PRIMARY_Y, 3, 2, 3, 1, true, 25);
-            lv_obj_set_style_text_font(chart, &lv_font_montserrat_10, 0);
+            lv_obj_set_style_text_font(chart, &font2, 0);
 
             Serial.printf("Making chart with Range %d > %d\n",min , max);
 

@@ -37,7 +37,7 @@ void setup() {
         global_config.wifiConfigured = true;
         global_config.ipConfigured = true;
 
-        const static int t[] = {37, 81, 16, 36, 28, 35, 57, 3, 45};
+        const static int t[] = {37, 81, 16, 36, 28, 35, 57, 92, 45};
         for (int i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++)
             global_config.ListDevices[i] = t[i];
         WriteGlobalConfig();

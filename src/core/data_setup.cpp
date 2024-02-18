@@ -126,6 +126,7 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
             url = url + "temp";
             break;
         case TYPE_CONSUMPTION:
+        case TYPE_POWER:
         case TYPE_LUX:
             url = url + "counter";
             break;
@@ -157,6 +158,7 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
                 if (type == TYPE_TEMPERATURE) v = i["te"];
                 if (type == TYPE_HUMIDITY) v = i["hu"];
                 if (type == TYPE_CONSUMPTION) v = i["u"];
+                if (type == TYPE_POWER) v = i["u"];
                 if (type == TYPE_PERCENT_SENSOR) v = i["v"];
 
                 // Because of decimal values
@@ -265,9 +267,13 @@ bool HttpInitDevice(Device *d, int id)
                 {
                     d->type = TYPE_DIMMER;
                 }
-                else if ((strcmp(switchtype,"On/Off") == 0) || (strcmp(switchtype,"Push On Button") == 0) || (strcmp(switchtype,"Push Off Button") == 0))
+                else if (strcmp(switchtype,"On/Off") == 0)
                 {
                     d->type = TYPE_LIGHT;
+                }
+                else if ((strcmp(switchtype,"Push On Button") == 0) || (strcmp(switchtype,"Push Off Button") == 0))
+                {
+                    d->type = TYPE_PUSH;
                 }
                 else if ((strcmp(switchtype,"Venetian Blinds EU") == 0) || (strcmp(switchtype,"Venetian Blinds US") == 0) || (strcmp(switchtype,"Blinds Percentage") == 0))
                 {
@@ -293,7 +299,11 @@ bool HttpInitDevice(Device *d, int id)
         {
             d->type = TYPE_HUMIDITY;
         }
-        else if ((strcmp(type, "Usage") == 0) || (strcmp(type, "P1 Smart Meter") == 0))
+        else if (strcmp(type, "Usage") == 0)
+        {
+            d->type = TYPE_POWER;
+        }
+        else if (strcmp(type, "P1 Smart Meter") == 0)
         {
             d->type = TYPE_CONSUMPTION;
         }
@@ -304,6 +314,7 @@ bool HttpInitDevice(Device *d, int id)
             if (strcmp(subtype,"Alert") == 0) d->type = TYPE_WARNING;
             else if (strcmp(subtype,"Percentage") == 0) d->type = TYPE_PERCENT_SENSOR;
             else if (strcmp(subtype,"Text") == 0) d->type = TYPE_TEXT;
+            else if (strcmp(subtype,"kWh") == 0) d->type = TYPE_CONSUMPTION;
         }
         else if (strcmp(type, "Lux") == 0)
         {

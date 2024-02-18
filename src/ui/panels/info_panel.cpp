@@ -157,7 +157,7 @@ void info_panel_init(lv_obj_t* panel)
 
     table = lv_table_create(cont);
 
-    lv_obj_set_style_text_font(table, &lv_font_montserrat_12, 0);
+    lv_obj_set_style_text_font(table, &font3, 0);
     lv_obj_set_style_pad_all(table, 1, LV_PART_ITEMS);
     lv_obj_set_style_border_width(table, 1, LV_PART_ITEMS);
     lv_table_set_col_width(table, 1, TFT_WIDTH / 3+25);
