@@ -343,7 +343,7 @@ void device_panel_init(lv_obj_t* panel)
         lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
         lv_obj_set_pos(obj, 0, 0);
 #ifdef OLD_DOMOTICZ
-        lv_obj_add_event_cb(obj, btn_event_handler, LV_EVENT_CLICKED, (char *)"On");
+        lv_obj_add_event_cb(obj, btn_event_handler, LV_EVENT_CLICKED, (char *)"Off");
 #else
         lv_obj_add_event_cb(obj, btn_event_handler, LV_EVENT_CLICKED, (char *)"Open");
 #endif
@@ -361,7 +361,7 @@ void device_panel_init(lv_obj_t* panel)
         lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
         lv_obj_set_pos(obj, 0, LV_PCT(66));
 #ifdef OLD_DOMOTICZ
-        lv_obj_add_event_cb(obj, btn_event_handler, LV_EVENT_CLICKED, (char *)"Off");
+        lv_obj_add_event_cb(obj, btn_event_handler, LV_EVENT_CLICKED, (char *)"On");
 #else
         lv_obj_add_event_cb(obj, btn_event_handler, LV_EVENT_CLICKED, (char *)"Close");
 #endif

@@ -72,6 +72,7 @@ bool HTTPGETRequestWithReturn(const char * url2, JsonArray *JS, bool NeedFilter)
         if (err)
         {
             Serial.println("Can't deserializeJson JSON\n");
+            Serial.println(err.c_str());
             return false;
         }
 

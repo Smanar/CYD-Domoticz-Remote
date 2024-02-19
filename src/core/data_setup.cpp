@@ -144,14 +144,22 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
     {
         if (!JS) return nullptr;
 
-        double v;
+        double v; // value
+        int hour;
+        const char * c = NULL;
 
         // Value are not constant so can be evry 15 mn or 20 mn
         int s = JS.size();
 
         int j = 0;
         for (auto i : JS)
+        //for(auto i = JS.end(); i != JS.begin(); --i)
         {
+            //"d" : "2024-02-16 19:45",
+            c = i["d"];
+            sscanf(c+11, "%2d", &hour);
+            Serial.println(hour);
+
             //ATM we are using only the 24 last value every 4 values
             if ((s < 4 * 26) && (s % 4 == 0) && (j < 24))
             {
@@ -320,7 +328,7 @@ bool HttpInitDevice(Device *d, int id)
         {
             d->type = TYPE_LUX;
         }
-        else if (strcmp(type, "Setpoint") == 0)
+        else if ((strcmp(type, "Setpoint") == 0) || (strcmp(type, "Thermostat") == 0))
         {
             d->type = TYPE_SETPOINT;
         }

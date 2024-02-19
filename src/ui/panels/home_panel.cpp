@@ -66,8 +66,12 @@ static void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int 
     //lv_label_set_recolor(label2, true);                           /*Activate coloring*/
     lv_label_set_text(label2, desc);                                /*Set the labels text*/
     //lv_obj_center(label2);
-    lv_obj_set_size(label2, Size_w-10, 30);
-    lv_obj_align_to(label2, img,  LV_ALIGN_OUT_BOTTOM_MID, 0, 5);
+    lv_obj_set_size(label2, Size_w-10, 30); 
+#if TOTAL_ICONX == 3
+    lv_obj_align_to(label2, img,  LV_ALIGN_OUT_BOTTOM_MID, 0, 5);                        // Need to use absolute position
+#else
+    lv_obj_align_to(label2, img,  LV_ALIGN_OUT_BOTTOM_MID, 0, 20);                         // Need to use absolute position
+#endif
 
 }
 
@@ -99,7 +103,11 @@ static void Widget_sensor(lv_obj_t* panel, char* desc, char* value, int x, int y
     lv_obj_t * label = lv_label_create(Button_icon);
     lv_obj_set_style_text_font(label, &font1, 0);
     lv_label_set_text(label, value);
-    lv_obj_align_to(label, img,  LV_ALIGN_OUT_RIGHT_MID, 0, 0);
+#if TOTAL_ICONX == 3
+    lv_obj_align_to(label, img,  LV_ALIGN_OUT_RIGHT_MID, 0, 0); //Need to use absolute method
+#else
+    lv_obj_align_to(label, img,  LV_ALIGN_OUT_RIGHT_MID, 20, 0); //Need to use absolute method
+#endif
     lv_obj_set_style_text_color(label, color, 0);
 
     /*Create description*/
