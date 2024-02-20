@@ -10,7 +10,8 @@
 #include <ArduinoJson.h>
 
 
-static lv_obj_t * slider_label;
+static lv_obj_t * slider_label; // Label for slider
+static lv_obj_t * slider_TH; // Slider for thermostat
 
 extern Device myDevices[]; // For home page
 Device SelectedDevice; // The selected one
@@ -59,21 +60,33 @@ static void slider_event_cb(lv_event_t * e)
     }
 }
 
-static void slider_event_cb2(lv_event_t * e)
+static void TH_btn_event_handler(lv_event_t * e)
 {
-    lv_obj_t * slider = lv_event_get_target(e);
-    lv_event_code_t code = lv_event_get_code(e);
+
+    int b = (int)lv_event_get_user_data(e);
+    int v = lv_slider_get_value(slider_TH);
+
+    switch (b)
+    {
+        case 1:
+            v+=1;
+            lv_slider_set_value(slider_TH, v, LV_ANIM_ON);
+        break;
+        case 2:
+            v-=1;
+            lv_slider_set_value(slider_TH, v, LV_ANIM_ON);
+        break;
+        case 3:
+            char buff[256] = {};
+            lv_snprintf(buff, 256, "/json.htm?type=command&param=setsetpoint&idx=%d&setpoint=%.1f", SelectedDevice.idx, v/10.f);
+            HTTPGETRequest(buff);
+        break;
+    }
 
     if (slider_label)
     {
-        lv_label_set_text_fmt(slider_label, "%.1f",(float)(lv_slider_get_value(slider)/10.f));
-        lv_obj_align_to(slider_label, slider, LV_ALIGN_OUT_RIGHT_MID, 10, 0);
-    }
-
-    if (code == LV_EVENT_VALUE_CHANGED) {
-        char buff[256] = {};
-        lv_snprintf(buff, 256, "/json.htm?type=command&param=setsetpoint&idx=%d&setpoint=%.1f", SelectedDevice.idx, lv_slider_get_value(slider)/10.f);
-        HTTPGETRequest(buff);
+        lv_label_set_text_fmt(slider_label, "%.1f",(float)(v/10.f));
+        lv_obj_align_to(slider_label, slider_TH, LV_ALIGN_OUT_RIGHT_MID, 10, 0);
     }
 }
 
@@ -485,21 +498,44 @@ void device_panel_init(lv_obj_t* panel)
     //Thermostat setpoint
     if (SelectedDevice.type == TYPE_SETPOINT)
     {
-        lv_obj_t * slider = lv_slider_create(GridBig);
-        lv_obj_set_width(slider, lv_pct(80));
-        lv_slider_set_range(slider, 0, 400);
-        lv_slider_set_value(slider, atof(SelectedDevice.data) *10, LV_ANIM_ON);
-        lv_obj_center(slider);
-        lv_obj_add_event_cb(slider, slider_event_cb2, LV_EVENT_VALUE_CHANGED, NULL);
+        slider_TH = lv_slider_create(GridBig);
+        lv_obj_set_width(slider_TH, lv_pct(80));
+        lv_slider_set_range(slider_TH, 0, 400);
+        lv_slider_set_value(slider_TH, atof(SelectedDevice.data) *10, LV_ANIM_ON);
+        lv_obj_center(slider_TH);
         
-        //lv_obj_set_style_bg_color(slider, lv_color_hex(0x569af8), LV_PART_INDICATOR);
-        //lv_obj_set_style_bg_color(slider, lv_color_hex(0xff0000), LV_PART_INDICATOR | LV_STATE_PRESSED);
-        lv_obj_remove_style(slider, NULL, LV_PART_INDICATOR);
+        //lv_obj_set_style_bg_color(slider_TH, lv_color_hex(0x569af8), LV_PART_INDICATOR);
+        //lv_obj_set_style_bg_color(slider_TH, lv_color_hex(0xff0000), LV_PART_INDICATOR | LV_STATE_PRESSED);
+        lv_obj_remove_style(slider_TH, NULL, LV_PART_INDICATOR);
 
         /*Create a label below the slider*/
         slider_label = lv_label_create(lv_scr_act());
         lv_label_set_text_fmt(slider_label, "%.1f",atof(SelectedDevice.data)/1.f);
-        lv_obj_align_to(slider_label, slider, LV_ALIGN_OUT_RIGHT_MID, 10, 0);
+        lv_obj_align_to(slider_label, slider_TH, LV_ALIGN_OUT_RIGHT_MID, 10, 0);
+
+        // And somes buttons
+        lv_obj_t * obj= lv_btn_create(GridSmall);
+        lv_obj_set_size(obj, LV_PCT(100), LV_PCT(30));
+        label = lv_label_create(obj);
+        lv_label_set_text_static(label, "+");
+        lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
+        lv_obj_set_pos(obj, 0, 0);
+        lv_obj_add_event_cb(obj, TH_btn_event_handler, LV_EVENT_CLICKED, (void *)1);
+        obj= lv_btn_create(GridSmall);
+        lv_obj_set_size(obj, LV_PCT(100), LV_PCT(30));
+        label = lv_label_create(obj);
+        lv_label_set_text_static(label, "-");
+        lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
+        lv_obj_set_pos(obj, 0, LV_PCT(33));
+        lv_obj_add_event_cb(obj, TH_btn_event_handler, LV_EVENT_CLICKED, (void *)2);
+        obj= lv_btn_create(GridSmall);
+        lv_obj_set_size(obj, LV_PCT(100), LV_PCT(30));
+        label = lv_label_create(obj);
+        lv_label_set_text_static(label, "Set");
+        lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
+        lv_obj_set_pos(obj, 0, LV_PCT(66));
+        lv_obj_add_event_cb(obj, TH_btn_event_handler, LV_EVENT_CLICKED, (char *)3);
+
     }
 
     // Other sensors

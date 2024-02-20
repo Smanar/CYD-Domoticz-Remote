@@ -21,6 +21,28 @@ static void event_handler(lv_event_t * e){
     }
 }
 
+static void scr_event_cb(lv_event_t * e)
+{
+    int p = GetActivePanel();
+
+    if (p < 3)
+    {
+
+        lv_dir_t dir = lv_indev_get_gesture_dir(lv_indev_get_act());
+        if (dir == LV_DIR_LEFT) p +=1;
+        if (dir == LV_DIR_RIGHT) p -=1;
+
+        if (p < 0) p = 0;
+        if (p > 2) p = 2;
+
+        lv_indev_wait_release(lv_indev_get_act());
+
+        //Serial.printf("Dir: %d\n", dir);
+        
+        navigation_screen(p);
+    }
+}
+
 void setup() {
     Serial.begin(115200);
     Serial.println("Starting application");
@@ -66,6 +88,10 @@ digitalWrite(RGB_LED_B, true);
     Init_Info_Style();
     
     main_ui_setup();
+
+    //Set base display
+    lv_obj_add_event_cb(lv_scr_act(), scr_event_cb , LV_EVENT_GESTURE , NULL);
+    lv_obj_clear_flag(lv_scr_act(), LV_OBJ_FLAG_SCROLLABLE);
 
     //Start on Home panel
     navigation_screen(1);

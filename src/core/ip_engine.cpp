@@ -20,6 +20,8 @@ bool HTTPGETRequest(char * url2)
     return HTTPGETRequestWithReturn(url2,NULL);
 }
 
+// To check https://arduinojson.org/v6/how-to/use-arduinojson-with-httpclient/#how-to-parse-a-json-document-from-an-http-response
+// DeserializationError::EmptyInput
 bool HTTPGETRequestWithReturn(const char * url2, JsonArray *JS, bool NeedFilter)
 {
     HTTPClient client;
@@ -71,8 +73,8 @@ bool HTTPGETRequestWithReturn(const char * url2, JsonArray *JS, bool NeedFilter)
 
         if (err)
         {
-            Serial.println("Can't deserializeJson JSON\n");
-            Serial.println(err.c_str());
+            Serial.printf("Can't deserializeJson JSON : %s\n",err.c_str());
+            Serial.printf("content Length : %d\n", client.getSize());
             return false;
         }
 
