@@ -151,33 +151,51 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
         // Value are not constant so can be evry 15 mn or 20 mn
         int s = JS.size();
 
-        int j = 0;
+        int j,k = 0;
+        int actualhour = 0;
+        int diff = 0;
+
+        //Just need to memorise the last 24 values
+
         for (auto i : JS)
-        //for(auto i = JS.end(); i != JS.begin(); --i)
         {
             //"d" : "2024-02-16 19:45",
             c = i["d"];
             sscanf(c+11, "%2d", &hour);
-            Serial.println(hour);
 
-            //ATM we are using only the 24 last value every 4 values
-            if ((s < 4 * 26) && (s % 4 == 0) && (j < 24))
+            if (hour>23) hour = 23;
+        
+            //How many value different 
+            if (hour >= actualhour) diff = hour - actualhour;
+            else diff = hour - actualhour + 24;
+
+            //if already value set for this hour, skip
+            if (diff == 0) continue;
+
+            actualhour = hour;
+
+            if (type == TYPE_TEMPERATURE) v = i["te"];
+            if (type == TYPE_HUMIDITY) v = i["hu"];
+            if (type == TYPE_CONSUMPTION) v = i["u"];
+            if (type == TYPE_POWER) v = i["u"];
+            if (type == TYPE_PERCENT_SENSOR) v = i["v"];
+
+            // Because of decimal values
+            if (type == TYPE_TEMPERATURE) v = v *10;
+
+            if (v > *max) *max = v;
+            if (v < *min) *min = v;
+
+            //swift the table
+            for (j = 0; j < diff; j++)
             {
-                if (type == TYPE_TEMPERATURE) v = i["te"];
-                if (type == TYPE_HUMIDITY) v = i["hu"];
-                if (type == TYPE_CONSUMPTION) v = i["u"];
-                if (type == TYPE_POWER) v = i["u"];
-                if (type == TYPE_PERCENT_SENSOR) v = i["v"];
-
-                // Because of decimal values
-                if (type == TYPE_TEMPERATURE) v = v *10;
-
-                if (v > *max) *max = v;
-                if (v < *min) *min = v;
-                a[j] = int(v);
-                j += 1;
+                for (k = 0; k < 23; k++)
+                {
+                    a[k] = a[k+1];
+                }
+                a[23] = v;
             }
-            s -= 1;
+
         }
 
         v = (*max - *min) / 10;

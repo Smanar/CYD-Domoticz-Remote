@@ -113,11 +113,6 @@ static void draw_part_event_cb(lv_event_t * e)
 
 void info_panel_init(lv_obj_t* panel)
 {
-    //lv_obj_set_size(panel, TFT_HEIGHT, TFT_WIDTH);
-    //lv_obj_align(panel, LV_ALIGN_TOP_RIGHT, 0, 0);
-    //lv_obj_set_style_border_width(panel, 0, 0);
-    lv_obj_set_style_bg_opa(panel, LV_OPA_TRANSP, 0);
-    lv_obj_set_style_pad_all(panel, 0, 0);
 
     //container
     lv_obj_t * cont = lv_obj_create(panel);

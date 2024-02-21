@@ -50,7 +50,6 @@ static void slider_event_cb(lv_event_t * e)
     if (slider_label)
     {
         lv_label_set_text_fmt(slider_label, "%d%%",(int)lv_slider_get_value(slider));
-        lv_obj_align_to(slider_label, slider, LV_ALIGN_OUT_RIGHT_MID, 10, 0);
     }
 
     if (code == LV_EVENT_VALUE_CHANGED) {
@@ -86,7 +85,6 @@ static void TH_btn_event_handler(lv_event_t * e)
     if (slider_label)
     {
         lv_label_set_text_fmt(slider_label, "%.1f",(float)(v/10.f));
-        lv_obj_align_to(slider_label, slider_TH, LV_ALIGN_OUT_RIGHT_MID, 10, 0);
     }
 }
 
@@ -294,6 +292,7 @@ void device_panel_init(lv_obj_t* panel)
     lv_obj_set_grid_cell(GridExit, LV_GRID_ALIGN_STRETCH, 2, 1, LV_GRID_ALIGN_STRETCH, 2, 1);
     lv_obj_set_style_bg_color(GridExit, lv_palette_darken(LV_PALETTE_GREY, 4),0);
     lv_obj_set_style_border_width(GridExit, 0, 0);
+    lv_obj_set_style_pad_all(GridExit, 0, 0);
 
     // Icon
     lv_obj_t *img = lv_img_create(GridTop);
@@ -330,7 +329,8 @@ void device_panel_init(lv_obj_t* panel)
     if (SelectedDevice.type == TYPE_PUSH)
     {
         lv_obj_t * sw = lv_btn_create(GridBig);
-        lv_obj_set_size(sw, LV_PCT(80), LV_PCT(50));
+        lv_obj_set_size(sw, LV_PCT(60), LV_PCT(50));
+        lv_obj_align(sw, LV_ALIGN_CENTER, 0, 0);
         label = lv_label_create(sw);
         if (strcmp(SelectedDevice.data, "On") == 0)
         {
@@ -511,7 +511,7 @@ void device_panel_init(lv_obj_t* panel)
         /*Create a label below the slider*/
         slider_label = lv_label_create(lv_scr_act());
         lv_label_set_text_fmt(slider_label, "%.1f",atof(SelectedDevice.data)/1.f);
-        lv_obj_align_to(slider_label, slider_TH, LV_ALIGN_OUT_RIGHT_MID, 10, 0);
+        lv_obj_align_to(slider_label, slider_TH, LV_ALIGN_OUT_BOTTOM_MID, 0, 15);
 
         // And somes buttons
         lv_obj_t * obj= lv_btn_create(GridSmall);
@@ -582,7 +582,7 @@ void device_panel_init(lv_obj_t* panel)
             for (i = 0; i < 24; i++)
             {
                 lv_chart_set_next_value(chart, ser1, pTab[i]);
-                //Serial.printf("Using values %d", pTab[i] );
+                //Serial.printf("Using values %d\n", pTab[i] );
             }
 
             lv_chart_refresh(chart); /*Required after direct set*/
@@ -595,14 +595,14 @@ void device_panel_init(lv_obj_t* panel)
 
     }
 
-
     // Back button
     lv_obj_t * returnBtn = lv_btn_create(GridExit);
+    lv_obj_set_size(returnBtn, LV_PCT(80)  , LV_PCT(80) );
+    lv_obj_set_style_bg_color(returnBtn, lv_palette_darken(LV_PALETTE_RED, 4),0);
+    lv_obj_set_style_border_width(returnBtn, 4, 4);
     lv_obj_add_event_cb(returnBtn, return_btn_event_handler, LV_EVENT_ALL, NULL);
-    lv_obj_align(returnBtn, LV_ALIGN_CENTER, 0, 0);
-    lv_obj_center(returnBtn);
-    //lv_obj_set_y(returnBtn, 200); // No effect
-    //lv_obj_align_to(returnBtn, cont, LV_ALIGN_BOTTOM_MID, -10, -10);
+    lv_obj_align_to(returnBtn, GridExit, LV_ALIGN_BOTTOM_RIGHT, -4, -4);
+    //lv_obj_center(returnBtn);
 
     label = lv_label_create(returnBtn);
     lv_label_set_text_static(label, "Back");

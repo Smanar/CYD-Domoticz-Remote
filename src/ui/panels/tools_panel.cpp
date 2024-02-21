@@ -29,11 +29,6 @@ static void tools_btn_event_handler(lv_event_t * e)
 
 void tools_panel_init(lv_obj_t* panel)
 {
-    //lv_obj_set_size(panel, TFT_HEIGHT, TFT_WIDTH);
-    //lv_obj_align(panel, LV_ALIGN_TOP_RIGHT, 0, 0);
-    //lv_obj_set_style_border_width(panel, 0, 0);
-    lv_obj_set_style_bg_opa(panel, LV_OPA_TRANSP, 0);
-    lv_obj_set_style_pad_all(panel, 0, 0);
 
     //First part
     lv_obj_t * obj;
