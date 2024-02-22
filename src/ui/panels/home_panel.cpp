@@ -148,6 +148,7 @@ void home_panel_init(lv_obj_t* panel)
                 case TYPE_POWER:
                 case TYPE_SWITCH_SENSOR:
                 case TYPE_LUX:
+                case TYPE_METEO:
                 case TYPE_VALUE_SENSOR:
                 case TYPE_SETPOINT:
                 {

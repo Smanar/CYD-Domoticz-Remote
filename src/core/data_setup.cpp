@@ -56,7 +56,6 @@ int Get_ID_Device(int JSonidx)
 
 void Update_data(JsonObject RJson2)
 {
-
     //char buffer[4096];
     //serializeJsonPretty(RJson2, buffer);
     //Serial.println(buffer);
@@ -88,7 +87,15 @@ void Update_data(JsonObject RJson2)
     }
     if (strcmp(JSondata, myDevices[ID].data) != 0)
     {
-        strncpy(myDevices[ID].data, JSondata,20);
+        //Use dynamic array, but only 1 time
+        if (strlen(JSondata) > myDevices[ID].lenData)
+        {
+            if (myDevices[ID].data) free(myDevices[ID].data);
+            myDevices[ID].data = (char*)malloc(strlen(JSondata) + 1);
+            myDevices[ID].lenData = strlen(JSondata);
+        }
+
+        strncpy(myDevices[ID].data, JSondata, myDevices[ID].lenData + 1);
         NeedUpdate = true;
     }
 
@@ -108,17 +115,20 @@ void Update_data(JsonObject RJson2)
 
 }
 
+
+static int tab[24];
 int * GetGraphValue(int type, int idx, int *min, int *max)
 {
 
-	static int a[24];
     *min = 0xFFFF;
     *max = 0;
+
 #ifdef OLD_DOMOTICZ
     String url = "/json.htm?type=graph&sensor=";
 #else
     String url = "/json.htm?type=command&param=graph&sensor=";
 #endif
+
     switch (type)
     {
         case TYPE_TEMPERATURE:
@@ -191,9 +201,9 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
             {
                 for (k = 0; k < 23; k++)
                 {
-                    a[k] = a[k+1];
+                    tab[k] = tab[k+1];
                 }
-                a[23] = v;
+                tab[23] = v;
             }
 
         }
@@ -202,7 +212,7 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
         *min = *min - v;
         *max = *max + v;
 
-        return a;
+        return tab;
     }
 
 	return nullptr;
@@ -211,7 +221,6 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
 
 bool HttpInitDevice(Device *d, int id)
 {
-
     JsonArray JS;
 #ifdef OLD_DOMOTICZ
     String url = "/json.htm?type=devices&rid=" + String(id);
@@ -226,10 +235,8 @@ bool HttpInitDevice(Device *d, int id)
     for (auto i : JS)  // Scan the array (only 1)
     {
         if (d->name) free(d->name);
-
-        d->name = (char*)malloc(strlen(i["Name"]) + 1);
-
-        strcpy(d->name, i["Name"]);
+        d->name = (char*)malloc(strlen(i["Name"]) + 1 + 1);
+        strncpy(d->name, i["Name"],strlen(i["Name"]) + 1);
 
         const char* JSondata = NULL;
         const char* type = NULL;
@@ -250,11 +257,21 @@ bool HttpInitDevice(Device *d, int id)
         //do some cleaning
         if (JSondata && strncmp(JSondata, "Humidity ", 9) == 0) JSondata+=9; // <<< Guru Meditation
 
-        strncpy(d->data, JSondata,20);
+        //Use dynamic array, but only 1 time
+        if (strlen(JSondata) > d->lenData)
+        {
+            if (d->data) free(d->data);
+            d->data = (char*)malloc(strlen(JSondata) + 1 + 1); // +1 for null char
+            //Serial.printf("Re-alloc from %d to %d\n", d->lenData, strlen(JSondata));
+            d->lenData = strlen(JSondata);
+           
+        }
+        strncpy(d->data, JSondata, d->lenData + 1);
+        //d->data[d->lenData] = '\0';
 
         if (d->ID) free(d->ID);
-        d->ID = (char*)malloc(strlen(i["ID"]) + 1);
-        strcpy(d->ID, i["ID"]);
+        d->ID = (char*)malloc(strlen(i["ID"]) + 1 + 1);
+        strncpy(d->ID, i["ID"],strlen(i["ID"]) + 1);
 
         d->idx = i["idx"];
         d->level = i["Level"];
@@ -272,7 +289,7 @@ bool HttpInitDevice(Device *d, int id)
                 d->type = TYPE_SELECTOR;
                 const char *base64 = i["LevelNames"];
                 if (d->levelname) free(d->levelname);
-                d->levelname = (char*)malloc(strlen(i["LevelNames"]) + 1);
+                d->levelname = (char*)malloc(strlen(i["LevelNames"]) + 1 + 1);
 
                 unsigned int string_length = decode_base64((const unsigned char*)base64, (unsigned char *)d->levelname);
                 d->levelname[string_length] = '\0';
@@ -324,6 +341,10 @@ bool HttpInitDevice(Device *d, int id)
         else if (strcmp(type, "Humidity") == 0)
         {
             d->type = TYPE_HUMIDITY;
+        }
+        else if (strcmp(type, "Rain") == 0)
+        {
+            d->type = TYPE_METEO;
         }
         else if (strcmp(type, "Usage") == 0)
         {

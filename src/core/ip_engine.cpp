@@ -20,8 +20,8 @@ bool HTTPGETRequest(char * url2)
     return HTTPGETRequestWithReturn(url2,NULL);
 }
 
-// To check https://arduinojson.org/v6/how-to/use-arduinojson-with-httpclient/#how-to-parse-a-json-document-from-an-http-response
-// DeserializationError::EmptyInput
+// IMPORTANT https://arduinojson.org/v6/how-to/use-arduinojson-with-httpclient/#how-to-parse-a-json-document-from-an-http-response
+// prevent issue DeserializationError::EmptyInput
 bool HTTPGETRequestWithReturn(const char * url2, JsonArray *JS, bool NeedFilter)
 {
     HTTPClient client;
@@ -29,6 +29,7 @@ bool HTTPGETRequestWithReturn(const char * url2, JsonArray *JS, bool NeedFilter)
     int httpCode;
     try {
         Serial.println(url);
+        client.useHTTP10(true); // Unfortunately, by using the underlying Stream, we bypass the code that handles chunked transfer encoding, so we must switch to HTTP version 1.0.
         client.setTimeout(500);
         client.begin(url);
         httpCode = client.GET();
@@ -42,7 +43,7 @@ bool HTTPGETRequestWithReturn(const char * url2, JsonArray *JS, bool NeedFilter)
         if (!JS) return true;
 
         //Some security
-        double buffer = 60000;
+        double buffer = 90000;
         if (int(buffer*1.2) > ESP.getMaxAllocHeap())
         {
             //Limited by PSRAM ?
@@ -68,7 +69,8 @@ bool HTTPGETRequestWithReturn(const char * url2, JsonArray *JS, bool NeedFilter)
         }
         else
         {
-            err = deserializeJson(doc, client.getString());
+            //err = deserializeJson(doc, client.getString());
+            err = deserializeJson(doc, client.getStream());
         }
 
         if (err)

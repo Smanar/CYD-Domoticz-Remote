@@ -14,10 +14,11 @@ static lv_obj_t * slider_label; // Label for slider
 static lv_obj_t * slider_TH; // Slider for thermostat
 
 extern Device myDevices[]; // For home page
-Device SelectedDevice; // The selected one
-extern lv_style_t style_shadow;
+//static Device SelectedDevice; // The selected one
+static Device SpecialDevice; // structure for an actual one that is not on HP
+static Device *SelectedDevice; // The selected one
 
-int* pTab; // Pointer to graph value
+extern lv_style_t style_shadow;
 
 static void return_btn_event_handler(lv_event_t * e) {
     lv_event_code_t code = lv_event_get_code(e);
@@ -37,7 +38,7 @@ static void colorwheel_event_cb(lv_event_t * e)
 
         char buff[256] = {};
         snprintf(buff, 256, "/json.htm?type=command&param=setcolbrightnessvalue&idx=%d&color={\"m\":3,\"t\":0,\"r\":%d,\"g\":%d,\"b\":%d,\"cw\":0,\"ww\":0}&brightness=%d",
-                        SelectedDevice.idx, c.ch.red, c.ch.green, c.ch.blue, SelectedDevice.level);
+                        SelectedDevice->idx, c.ch.red, c.ch.green, c.ch.blue, SelectedDevice->level);
         HTTPGETRequest(buff);
     }
 }
@@ -54,7 +55,7 @@ static void slider_event_cb(lv_event_t * e)
 
     if (code == LV_EVENT_VALUE_CHANGED) {
         char buff[256] = {};
-        lv_snprintf(buff, 256, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=Set%%20Level&level=%d", SelectedDevice.idx, (int)lv_slider_get_value(slider));
+        lv_snprintf(buff, 256, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=Set%%20Level&level=%d", SelectedDevice->idx, (int)lv_slider_get_value(slider));
         HTTPGETRequest(buff);
     }
 }
@@ -77,7 +78,7 @@ static void TH_btn_event_handler(lv_event_t * e)
         break;
         case 3:
             char buff[256] = {};
-            lv_snprintf(buff, 256, "/json.htm?type=command&param=setsetpoint&idx=%d&setpoint=%.1f", SelectedDevice.idx, v/10.f);
+            lv_snprintf(buff, 256, "/json.htm?type=command&param=setsetpoint&idx=%d&setpoint=%.1f", SelectedDevice->idx, v/10.f);
             HTTPGETRequest(buff);
         break;
     }
@@ -95,7 +96,7 @@ static void switch_event_handler(lv_event_t * e)
 
     if (code == LV_EVENT_VALUE_CHANGED) {
         char buff[256] = {};
-        lv_snprintf(buff, 256, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=%s", SelectedDevice.idx, lv_obj_has_state(obj, LV_STATE_CHECKED) ? "On" : "Off");
+        lv_snprintf(buff, 256, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=%s", SelectedDevice->idx, lv_obj_has_state(obj, LV_STATE_CHECKED) ? "On" : "Off");
         HTTPGETRequest(buff);
     }
 }
@@ -107,7 +108,7 @@ static void btn_event_handler(lv_event_t * e)
 
     if (code == LV_EVENT_CLICKED) {
         char buff[256] = {};
-        lv_snprintf(buff, 256, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=%s", SelectedDevice.idx, s);
+        lv_snprintf(buff, 256, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=%s", SelectedDevice->idx, s);
         HTTPGETRequest(buff);
     }
 }
@@ -123,7 +124,7 @@ static void dd_event_handler(lv_event_t * e)
         int index = lv_dropdown_get_selected(obj);
 
         char buff[256] = {};
-        lv_snprintf(buff, 256, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=Set%%20Level&level=%d", SelectedDevice.idx, index * 10);
+        lv_snprintf(buff, 256, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=Set%%20Level&level=%d", SelectedDevice->idx, index * 10);
         HTTPGETRequest(buff);
     }
 }
@@ -131,15 +132,15 @@ static void dd_event_handler(lv_event_t * e)
 void Select_deviceHP(int device)
 {
     //This one is already memorised so just pick it
-    SelectedDevice = myDevices[device];
+    SelectedDevice = &myDevices[device];
     navigation_screen(3);
 }
 
 void Select_deviceIDX(int idx)
 {
     //This one is empty so get data
-    FillDeviceData(&SelectedDevice, idx);
-
+    FillDeviceData(&SpecialDevice, idx);
+    SelectedDevice = &SpecialDevice;
     navigation_screen(3);
 }
 
@@ -151,6 +152,7 @@ lv_color_t Getcolor(int type)
         case TYPE_HUMIDITY:
         case TYPE_SWITCH_SENSOR:
         case TYPE_LUX:
+        case TYPE_METEO:
         case TYPE_PERCENT_SENSOR:
         case TYPE_VALUE_SENSOR:
             return LV_COLOR_MAKE(0x00, 0x7F, 0xFF);
@@ -224,6 +226,7 @@ const lv_img_dsc_t *Geticon(int type)
             return &blinds35x35; 
         case TYPE_SWITCH_SENSOR:
         case TYPE_LUX:
+        case TYPE_METEO:
         case TYPE_PERCENT_SENSOR:
         case TYPE_VALUE_SENSOR:
             return &sensor35x35; 
@@ -238,8 +241,8 @@ const lv_img_dsc_t *Geticon(int type)
 void device_panel_init(lv_obj_t* panel)
 {
 
-    lv_color_t color = Getcolor(SelectedDevice.type);
-    const lv_img_dsc_t *icon = Geticon(SelectedDevice.type);
+    lv_color_t color = Getcolor(SelectedDevice->type);
+    const lv_img_dsc_t *icon = Geticon(SelectedDevice->type);
     lv_obj_t * label;
 
     static lv_coord_t col_dsc[] = {LV_GRID_FR(34), LV_GRID_FR(33), LV_GRID_FR(33), LV_GRID_TEMPLATE_LAST};
@@ -304,7 +307,7 @@ void device_panel_init(lv_obj_t* panel)
     //Label
     label = lv_label_create(GridTop);
     lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP); 
-    lv_label_set_text(label, SelectedDevice.name);
+    lv_label_set_text(label, SelectedDevice->name);
     //lv_obj_align(label, LV_ALIGN_RIGHT_MID, 0, 0);
     lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_size(label, TFT_WIDTH - 50, 30);
@@ -313,11 +316,11 @@ void device_panel_init(lv_obj_t* panel)
     //Options
     //
     //Create switch
-    if ((SelectedDevice.type == TYPE_SWITCH) || (SelectedDevice.type == TYPE_DIMMER)
-     || (SelectedDevice.type == TYPE_PLUG) || (SelectedDevice.type == TYPE_COLOR) || (SelectedDevice.type == TYPE_LIGHT))
+    if ((SelectedDevice->type == TYPE_SWITCH) || (SelectedDevice->type == TYPE_DIMMER)
+     || (SelectedDevice->type == TYPE_PLUG) || (SelectedDevice->type == TYPE_COLOR) || (SelectedDevice->type == TYPE_LIGHT))
     {
         lv_obj_t * sw = lv_switch_create(GridSmall);
-        if (strcmp(SelectedDevice.data, "On") == 0)
+        if (strcmp(SelectedDevice->data, "On") == 0)
         {
             lv_obj_add_state(sw, LV_STATE_CHECKED);
         }
@@ -326,13 +329,13 @@ void device_panel_init(lv_obj_t* panel)
     }
 
     //Create a push switch
-    if (SelectedDevice.type == TYPE_PUSH)
+    if (SelectedDevice->type == TYPE_PUSH)
     {
         lv_obj_t * sw = lv_btn_create(GridBig);
         lv_obj_set_size(sw, LV_PCT(60), LV_PCT(50));
         lv_obj_align(sw, LV_ALIGN_CENTER, 0, 0);
         label = lv_label_create(sw);
-        if (strcmp(SelectedDevice.data, "On") == 0)
+        if (strcmp(SelectedDevice->data, "On") == 0)
         {
             lv_label_set_text_static(label, "ON");
             lv_obj_add_event_cb(sw, btn_event_handler, LV_EVENT_ALL,(void *)"On");
@@ -347,7 +350,7 @@ void device_panel_init(lv_obj_t* panel)
     }
 
     //Create blinds buttons
-    if (SelectedDevice.type == TYPE_BLINDS)
+    if (SelectedDevice->type == TYPE_BLINDS)
     {
         lv_obj_t * obj= lv_btn_create(GridSmall);
         lv_obj_set_size(obj, LV_PCT(100), LV_PCT(30));
@@ -381,11 +384,11 @@ void device_panel_init(lv_obj_t* panel)
     }
 
     //Create a LED
-    if (SelectedDevice.type == TYPE_SWITCH_SENSOR) 
+    if (SelectedDevice->type == TYPE_SWITCH_SENSOR) 
     {
         lv_obj_t * led  = lv_led_create(GridBig);
         lv_obj_align(led, LV_ALIGN_CENTER, 0, 0);
-        if (strcmp(SelectedDevice.data, "On") == 0)
+        if (strcmp(SelectedDevice->data, "On") == 0)
         {
             lv_led_on(led);
         }
@@ -396,11 +399,11 @@ void device_panel_init(lv_obj_t* panel)
     }
 
     //Create a slider
-    if ((SelectedDevice.type == TYPE_DIMMER) || (SelectedDevice.type == TYPE_BLINDS))
+    if ((SelectedDevice->type == TYPE_DIMMER) || (SelectedDevice->type == TYPE_BLINDS))
     {
 
         lv_obj_t * slider = lv_slider_create(GridBig);
-        lv_slider_set_value(slider, SelectedDevice.level, LV_ANIM_ON);
+        lv_slider_set_value(slider, SelectedDevice->level, LV_ANIM_ON);
         lv_obj_set_width(slider, lv_pct(80));
         lv_slider_set_range(slider, 0, 100);
         lv_obj_center(slider);
@@ -408,16 +411,16 @@ void device_panel_init(lv_obj_t* panel)
 
         /*Create a label below the slider*/
         slider_label = lv_label_create(lv_scr_act());
-        lv_label_set_text_fmt(slider_label, "%d%",SelectedDevice.level);
+        lv_label_set_text_fmt(slider_label, "%d%",SelectedDevice->level);
         lv_obj_align_to(slider_label, slider, LV_ALIGN_OUT_BOTTOM_MID, 0, 15);
     }
 
     //Create a color wheel + slider
-    if (SelectedDevice.type == TYPE_COLOR)
+    if (SelectedDevice->type == TYPE_COLOR)
     {
         /*Create a slider*/
         lv_obj_t * slider = lv_slider_create(GridBig);
-        lv_slider_set_value(slider, SelectedDevice.level, LV_ANIM_ON);
+        lv_slider_set_value(slider, SelectedDevice->level, LV_ANIM_ON);
         lv_obj_set_size(slider, 10, lv_pct(80));
         lv_slider_set_range(slider, 0, 100);
         lv_obj_add_event_cb(slider, slider_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
@@ -441,19 +444,19 @@ void device_panel_init(lv_obj_t* panel)
     }
 
     //Selector switch
-    if (SelectedDevice.type == TYPE_SELECTOR || SelectedDevice.type == TYPE_SPEAKER)
+    if (SelectedDevice->type == TYPE_SELECTOR || SelectedDevice->type == TYPE_SPEAKER)
     {
         /*Create a normal drop down list*/
         lv_obj_t * dd = lv_dropdown_create(GridBig);
-        lv_dropdown_set_options(dd, SelectedDevice.levelname);
+        lv_dropdown_set_options(dd, SelectedDevice->levelname);
 
         //lv_obj_align(dd, LV_ALIGN_TOP_MID, 0, 20);
         lv_obj_add_event_cb(dd, dd_event_handler, LV_EVENT_VALUE_CHANGED, NULL);
-        lv_dropdown_set_selected(dd, SelectedDevice.level / 10);
+        lv_dropdown_set_selected(dd, SelectedDevice->level / 10);
     }
 
     // Info and Text device
-    if ((SelectedDevice.type == TYPE_WARNING) ||(SelectedDevice.type == TYPE_TEXT))
+    if ((SelectedDevice->type == TYPE_WARNING) ||(SelectedDevice->type == TYPE_TEXT))
     {
         lv_obj_add_flag(cont, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);       //Force new line
         lv_obj_add_flag(cont, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);       //Force new line
@@ -461,14 +464,15 @@ void device_panel_init(lv_obj_t* panel)
         //Display Text
         label = lv_label_create(GridBig);
         lv_obj_set_style_text_font(label, &font1, 0);
-        lv_label_set_text(label, SelectedDevice.data);
-        lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP); 
+        lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP);
         lv_obj_align(label,  LV_ALIGN_CENTER, 0, 0);
         lv_obj_set_style_text_color(label, color, 0);
+        lv_obj_set_size(label, lv_pct(100), lv_pct(80)); 
+        lv_label_set_text(label, SelectedDevice->data);
     }
 
     // Info device 
-    if (SelectedDevice.type == TYPE_WARNING) 
+    if (SelectedDevice->type == TYPE_WARNING) 
     {
         lv_obj_t * led  = lv_led_create(GridSmall);
         lv_obj_set_size(led, lv_pct(80), lv_pct(60));
@@ -476,15 +480,15 @@ void device_panel_init(lv_obj_t* panel)
         lv_led_on(led);
 
         //Color the led according to alert Level
-        if (SelectedDevice.level == 1)
+        if (SelectedDevice->level == 1)
         {
             lv_led_set_color(led, LV_COLOR_MAKE(0x00, 0xFF, 0x00));
         }
-        else if (SelectedDevice.level == 2)
+        else if (SelectedDevice->level == 2)
         {
             lv_led_set_color(led, LV_COLOR_MAKE(0xFF, 0xFF, 0x00));
         }
-        else if (SelectedDevice.level == 3)
+        else if (SelectedDevice->level == 3)
         {
             lv_led_set_color(led, LV_COLOR_MAKE(0xFF, 0x00, 0x00));
         }
@@ -496,12 +500,12 @@ void device_panel_init(lv_obj_t* panel)
     }
 
     //Thermostat setpoint
-    if (SelectedDevice.type == TYPE_SETPOINT)
+    if (SelectedDevice->type == TYPE_SETPOINT)
     {
         slider_TH = lv_slider_create(GridBig);
         lv_obj_set_width(slider_TH, lv_pct(80));
         lv_slider_set_range(slider_TH, 0, 400);
-        lv_slider_set_value(slider_TH, atof(SelectedDevice.data) *10, LV_ANIM_ON);
+        lv_slider_set_value(slider_TH, atof(SelectedDevice->data) *10, LV_ANIM_ON);
         lv_obj_center(slider_TH);
         
         //lv_obj_set_style_bg_color(slider_TH, lv_color_hex(0x569af8), LV_PART_INDICATOR);
@@ -510,7 +514,7 @@ void device_panel_init(lv_obj_t* panel)
 
         /*Create a label below the slider*/
         slider_label = lv_label_create(lv_scr_act());
-        lv_label_set_text_fmt(slider_label, "%.1f",atof(SelectedDevice.data)/1.f);
+        lv_label_set_text_fmt(slider_label, "%.1f",atof(SelectedDevice->data)/1.f);
         lv_obj_align_to(slider_label, slider_TH, LV_ALIGN_OUT_BOTTOM_MID, 0, 15);
 
         // And somes buttons
@@ -539,23 +543,25 @@ void device_panel_init(lv_obj_t* panel)
     }
 
     // Other sensors
-    if ((SelectedDevice.type == TYPE_TEMPERATURE) || (SelectedDevice.type == TYPE_VALUE_SENSOR)
-    || (SelectedDevice.type == TYPE_HUMIDITY) || (SelectedDevice.type == TYPE_CONSUMPTION) || (SelectedDevice.type == TYPE_POWER)
-    || (SelectedDevice.type == TYPE_LUX) || (SelectedDevice.type == TYPE_PERCENT_SENSOR))
+    if ((SelectedDevice->type == TYPE_TEMPERATURE) || (SelectedDevice->type == TYPE_VALUE_SENSOR)
+    || (SelectedDevice->type == TYPE_HUMIDITY) || (SelectedDevice->type == TYPE_CONSUMPTION) || (SelectedDevice->type == TYPE_POWER)
+    || (SelectedDevice->type == TYPE_LUX) || (SelectedDevice->type == TYPE_PERCENT_SENSOR) || (SelectedDevice->type == TYPE_METEO))
     {
 
         label = lv_label_create(GridSmall);
         lv_obj_set_style_text_font(label, &font1, 0);
         lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP);
         lv_obj_set_size(label, lv_pct(100), lv_pct(100));
-        lv_label_set_text(label, SelectedDevice.data);
+        lv_label_set_text(label, SelectedDevice->data);
         lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
         lv_obj_set_style_text_color(label, color, 0);
 
 #if LV_USE_CHART
         //Making a graph
-        int min, max;
-        pTab = GetGraphValue(SelectedDevice.type, SelectedDevice.idx, &min, &max);
+        int min = 0;
+        int max = 0;
+        int* pTab = nullptr; // Pointer to graph value
+        pTab = GetGraphValue(SelectedDevice->type, SelectedDevice->idx, &min, &max);
 
         if (pTab)
         {

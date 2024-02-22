@@ -20,6 +20,7 @@ enum {
     TYPE_DIMMER,
     TYPE_BLINDS,
     TYPE_LUX,
+    TYPE_METEO,
     TYPE_SETPOINT,
     TYPE_TEXT,
     TYPE_PUSH
@@ -27,13 +28,14 @@ enum {
 
 typedef struct _Device {
     char* name = nullptr;
-    char * ID;
-    char data[20];
+    char * ID = nullptr;
+    char *data = nullptr;
     int level = 0;
     int  idx = 0;
     int type = TYPE_UNKNOWN;
     bool used = false;
-    char * levelname;
+    char * levelname = nullptr;
+    int lenData=0;
 
     //lv_obj_t * label; // used for device update
 
