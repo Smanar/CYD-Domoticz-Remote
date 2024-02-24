@@ -235,7 +235,7 @@ bool HttpInitDevice(Device *d, int id)
     for (auto i : JS)  // Scan the array (only 1)
     {
         if (d->name) free(d->name);
-        d->name = (char*)malloc(strlen(i["Name"]) + 1 + 1);
+        d->name = (char*)malloc(strlen(i["Name"]) + 1);
         strncpy(d->name, i["Name"],strlen(i["Name"]) + 1);
 
         const char* JSondata = NULL;
@@ -261,7 +261,7 @@ bool HttpInitDevice(Device *d, int id)
         if (strlen(JSondata) > d->lenData)
         {
             if (d->data) free(d->data);
-            d->data = (char*)malloc(strlen(JSondata) + 1 + 1); // +1 for null char
+            d->data = (char*)malloc(strlen(JSondata) + 1);
             //Serial.printf("Re-alloc from %d to %d\n", d->lenData, strlen(JSondata));
             d->lenData = strlen(JSondata);
            
@@ -270,7 +270,7 @@ bool HttpInitDevice(Device *d, int id)
         //d->data[d->lenData] = '\0';
 
         if (d->ID) free(d->ID);
-        d->ID = (char*)malloc(strlen(i["ID"]) + 1 + 1);
+        d->ID = (char*)malloc(strlen(i["ID"]) + 1);
         strncpy(d->ID, i["ID"],strlen(i["ID"]) + 1);
 
         d->idx = i["idx"];
@@ -289,7 +289,9 @@ bool HttpInitDevice(Device *d, int id)
                 d->type = TYPE_SELECTOR;
                 const char *base64 = i["LevelNames"];
                 if (d->levelname) free(d->levelname);
-                d->levelname = (char*)malloc(strlen(i["LevelNames"]) + 1 + 1);
+                // Decoded string is always smaller, bytes = (string_length(encoded_string) − 814) / 1.37
+                // So we loose 30% of memory for nothing but don't need to re-alloc it.
+                d->levelname = (char*)malloc(strlen(i["LevelNames"]) + 1);
 
                 unsigned int string_length = decode_base64((const unsigned char*)base64, (unsigned char *)d->levelname);
                 d->levelname[string_length] = '\0';

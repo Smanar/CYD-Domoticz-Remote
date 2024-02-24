@@ -22,6 +22,7 @@ bool HTTPGETRequest(char * url2)
 
 // IMPORTANT https://arduinojson.org/v6/how-to/use-arduinojson-with-httpclient/#how-to-parse-a-json-document-from-an-http-response
 // prevent issue DeserializationError::EmptyInput
+//https://github.com/bblanchon/ArduinoJson/issues/1705
 bool HTTPGETRequestWithReturn(const char * url2, JsonArray *JS, bool NeedFilter)
 {
     HTTPClient client;
@@ -75,6 +76,9 @@ bool HTTPGETRequestWithReturn(const char * url2, JsonArray *JS, bool NeedFilter)
 
         if (err)
         {
+
+            Serial.printf("JSON PARSE: %s\n", client.getString());
+
             Serial.printf("Can't deserializeJson JSON : %s\n",err.c_str());
             Serial.printf("content Length : %d\n", client.getSize());
             return false;

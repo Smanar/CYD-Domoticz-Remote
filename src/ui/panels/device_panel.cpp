@@ -152,15 +152,14 @@ lv_color_t Getcolor(int type)
         case TYPE_HUMIDITY:
         case TYPE_SWITCH_SENSOR:
         case TYPE_LUX:
-        case TYPE_METEO:
         case TYPE_PERCENT_SENSOR:
         case TYPE_VALUE_SENSOR:
             return LV_COLOR_MAKE(0x00, 0x7F, 0xFF);
-        break;
+        case TYPE_METEO:
+            return LV_COLOR_MAKE(0xFF, 0x33, 0xFF);
         case TYPE_WARNING:
         case TYPE_TEXT:
             return LV_COLOR_MAKE(0x00, 0xFF, 0x00);
-        break;
         case TYPE_SPEAKER:
         case TYPE_SETPOINT:
             return LV_COLOR_MAKE(0xFF, 0xFF, 0x00);
@@ -172,7 +171,6 @@ lv_color_t Getcolor(int type)
         case TYPE_LIGHT:
         case TYPE_BLINDS:
             return LV_COLOR_MAKE(0xFF, 0x2F, 0x2F); 
-        break;
         default:
         break;
     }
@@ -190,6 +188,7 @@ LV_IMG_DECLARE(power35x35)
 LV_IMG_DECLARE(sensor35x35)
 LV_IMG_DECLARE(blinds35x35)
 LV_IMG_DECLARE(unknown35x35)
+LV_IMG_DECLARE(meteo35x35)
 
 // To convert image https://lvgl.io/tools/imageconverter
 const lv_img_dsc_t *Geticon(int type)
@@ -199,20 +198,15 @@ const lv_img_dsc_t *Geticon(int type)
         case TYPE_TEMPERATURE:
         case TYPE_SETPOINT:
             return &temperature35x35;
-        break;
         case TYPE_HUMIDITY:
             return &humidity35x35;
-        break;
         case TYPE_CONSUMPTION:
         case TYPE_POWER:
             return &power35x35;
-        break;
         case TYPE_WARNING:
             return &warning35x35;
-        break;
         case TYPE_PLUG:
             return &plug35x35;
-        break;
         case TYPE_SPEAKER:
             return &speaker35x35;
         case TYPE_SELECTOR:
@@ -226,11 +220,11 @@ const lv_img_dsc_t *Geticon(int type)
             return &blinds35x35; 
         case TYPE_SWITCH_SENSOR:
         case TYPE_LUX:
-        case TYPE_METEO:
         case TYPE_PERCENT_SENSOR:
         case TYPE_VALUE_SENSOR:
-            return &sensor35x35; 
-        break;
+            return &sensor35x35;
+        case TYPE_METEO:
+            return &meteo35x35;
         default:
         break;
     }
