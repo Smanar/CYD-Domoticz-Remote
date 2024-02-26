@@ -3,7 +3,7 @@
 
 #include "lvgl.h"
 
-#define CONFIG_VERSION 2
+#define CONFIG_VERSION 3
 
 typedef struct _GLOBAL_CONFIG {
     unsigned char version;

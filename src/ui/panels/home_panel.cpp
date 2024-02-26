@@ -7,8 +7,6 @@
 #include <HardwareSerial.h>
 #include <HTTPClient.h>
 
-LV_FONT_DECLARE(Montserrat_Bold_14)
-
 extern Device myDevices[];
 extern lv_style_t style_shadow;
 
@@ -19,7 +17,7 @@ extern lv_style_t style_shadow;
 int Size_w = int(TFT_HEIGHT/TOTAL_ICONX) -  TOTAL_OFFSET_X;
 int Size_h = int(TFT_WIDTH/TOTAL_ICONY) - TOTAL_OFFSET_Y;
 //Icon size
-int Size_icon = Size_h/2;
+int Size_icon = 35;// Size_h/2; // Fixed for the moment
 
 
 static void btn_event_cb(lv_event_t * e)
@@ -54,6 +52,7 @@ static void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int 
     lv_obj_t *img = lv_img_create(Button_icon);
     //lv_img_set_src(img, LV_SYMBOL_OK "Accept");
     lv_img_set_src(img, icon);
+    //lv_img_set_zoom(img,512); // Work only for 256 color image or any non True color
     lv_obj_align(img, LV_ALIGN_TOP_MID , 0, -10);
     lv_obj_set_size(img, Size_icon, Size_icon);
     lv_obj_set_style_img_recolor_opa(img, 50, 0);
@@ -62,13 +61,17 @@ static void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int 
     /*Create description*/
     lv_obj_t * label2 = lv_label_create(Button_icon);               /*Add a label to the button*/
     lv_label_set_long_mode(label2, LV_LABEL_LONG_WRAP);             /*Break the long lines*/
-    lv_obj_set_style_text_font(label2, &lv_font_montserrat_10, 0);
+    lv_obj_set_style_text_font(label2, &font2, 0);
     lv_obj_set_style_text_align(label2, LV_TEXT_ALIGN_CENTER, 0);
     //lv_label_set_recolor(label2, true);                           /*Activate coloring*/
     lv_label_set_text(label2, desc);                                /*Set the labels text*/
     //lv_obj_center(label2);
-    lv_obj_set_size(label2, Size_w-10, 30);
-    lv_obj_align_to(label2, img,  LV_ALIGN_OUT_BOTTOM_MID, 0, 5);
+    lv_obj_set_size(label2, Size_w-10, 30); 
+#if TOTAL_ICONX == 3
+    lv_obj_align_to(label2, img,  LV_ALIGN_OUT_BOTTOM_MID, 0, 5);                        // Need to use absolute position
+#else
+    lv_obj_align_to(label2, img,  LV_ALIGN_OUT_BOTTOM_MID, 0, 20);                         // Need to use absolute position
+#endif
 
 }
 
@@ -92,23 +95,26 @@ static void Widget_sensor(lv_obj_t* panel, char* desc, char* value, int x, int y
     //lv_img_set_zoom(img,200);                         // Not working for this image type
     lv_obj_align(img, LV_ALIGN_TOP_LEFT , -10, -10);
     lv_obj_set_size(img, Size_icon, Size_icon);
-    // lv_img_set_zoom(img, 350);                         // Zoom 256 = 100% Not working
     lv_obj_set_style_img_recolor_opa(img, 50, 0);
     lv_obj_set_style_img_recolor(img, color, 0);
 
      /*Create Value*/
      // Does _local_ is working here ?
     lv_obj_t * label = lv_label_create(Button_icon);
-    lv_obj_set_style_text_font(label, &Montserrat_Bold_14, 0);
+    lv_obj_set_style_text_font(label, &font1, 0);
     lv_label_set_text(label, value);
-    lv_obj_align_to(label, img,  LV_ALIGN_OUT_RIGHT_MID, 0, 0);
+#if TOTAL_ICONX == 3
+    lv_obj_align_to(label, img,  LV_ALIGN_OUT_RIGHT_MID, 0, 0); //Need to use absolute method
+#else
+    lv_obj_align_to(label, img,  LV_ALIGN_OUT_RIGHT_MID, 20, 0); //Need to use absolute method
+#endif
     lv_obj_set_style_text_color(label, color, 0);
 
     /*Create description*/
     lv_obj_t * label2 = lv_label_create(Button_icon);
     lv_label_set_long_mode(label2, LV_LABEL_LONG_WRAP);
     lv_obj_set_style_text_align(label2, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_set_style_text_font(label2, &lv_font_montserrat_10, 0);
+    lv_obj_set_style_text_font(label2, &font2, 0);
     lv_label_set_text(label2, desc);
     lv_obj_set_size(label2, Size_w-10, 30);
     //lv_obj_align_to(label2, img,  LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
@@ -134,11 +140,17 @@ void home_panel_init(lv_obj_t* panel)
 
             switch (myDevices[i].type)
             {
+                case TYPE_UNKNOWN: // Unknown type
+                break;
                 case TYPE_TEMPERATURE:
                 case TYPE_HUMIDITY:
                 case TYPE_CONSUMPTION:
+                case TYPE_POWER:
                 case TYPE_SWITCH_SENSOR:
                 case TYPE_LUX:
+                case TYPE_METEO:
+                case TYPE_VALUE_SENSOR:
+                case TYPE_SETPOINT:
                 {
                     Widget_sensor(panel, myDevices[i].name, myDevices[i].data, cx , cy , Size_w , Size_h, device_color, &myDevices[i].pointer,icon);
                 }
@@ -150,12 +162,16 @@ void home_panel_init(lv_obj_t* panel)
                 case TYPE_PLUG:
                 case TYPE_COLOR:
                 case TYPE_LIGHT:
+                case TYPE_BLINDS:
+                case TYPE_PUSH:
                 case TYPE_WARNING: // This one is a sensor, but too much text to be displayed on homepage
+                case TYPE_TEXT: // This one is a sensor, but too much text to be displayed on homepage
                 {
                     Widget_button(panel, myDevices[i].name, cx, cy, Size_w , Size_h, device_color, &myDevices[i].pointer, icon); 
                 }
                 break;
                 default:
+                    Serial.printf("Undefinied widget for HomePage: %d\n", myDevices[i].type);
                 break;
             }
 

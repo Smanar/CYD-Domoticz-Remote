@@ -13,7 +13,7 @@ static lv_color_t buf[TFT_WIDTH * TFT_HEIGHT / 10];
     #include <TFT_eSPI.h>
     static TFT_eSPI tft = TFT_eSPI();
 
-    //Needed
+    //Needed for this driver
     #define XPT2046
 #endif
 
@@ -26,6 +26,9 @@ static lv_color_t buf[TFT_WIDTH * TFT_HEIGHT / 10];
     #endif
     #ifdef esp2432S028R
     #include "../drivers/esp32-2432S028R.h"
+    #endif
+    #ifdef ESP32_2432S024C
+    #include "../drivers/esp32-2432S024C.h"
     #endif
 
     LGFX tft;

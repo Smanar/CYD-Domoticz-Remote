@@ -64,11 +64,11 @@ public:
       cfg.freq_write  = 14000000;
 
       cfg.hsync_polarity    = 0;
-      cfg.hsync_front_porch = 8;
+      cfg.hsync_front_porch = 8;//48
       cfg.hsync_pulse_width = 4;
       cfg.hsync_back_porch  = 16;
       cfg.vsync_polarity    = 0;
-      cfg.vsync_front_porch = 4;
+      cfg.vsync_front_porch = 4;//12
       cfg.vsync_pulse_width = 4;
       cfg.vsync_back_porch  = 4;
       cfg.pclk_idle_high    = 1;
@@ -76,11 +76,12 @@ public:
     }
     _panel_instance.setBus(&_bus_instance);
 
-    {
-      auto cfg = _light_instance.config();
-      cfg.pin_bl = GPIO_NUM_2;
-      _light_instance.config(cfg);
-    }
+     {
+       auto cfg = _light_instance.config();
+       cfg.pin_bl = GPIO_NUM_44;
+       cfg.invert = true; // true to invert backlight brightness
+       _light_instance.config(cfg);
+     }
     _panel_instance.light(&_light_instance);
 
     {
@@ -89,7 +90,7 @@ public:
       cfg.y_min      = 0;
       cfg.bus_shared = false;
       cfg.offset_rotation = 0;
-      // I2C接続
+      // I2C
       cfg.i2c_port   = I2C_NUM_1;
       cfg.pin_sda    = GPIO_NUM_17;
       cfg.pin_scl    = GPIO_NUM_18;

@@ -25,7 +25,13 @@ static void TV_btn_event_handler(lv_event_t * e) {
 
     JsonArray JS;
     char buff[256] = {};
+
+#ifdef OLD_DOMOTICZ
+    snprintf(buff, 256, "/json.htm?type=devices&filter=%s&used=true&order=Name",lv_label_get_text(label));
+#else
+    //snprintf(buff, 256, "/json.htm?type=command&param=getdevices&used=true&displayhidden=1"); // TO TEST, need to be removed
     snprintf(buff, 256, "/json.htm?type=command&param=getdevices&filter=%s&used=true&order=Name",lv_label_get_text(label));
+#endif
 
     if (!HTTPGETRequestWithReturn(buff, &JS, true)) return;
     
@@ -108,11 +114,6 @@ static void draw_part_event_cb(lv_event_t * e)
 
 void info_panel_init(lv_obj_t* panel)
 {
-    //lv_obj_set_size(panel, TFT_HEIGHT, TFT_WIDTH);
-    //lv_obj_align(panel, LV_ALIGN_TOP_RIGHT, 0, 0);
-    //lv_obj_set_style_border_width(panel, 0, 0);
-    lv_obj_set_style_bg_opa(panel, LV_OPA_TRANSP, 0);
-    lv_obj_set_style_pad_all(panel, 0, 0);
 
     //container
     lv_obj_t * cont = lv_obj_create(panel);
@@ -152,7 +153,7 @@ void info_panel_init(lv_obj_t* panel)
 
     table = lv_table_create(cont);
 
-    lv_obj_set_style_text_font(table, &lv_font_montserrat_12, 0);
+    lv_obj_set_style_text_font(table, &font3, 0);
     lv_obj_set_style_pad_all(table, 1, LV_PART_ITEMS);
     lv_obj_set_style_border_width(table, 1, LV_PART_ITEMS);
     lv_table_set_col_width(table, 1, TFT_WIDTH / 3+25);

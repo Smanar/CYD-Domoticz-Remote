@@ -20,6 +20,9 @@ bool HTTPGETRequest(char * url2)
     return HTTPGETRequestWithReturn(url2,NULL);
 }
 
+// IMPORTANT https://arduinojson.org/v6/how-to/use-arduinojson-with-httpclient/#how-to-parse-a-json-document-from-an-http-response
+// prevent issue DeserializationError::EmptyInput
+//https://github.com/bblanchon/ArduinoJson/issues/1705
 bool HTTPGETRequestWithReturn(const char * url2, JsonArray *JS, bool NeedFilter)
 {
     HTTPClient client;
@@ -27,6 +30,7 @@ bool HTTPGETRequestWithReturn(const char * url2, JsonArray *JS, bool NeedFilter)
     int httpCode;
     try {
         Serial.println(url);
+        client.useHTTP10(true); // Unfortunately, by using the underlying Stream, we bypass the code that handles chunked transfer encoding, so we must switch to HTTP version 1.0.
         client.setTimeout(500);
         client.begin(url);
         httpCode = client.GET();
@@ -40,15 +44,20 @@ bool HTTPGETRequestWithReturn(const char * url2, JsonArray *JS, bool NeedFilter)
         if (!JS) return true;
 
         //Some security
-        double buffer = 60000;
+        double buffer = 90000;
         if (int(buffer*1.2) > ESP.getMaxAllocHeap())
         {
             //Limited by PSRAM ?
             Serial.printf("Not enought Heap memory to parse json, Available %d, needed %f\n", ESP.getMaxAllocHeap(), buffer*1.2f);
             return false;
         }
-
+ 
+ #ifdef ARDUINOJSON_V7
+        JsonDocument doc;
+ #else
         DynamicJsonDocument doc(buffer);
+ #endif
+
         DeserializationError err;
 
         //Need to use filter here, domotocz is too much talkative
@@ -57,7 +66,11 @@ bool HTTPGETRequestWithReturn(const char * url2, JsonArray *JS, bool NeedFilter)
         if (NeedFilter)
         {
             // The filter: it contains "true" for each value we want to keep
+ #ifdef ARDUINOJSON_V7
+            JsonDocument filter;
+ #else
             StaticJsonDocument<200> filter;
+ #endif
             filter["result"][0]["Data"] = true;
             filter["result"][0]["idx"] = true;
             filter["result"][0]["Name"] = true;
@@ -66,12 +79,17 @@ bool HTTPGETRequestWithReturn(const char * url2, JsonArray *JS, bool NeedFilter)
         }
         else
         {
-            err = deserializeJson(doc, client.getString());
+            //err = deserializeJson(doc, client.getString());
+            err = deserializeJson(doc, client.getStream());
         }
 
         if (err)
         {
-            Serial.println("Can't deserializeJson JSON\n");
+
+            Serial.printf("JSON PARSE: %s\n", client.getString());
+
+            Serial.printf("Can't deserializeJson JSON : %s\n",err.c_str());
+            Serial.printf("content Length : %d\n", client.getSize());
             return false;
         }
 
@@ -87,7 +105,8 @@ bool HTTPGETRequestWithReturn(const char * url2, JsonArray *JS, bool NeedFilter)
         //Serial.printf("Heap Memory Usable (Kb) %d , Max %d, Total %d\n", ESP.getMaxAllocHeap()/1000, ESP.getFreeHeap()/1000, ESP.getHeapSize()/1000); // 45044
         //Serial.printf("RAM Memory Free (Kb) %d , Total %d\n", ESP.getFreePsram()/1000, ESP.getPsramSize()/1000); // 4 M
 
-        *JS = doc["result"].as<JsonArray>();
+        //*JS = doc["result"].as<JsonArray>();
+        *JS = doc["result"];
 
         if (!*JS)
         {
@@ -140,8 +159,12 @@ static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
 			//Serial.printf("[WSc] get text: %s\n", payload);
             if (length > 0)
             {
+
+ #ifdef ARDUINOJSON_V7
+                JsonDocument doc;
+ #else
                 DynamicJsonDocument doc(4096);
-                //StaticJsonDocument<256> doc; // Si < 1ko
+ #endif
 
                 DeserializationError err = deserializeJson(doc, payload, length);
 
@@ -154,8 +177,11 @@ static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
                         if ((doc["event"] == "response") && (doc.containsKey("data")))
                         {
                             //On the request data is a string so need to be deserialized too
-                            //StaticJsonDocument<1024> doc2;
+ #ifdef ARDUINOJSON_V7
+                            JsonDocument doc;
+ #else
                             DynamicJsonDocument doc2(4096);
+ #endif
                             deserializeJson(doc2, doc["data"].as<const char*>());
                             //JsonObject RJson = doc2.as<JsonObject>();
 
@@ -214,6 +240,7 @@ void WS_Run(void)
     connect_ok = false;
 
     Serial.println("Connecting to Webserver");
+    //Serial.printf("Connecting to %s%s:%d\n",global_config.ServerHost, "/json", global_config.ServerPort);
 
     // server address, port and URL
     WSclient.begin(global_config.ServerHost, global_config.ServerPort, "/json", "domoticz");

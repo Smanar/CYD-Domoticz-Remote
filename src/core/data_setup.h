@@ -2,7 +2,7 @@
 #define DATA_SETUP_H
 
 enum {
-    TYPE_UNKNOW,
+    TYPE_UNKNOWN,
     TYPE_SWITCH,
     TYPE_SPEAKER,
     TYPE_TEMPERATURE,
@@ -15,22 +15,27 @@ enum {
     TYPE_PLUG,
     TYPE_HUMIDITY,
     TYPE_CONSUMPTION,
+    TYPE_POWER,
     TYPE_LIGHT,
     TYPE_DIMMER,
     TYPE_BLINDS,
     TYPE_LUX,
-    TYPE_SETPOINT
+    TYPE_METEO,
+    TYPE_SETPOINT,
+    TYPE_TEXT,
+    TYPE_PUSH
 };
 
 typedef struct _Device {
-    char* name;
-    char * ID;
-    char data[20];
+    char* name = nullptr;
+    char * ID = nullptr;
+    char *data = nullptr;
     int level = 0;
     int  idx = 0;
-    int type = TYPE_VALUE_SENSOR;
+    int type = TYPE_UNKNOWN;
     bool used = false;
-    char * levelname;
+    char * levelname = nullptr;
+    int lenData=0;
 
     //lv_obj_t * label; // used for device update
 

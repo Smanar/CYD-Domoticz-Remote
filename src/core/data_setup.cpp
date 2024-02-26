@@ -8,9 +8,23 @@
 
 #define SIZEOF(arr) (sizeof(arr) / sizeof(*arr))
 
-Device myDevices[9];
+Device myDevices[TOTAL_ICONX*TOTAL_ICONY];
+static char TmpBuffer[255]; // To prevent multiple re-alloc
+static int tab[24]; // Tab for graph
 
 void RefreshHomePage(void);
+
+char * Cleandata(const char *origin, const char *bonus = nullptr) 
+{
+    if (!origin) return TmpBuffer;
+
+    if (strncmp(origin, "Humidity ", 9) == 0) origin+=9;
+    strncpy(TmpBuffer, origin, 255);
+
+    for (int i = 0; i<strlen(TmpBuffer); i++) { if (TmpBuffer[i] == ';') TmpBuffer[i] = '\n';}
+
+    return TmpBuffer;
+}
 
 void Init_data(void)
 {
@@ -56,7 +70,6 @@ int Get_ID_Device(int JSonidx)
 
 void Update_data(JsonObject RJson2)
 {
-
     //char buffer[4096];
     //serializeJsonPretty(RJson2, buffer);
     //Serial.println(buffer);
@@ -76,7 +89,7 @@ void Update_data(JsonObject RJson2)
 
     Serial.printf("Update HP device id: %d\n", ID);
 
-    //some cleaning
+    //some cleaning (to optimise)
     if (JSondata && strncmp(JSondata, "Humidity ", 9) == 0) JSondata+=9;
 
     bool NeedUpdate = false;
@@ -88,8 +101,19 @@ void Update_data(JsonObject RJson2)
     }
     if (strcmp(JSondata, myDevices[ID].data) != 0)
     {
-        strncpy(myDevices[ID].data, JSondata,20);
+        //Use dynamic array, but only 1 time
+        if (strlen(JSondata) > myDevices[ID].lenData)
+        {
+            if (myDevices[ID].data) free(myDevices[ID].data);
+            myDevices[ID].data = (char*)malloc(strlen(JSondata) + 1);
+            myDevices[ID].lenData = strlen(JSondata);
+        }
+
+        strncpy(myDevices[ID].data, JSondata, myDevices[ID].lenData + 1);
         NeedUpdate = true;
+
+        //some cleaning again (to optimise)
+        for (int i = 0; i<strlen(myDevices[ID].data); i++) { if (myDevices[ID].data[i] == ';') myDevices[ID].data[i] = '\n';}
     }
 
     if (NeedUpdate)
@@ -111,11 +135,15 @@ void Update_data(JsonObject RJson2)
 int * GetGraphValue(int type, int idx, int *min, int *max)
 {
 
-	static int a[24];
     *min = 0xFFFF;
     *max = 0;
 
+#ifdef OLD_DOMOTICZ
+    String url = "/json.htm?type=graph&sensor=";
+#else
     String url = "/json.htm?type=command&param=graph&sensor=";
+#endif
+
     switch (type)
     {
         case TYPE_TEMPERATURE:
@@ -123,6 +151,7 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
             url = url + "temp";
             break;
         case TYPE_CONSUMPTION:
+        case TYPE_POWER:
         case TYPE_LUX:
             url = url + "counter";
             break;
@@ -140,38 +169,66 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
     {
         if (!JS) return nullptr;
 
-        double v;
+        double v; // value
+        int hour;
+        const char * c = NULL;
 
         // Value are not constant so can be evry 15 mn or 20 mn
         int s = JS.size();
 
-        int j = 0;
+        int j,k = 0;
+        int actualhour = 0;
+        int diff = 0;
+
+        //Just need to memorise the last 24 values
+
         for (auto i : JS)
         {
-            //ATM we are using only the 24 last value every 4 values
-            if ((s < 4 * 26) && (s % 4 == 0) && (j < 24))
+            //"d" : "2024-02-16 19:45",
+            c = i["d"];
+            sscanf(c+11, "%2d", &hour);
+
+            if (hour>23) hour = 23;
+        
+            //How many value different 
+            if (hour >= actualhour) diff = hour - actualhour;
+            else diff = hour - actualhour + 24;
+
+            //if already value set for this hour, skip
+            if (diff == 0) continue;
+
+            actualhour = hour;
+
+            if (type == TYPE_TEMPERATURE) v = i["te"];
+            if (type == TYPE_HUMIDITY) v = i["hu"];
+            if (type == TYPE_CONSUMPTION) v = i["u"];
+            if (type == TYPE_POWER) v = i["u"];
+            if (type == TYPE_PERCENT_SENSOR) v = i["v"];
+            if (type == TYPE_METEO) v = i["mm"];
+
+            // Because of decimal values
+            if (type == TYPE_TEMPERATURE) v = v *10;
+
+            if (v > *max) *max = v;
+            if (v < *min) *min = v;
+
+            //swift the table
+            for (j = 0; j < diff; j++)
             {
-                if (type == TYPE_TEMPERATURE) v = i["te"];
-                if (type == TYPE_HUMIDITY) v = i["hu"];
-                if (type == TYPE_CONSUMPTION) v = i["u"];
-                if (type == TYPE_PERCENT_SENSOR) v = i["v"];
-
-                // Because of decimal values
-                if (type == TYPE_TEMPERATURE) v = v *10;
-
-                if (v > *max) *max = v;
-                if (v < *min) *min = v;
-                a[j] = int(v);
-                j += 1;
+                for (k = 0; k < 23; k++)
+                {
+                    tab[k] = tab[k+1];
+                }
+                tab[23] = v;
             }
-            s -= 1;
+
         }
 
         v = (*max - *min) / 10;
         *min = *min - v;
         *max = *max + v;
 
-        return a;
+        return tab;
     }
 
 	return nullptr;
@@ -180,19 +237,27 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
 
 bool HttpInitDevice(Device *d, int id)
 {
-
     JsonArray JS;
+#ifdef OLD_DOMOTICZ
+    String url = "/json.htm?type=devices&rid=" + String(id);
+#else
     String url = "/json.htm?type=command&param=getdevices&rid=" + String(id);
+#endif
 
     if (!HTTPGETRequestWithReturn((char *)url.c_str(), &JS)) return false;
 
     if (!JS) return false;
 
+    //char buffer[4096];
+    //serializeJsonPretty(JS, buffer);
+    //Serial.println(buffer);
+    //Serial.println("no crash !!!");
+
     for (auto i : JS)  // Scan the array (only 1)
     {
         if (d->name) free(d->name);
         d->name = (char*)malloc(strlen(i["Name"]) + 1);
-        strcpy(d->name, i["Name"]);
+        strncpy(d->name, i["Name"],strlen(i["Name"]) + 1);
 
         const char* JSondata = NULL;
         const char* type = NULL;
@@ -210,20 +275,26 @@ bool HttpInitDevice(Device *d, int id)
             return false;
         }
 
-        //do some cleaning
-        if (JSondata && strncmp(JSondata, "Humidity ", 9) == 0) JSondata+=9; // <<< Guru Meditation
+        //Use dynamic array if needed, but only 1 time
+        if (strlen(JSondata) > d->lenData)
+        {
+            if (d->data) free(d->data);
+            d->data = (char*)malloc(strlen(JSondata) + 1);
+            //Serial.printf("Re-alloc from %d to %d\n", d->lenData, strlen(JSondata));
+            d->lenData = strlen(JSondata);
+        }
 
-        strncpy(d->data, JSondata,20);
+        strncpy(d->data, Cleandata(JSondata), d->lenData + 1);
 
         if (d->ID) free(d->ID);
         d->ID = (char*)malloc(strlen(i["ID"]) + 1);
-        strcpy(d->ID, i["ID"]);
+        strncpy(d->ID, i["ID"],strlen(i["ID"]) + 1);
 
         d->idx = i["idx"];
         d->level = i["Level"];
 
         //Set a defaut value
-        d->type = TYPE_VALUE_SENSOR;
+        d->type = TYPE_UNKNOWN;
 
         if (strcmp(type, "Light/Switch") == 0)
         {
@@ -235,6 +306,8 @@ bool HttpInitDevice(Device *d, int id)
                 d->type = TYPE_SELECTOR;
                 const char *base64 = i["LevelNames"];
                 if (d->levelname) free(d->levelname);
+                // Decoded string is always smaller, bytes = (string_length(encoded_string) − 814) / 1.37
+                // So we loose 30% of memory for nothing but don't need to re-alloc it.
                 d->levelname = (char*)malloc(strlen(i["LevelNames"]) + 1);
 
                 unsigned int string_length = decode_base64((const unsigned char*)base64, (unsigned char *)d->levelname);
@@ -260,6 +333,14 @@ bool HttpInitDevice(Device *d, int id)
                 {
                     d->type = TYPE_LIGHT;
                 }
+                else if ((strcmp(switchtype,"Push On Button") == 0) || (strcmp(switchtype,"Push Off Button") == 0))
+                {
+                    d->type = TYPE_PUSH;
+                }
+                else if ((strcmp(switchtype,"Venetian Blinds EU") == 0) || (strcmp(switchtype,"Venetian Blinds US") == 0) || (strcmp(switchtype,"Blinds Percentage") == 0))
+                {
+                    d->type = TYPE_BLINDS;
+                }
                 else // Just passive sensor
                 {
                     d->type = TYPE_SWITCH_SENSOR;
@@ -280,7 +361,23 @@ bool HttpInitDevice(Device *d, int id)
         {
             d->type = TYPE_HUMIDITY;
         }
-        else if ((strcmp(type, "Usage") == 0) || (strcmp(type, "P1 Smart Meter") == 0))
+        else if (strcmp(type, "Rain") == 0)
+        {
+            d->type = TYPE_METEO;
+            //Special device
+            // We will replace the total counter by the daily rain, so the data size will be lower, no need to re-alloc
+            if (i["Rain"] && i["RainRate"])
+            {
+                strncpy(d->data, i["Rain"], strlen(i["Rain"]));
+                strncpy(d->data + strlen(i["Rain"]) , "\n", 1);
+                strncpy(d->data + strlen(i["Rain"]) + 1, i["RainRate"], strlen(i["RainRate"])+1);
+            }
+        }
+        else if (strcmp(type, "Usage") == 0)
+        {
+            d->type = TYPE_POWER;
+        }
+        else if (strcmp(type, "P1 Smart Meter") == 0)
         {
             d->type = TYPE_CONSUMPTION;
         }
@@ -290,12 +387,14 @@ bool HttpInitDevice(Device *d, int id)
 
             if (strcmp(subtype,"Alert") == 0) d->type = TYPE_WARNING;
             else if (strcmp(subtype,"Percentage") == 0) d->type = TYPE_PERCENT_SENSOR;
+            else if (strcmp(subtype,"Text") == 0) d->type = TYPE_TEXT;
+            else if (strcmp(subtype,"kWh") == 0) d->type = TYPE_CONSUMPTION;
         }
         else if (strcmp(type, "Lux") == 0)
         {
             d->type = TYPE_LUX;
         }
-        else if (strcmp(type, "Setpoint") == 0)
+        else if ((strcmp(type, "Setpoint") == 0) || (strcmp(type, "Thermostat") == 0))
         {
             d->type = TYPE_SETPOINT;
         }
@@ -310,10 +409,6 @@ bool HttpInitDevice(Device *d, int id)
             else if (image && strcmp(image,"Speaker") == 0)
             {
                 d->type = TYPE_SPEAKER;
-            }
-            else if (image && strcmp(image,"blinds") == 0)
-            {
-                d->type = TYPE_BLINDS;
             }
         }
 
