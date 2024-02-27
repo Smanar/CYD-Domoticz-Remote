@@ -23,7 +23,7 @@ static void TV_btn_event_handler(lv_event_t * e) {
     //lv_obj_clean(table);
     //uint16_t r = lv_table_get_row_cnt(table);
 
-    JsonArray JS;
+    JsonDocument doc;
     char buff[256] = {};
 
 #ifdef OLD_DOMOTICZ
@@ -33,7 +33,16 @@ static void TV_btn_event_handler(lv_event_t * e) {
     snprintf(buff, 256, "/json.htm?type=command&param=getdevices&filter=%s&used=true&order=Name",lv_label_get_text(label));
 #endif
 
-    if (!HTTPGETRequestWithReturn(buff, &JS, true)) return;
+    if (!HTTPGETRequestWithReturn(buff, &doc, true)) return;
+
+    JsonArray JS;
+    JS = doc["result"];
+
+    if (JS.isNull())
+    {
+        Serial.println("Json not available\n");
+        return;
+    }
     
     lv_table_set_row_cnt(table, JS.size()); // To prevent multiple memory re allocation
 
