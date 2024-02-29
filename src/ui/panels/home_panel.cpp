@@ -26,16 +26,15 @@ static void btn_event_cb(lv_event_t * e)
     //lv_obj_t * btn = lv_event_get_target(e);
     //int *d = (int*)lv_event_get_param(e);
 
-    int * btn_no; // create a user data type pointer
-    btn_no = (int*)lv_event_get_user_data(e); // cast the return pointer to data type pointer
+    int btn_no = (int)lv_event_get_user_data(e); // cast the return pointer to data type pointer
 
     if(code == LV_EVENT_CLICKED) {
         //Serial.printf("Clic sur boutton: %d", * btn_no);
-        Select_deviceHP(*btn_no);
+        Select_deviceHP(btn_no);
     }
 }
 
-static void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int h, lv_color_t color, int *d, const lv_img_dsc_t* icon)
+static void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int h, lv_color_t color, int d, const lv_img_dsc_t* icon)
 {
 
     /*Create a container with ROW flex direction*/
@@ -47,7 +46,7 @@ static void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int 
     //lv_obj_set_drag(Button_icon, false);
     //lv_obj_set_flex_flow(Button_icon, LV_FLEX_FLOW_ROW);
     lv_obj_clear_flag( Button_icon, LV_OBJ_FLAG_SCROLLABLE );                     // Remove scrollbar
-    lv_obj_add_event_cb(Button_icon, btn_event_cb, LV_EVENT_ALL, d);              /*Assign a callback to the button*/
+    lv_obj_add_event_cb(Button_icon, btn_event_cb, LV_EVENT_ALL, (void *)d);              /*Assign a callback to the button*/
 
     lv_obj_t *img = lv_img_create(Button_icon);
     //lv_img_set_src(img, LV_SYMBOL_OK "Accept");
@@ -75,7 +74,7 @@ static void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int 
 
 }
 
-static void Widget_sensor(lv_obj_t* panel, char* desc, char* value, int x, int y, int w, int h, lv_color_t color, int *d, const lv_img_dsc_t *icon)
+static void Widget_sensor(lv_obj_t* panel, char* desc, char* value, int x, int y, int w, int h, lv_color_t color, int d, const lv_img_dsc_t *icon)
 {
 
     /*Create a container*/
@@ -85,7 +84,7 @@ static void Widget_sensor(lv_obj_t* panel, char* desc, char* value, int x, int y
     lv_obj_set_pos(Button_icon, x, y);
     lv_obj_add_style(Button_icon, &style_shadow, LV_PART_MAIN);
     lv_obj_clear_flag( Button_icon, LV_OBJ_FLAG_SCROLLABLE );
-    lv_obj_add_event_cb(Button_icon, btn_event_cb, LV_EVENT_ALL, d);              /*Assign a callback to the button*/
+    lv_obj_add_event_cb(Button_icon, btn_event_cb, LV_EVENT_ALL, (void *)d);              /*Assign a callback to the button*/
     //lv_obj_add_event_cb(Button_icon,button_draw_event_cb,LV_EVENT_DRAW_PART_END,NULL); // To bypass drawing
 
     /*Create icon*/
@@ -136,8 +135,6 @@ void home_panel_init(lv_obj_t* panel)
             int cx = TOTAL_OFFSET_X / 2 + (Size_w + TOTAL_OFFSET_X) * x;
             int cy = TOTAL_OFFSET_Y / 2 + (Size_h + TOTAL_OFFSET_Y) * y;
 
-            myDevices[i].pointer = i;
-
             switch (myDevices[i].type)
             {
                 case TYPE_UNKNOWN: // Unknown type
@@ -152,7 +149,7 @@ void home_panel_init(lv_obj_t* panel)
                 case TYPE_VALUE_SENSOR:
                 case TYPE_SETPOINT:
                 {
-                    Widget_sensor(panel, myDevices[i].name, myDevices[i].data, cx , cy , Size_w , Size_h, device_color, &myDevices[i].pointer,icon);
+                    Widget_sensor(panel, myDevices[i].name, myDevices[i].data, cx , cy , Size_w , Size_h, device_color, i,icon);
                 }
                 break;
                 case TYPE_SWITCH:
@@ -167,7 +164,7 @@ void home_panel_init(lv_obj_t* panel)
                 case TYPE_WARNING: // This one is a sensor, but too much text to be displayed on homepage
                 case TYPE_TEXT: // This one is a sensor, but too much text to be displayed on homepage
                 {
-                    Widget_button(panel, myDevices[i].name, cx, cy, Size_w , Size_h, device_color, &myDevices[i].pointer, icon); 
+                    Widget_button(panel, myDevices[i].name, cx, cy, Size_w , Size_h, device_color, i, icon); 
                 }
                 break;
                 default:

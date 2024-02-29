@@ -129,11 +129,34 @@ static void dd_event_handler(lv_event_t * e)
     }
 }
 
+static void hist_chart_event_cb(lv_event_t * e)
+{
+    //Get the event descriptor
+    lv_obj_draw_part_dsc_t* dsc = lv_event_get_draw_part_dsc(e);
+
+    //Check what part we are updating. Only proceed if we are updating one of the tick label(s)
+    if (!lv_obj_draw_part_check_type(dsc, &lv_chart_class, LV_CHART_DRAW_PART_TICK_LABEL))
+        return;
+
+    //Check this is a callback for a major tick (minor ticks have 0 here)
+    if (dsc->text == NULL)
+        return;
+
+    //Get the multiplier from the user data
+    int coef = (int)lv_event_get_user_data(e);
+
+    //If we are editing the Y axis
+    if (dsc->id == LV_CHART_AXIS_PRIMARY_Y)
+    {
+        //update the label with the modified multiplier
+        lv_snprintf(dsc->text, dsc->text_length, "%.1f", (float)dsc->value / coef);
+    }
+}
 void Select_deviceHP(int device)
 {
     //This one is already memorised so just pick it
     SelectedDevice = &myDevices[device];
-    navigation_screen(3);
+    navigation_screen(5);
 }
 
 void Select_deviceIDX(int idx)
@@ -141,7 +164,7 @@ void Select_deviceIDX(int idx)
     //This one is empty so get data
     FillDeviceData(&SpecialDevice, idx);
     SelectedDevice = &SpecialDevice;
-    navigation_screen(3);
+    navigation_screen(5);
 }
 
 lv_color_t Getcolor(int type)
@@ -555,6 +578,7 @@ void device_panel_init(lv_obj_t* panel)
         int min = 0;
         int max = 0;
         int* pTab = nullptr; // Pointer to graph value
+
         pTab = GetGraphValue(SelectedDevice->type, SelectedDevice->idx, &min, &max);
 
         if (pTab)
@@ -583,6 +607,12 @@ void device_panel_init(lv_obj_t* panel)
             {
                 lv_chart_set_next_value(chart, ser1, pTab[i]);
                 //Serial.printf("Using values %d\n", pTab[i] );
+            }
+
+            //For float value
+            if (SelectedDevice->type == TYPE_TEMPERATURE)
+            {
+                lv_obj_add_event_cb(chart, hist_chart_event_cb, LV_EVENT_DRAW_PART_BEGIN, (void *)10);
             }
 
             lv_chart_refresh(chart); /*Required after direct set*/

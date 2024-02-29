@@ -63,10 +63,14 @@ void navigation_screen(unsigned char active_panel)
             master_panel = active_panel;
             info_panel_init(panel);
             break;
-        case 3: // Device panel
+        case 3:// Second Device list page
+            master_panel = active_panel;
+            home_panel_init(panel);
+            break;
+        case 5: // Device panel
             device_panel_init(panel);
             break;
-        case 4:// Settings
+        case 6:// Settings
             settings_panel_init(panel);
             break;
     }

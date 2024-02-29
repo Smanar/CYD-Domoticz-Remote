@@ -39,7 +39,6 @@ typedef struct _Device {
 
     //lv_obj_t * label; // used for device update
 
-    int pointer;
 } Device;
 
 void Init_data();

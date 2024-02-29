@@ -43,7 +43,7 @@ void Init_data(void)
             {
                 myDevices[i].used = true;
                 Serial.printf("Initialise Domoticz device id: %d , Name : %s\n", global_config.ListDevices[i], myDevices[i].name);
-                delay(100);
+                delay(50);
             }
         }
         else
@@ -169,6 +169,9 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
         case TYPE_PERCENT_SENSOR:
             url = url + "Percentage";
             break;
+        case TYPE_METEO:
+            url = url + "rain";
+            break;
         default:
             //not supported
             return nullptr;
@@ -219,7 +222,7 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
 
             if (type == TYPE_TEMPERATURE) v = i["te"];
             if (type == TYPE_HUMIDITY) v = i["hu"];
-            if (type == TYPE_CONSUMPTION) v = i["u"];
+            if (type == TYPE_CONSUMPTION) v = i["eu"];
             if (type == TYPE_POWER) v = i["u"];
             if (type == TYPE_PERCENT_SENSOR) v = i["v"];
             if (type == TYPE_METEO) v = i["mm"];

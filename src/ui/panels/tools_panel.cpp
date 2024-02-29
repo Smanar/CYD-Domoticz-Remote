@@ -21,7 +21,7 @@ static void tools_btn_event_handler(lv_event_t * e)
 
     if (b == 1)
     {
-        navigation_screen(4);
+        navigation_screen(6);
     }
     if (b == 2) ESP.restart();
 

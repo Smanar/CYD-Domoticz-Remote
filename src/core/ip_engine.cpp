@@ -10,6 +10,15 @@ static bool connect_ok = false;
 
 void Update_data(JsonObject RJson2);
 
+JsonDocument filter;
+void InitIPEngine(void)
+{
+    // The filter: it contains "true" for each value we want to keep
+    filter["result"][0]["Data"] = true;
+    filter["result"][0]["idx"] = true;
+    filter["result"][0]["Name"] = true;
+}
+
 
 bool verify_ip(){
     return HTTPGETRequestWithReturn("/json.htm?type=command&param=getServerTime",NULL);
@@ -31,7 +40,7 @@ bool HTTPGETRequestWithReturn(const char * url2, JsonDocument *doc, bool NeedFil
     try {
         Serial.println(url);
         client.useHTTP10(true); // Unfortunately, by using the underlying Stream, we bypass the code that handles chunked transfer encoding, so we must switch to HTTP version 1.0.
-        client.setTimeout(500);
+        client.setTimeout(1000);
         client.begin(url);
         httpCode = client.GET();
         if (httpCode != 200)
@@ -50,12 +59,6 @@ bool HTTPGETRequestWithReturn(const char * url2, JsonDocument *doc, bool NeedFil
 
         if (NeedFilter)
         {
-            // The filter: it contains "true" for each value we want to keep
-            JsonDocument filter;
-            filter["result"][0]["Data"] = true;
-            filter["result"][0]["idx"] = true;
-            filter["result"][0]["Name"] = true;
-
             err = deserializeJson(*doc, client.getString(), DeserializationOption::Filter(filter));
         }
         else
@@ -66,10 +69,10 @@ bool HTTPGETRequestWithReturn(const char * url2, JsonDocument *doc, bool NeedFil
 
         if (err)
         {
-
             //Serial.printf("JSON PARSE: %s\n", client.getString());
             Serial.printf("Can't deserializeJson JSON : %s\n",err.c_str());
             Serial.printf("content Length : %d\n", client.getSize());
+            Serial.printf("Free memory : %d\n", ESP.getMaxAllocHeap());
             return false;
         }
 
