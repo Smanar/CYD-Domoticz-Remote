@@ -30,12 +30,21 @@ There is different way to install the code on th device, but I think this one is
    
 For ther moment, need to edit code itself to set defaut devices, the edit box is here, but not possible to edit value.
 
-## Needed settings   
+## Settings   
 
 The project is still WIP so some settings are still hard coded.   
 - Somes settings depend of hardware, tell me your hardware, I will search values to edit.
 - To go faster can use somes hard coded settings here https://github.com/Smanar/CYD-Domoticz-Remote/blob/main/Domoticz_Remote/src/main.cpp#L31
-- By defaut, defaut devices diplayed on Homepage will be 1,2,3,4,5,6,7,8,9 so you need to change them on the setting panel.
+- By defaut, defaut devices displayed on Homepage will be 1,2,3,4,5,6,7,8,9 so you need to change them on the application setting panel.
+- Mains settings are in the file platformio.ini
+``` 
+  	-DUSER_SETUP_LOADED=1 #To enable multiple config for TFT_eSPI
+	#-DFORCE_CONFIG # Enable or disable the forced network configuration.
+	-DFORCECALIBRATE=false #Reset the calibration at every restart, used to reset it after a config change.
+	#-DOLD_DOMOTICZ #If you are using older Domoticz version < 2023.2
+	-DBONUSPAGE=0 # Special page to add, similar to Homepage but not updated
+	#-DFASTCLIC # Enable 1 clic action for some widget
+``` 
 
 ## Actuals issues   
 - Memory ^^, lot of feature are still in Beta test. For exemple Domoticz JSON are too big to be handled by the device, it cause problem for chart for exemple.
