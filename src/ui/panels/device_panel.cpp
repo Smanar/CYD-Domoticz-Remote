@@ -13,7 +13,6 @@
 static lv_obj_t * slider_label; // Label for slider
 static lv_obj_t * slider_TH; // Slider for thermostat
 
-extern Device myDevices[]; // For home page
 //static Device SelectedDevice; // The selected one
 static Device SpecialDevice; // structure for an actual one that is not on HP
 static Device *SelectedDevice; // The selected one
@@ -152,10 +151,10 @@ static void hist_chart_event_cb(lv_event_t * e)
         lv_snprintf(dsc->text, dsc->text_length, "%.1f", (float)dsc->value / coef);
     }
 }
-void Select_deviceHP(int device)
+void Select_deviceMemorised(void *device)
 {
     //This one is already memorised so just pick it
-    SelectedDevice = &myDevices[device];
+    SelectedDevice = (Device *)device;
     navigation_screen(5);
 }
 
@@ -268,7 +267,7 @@ void device_panel_init(lv_obj_t* panel)
     /*Create a container with grid*/
     lv_obj_t * cont = lv_obj_create(panel);
     lv_obj_set_grid_dsc_array(cont, col_dsc, row_dsc);
-#if TOTAL_ICONX == 3
+#if DEVICE_SIZE == 1
     lv_obj_set_size(cont, lv_pct(90), lv_pct(90));
 #else
     lv_obj_set_size(cont, lv_pct(80), lv_pct(80));

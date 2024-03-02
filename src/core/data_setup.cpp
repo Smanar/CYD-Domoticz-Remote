@@ -11,6 +11,9 @@
 Device myDevices[TOTAL_ICONX*TOTAL_ICONY];
 static char TmpBuffer[255]; // To prevent multiple re-alloc
 static int tab[24]; // Tab for graph
+#if BONUSPAGE > 0
+Device myDevicesP2[TOTAL_ICONX*TOTAL_ICONY];
+#endif
 
 void RefreshHomePage(void);
 
@@ -45,10 +48,14 @@ void Init_data(void)
                 Serial.printf("Initialise Domoticz device id: %d , Name : %s\n", global_config.ListDevices[i], myDevices[i].name);
                 delay(50);
             }
-        }
-        else
-        {
-            myDevices[i].used = false;
+#if BONUSPAGE > 0
+            if (HttpInitDevice(&myDevicesP2[i], global_config.ListDevices[i]))
+            {
+                myDevicesP2[i].used = true;
+                Serial.printf("Initialise Domoticz device id: %d , Name : %s\n", global_config.ListDevices[i], myDevicesP2[i].name);
+                delay(50);
+            }
+#endif
         }
     }
 }
@@ -133,7 +140,7 @@ void Update_data(JsonObject RJson2)
         if (myDevices[ID].type == TYPE_WARNING)
         {
             // Force popup
-            Select_deviceHP(ID);
+            Select_deviceMemorised((void *)&myDevices[ID]);
         }
         else
         {

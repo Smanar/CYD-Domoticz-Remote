@@ -2,11 +2,17 @@
 #include "panels/panel.h"
 #include "../core/data_setup.h"
 #include "navigation.h"
+#include "../core/data_setup.h"
 #include <HTTPClient.h>
 
 static lv_obj_t * tv;
 static int actived_panel = 0;
 static int master_panel = 0;
+
+extern Device myDevices[];
+#if BONUSPAGE > 0
+extern Device myDevicesP2[];
+#endif
 
 int GetActivePanel(void)
 {
@@ -57,7 +63,7 @@ void navigation_screen(unsigned char active_panel)
             break;
         case 1: // Homepage
             master_panel = active_panel;
-            home_panel_init(panel);
+            home_panel_init(panel, myDevices);
             break;
         case 2: //Info panel
             master_panel = active_panel;
@@ -65,7 +71,9 @@ void navigation_screen(unsigned char active_panel)
             break;
         case 3:// Second Device list page
             master_panel = active_panel;
-            home_panel_init(panel);
+#if BONUSPAGE > 0
+            home_panel_init(panel, myDevicesP2);
+#endif
             break;
         case 5: // Device panel
             device_panel_init(panel);
