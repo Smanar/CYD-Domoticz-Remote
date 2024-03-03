@@ -21,7 +21,7 @@ static void tools_btn_event_handler(lv_event_t * e)
 
     if (b == 1)
     {
-        navigation_screen(4);
+        navigation_screen(6);
     }
     if (b == 2) ESP.restart();
 
@@ -66,6 +66,10 @@ void tools_panel_init(lv_obj_t* panel)
     lv_obj_align(cont2, LV_ALIGN_BOTTOM_MID, 0, -10);
     lv_obj_add_style(cont2, &style_shadow, LV_PART_MAIN);
     lv_obj_clear_flag( cont2, LV_OBJ_FLAG_SCROLLABLE );
+
+    // The "4MB" in NodeMCU refers to the size of flash, the size of RAM on ESP32 is fixed at 512KB
+    // roughly 200KB of which is used by IRAM cache/code sections, leaving around 320KB for program memory, half of which is available for dynamic allocation.
+    // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/mem_alloc.html#:%7E:text=Due%20to%20a%20technical%20limitation,allocated%20at%20runtime%20as%20heap.
 
     label = lv_label_create(cont2);
     lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP);

@@ -6,5 +6,6 @@ bool HTTPGETRequest(char * url2);
 void Websocket_loop(void);
 void WS_Run(void);
 bool WS_Running(void);
+void InitIPEngine(void);
 
-bool HTTPGETRequestWithReturn(const char * url2, JsonArray *JS, bool filter=false);
+bool HTTPGETRequestWithReturn(const char * url2, JsonDocument *doc, bool filter=false);

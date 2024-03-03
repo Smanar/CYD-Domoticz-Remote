@@ -5,6 +5,7 @@
 #include "ui/http_setup.h"
 #include "lvgl.h"
 #include "core/data_setup.h"
+#include "core/ip_engine.h"
 #include "ui/main_ui.h"
 #include "ui/navigation.h"
 #include "ui/panels/panel.h"
@@ -25,7 +26,7 @@ static void scr_event_cb(lv_event_t * e)
 {
     int p = GetActivePanel();
 
-    if (p < 3)
+    if (p < (3+BONUSPAGE))
     {
 
         lv_dir_t dir = lv_indev_get_gesture_dir(lv_indev_get_act());
@@ -33,11 +34,12 @@ static void scr_event_cb(lv_event_t * e)
         if (dir == LV_DIR_RIGHT) p -=1;
 
         if (p < 0) p = 0;
-        if (p > 2) p = 2;
+        if (p > (2+BONUSPAGE)) p = (2+BONUSPAGE);
 
         lv_indev_wait_release(lv_indev_get_act());
 
         //Serial.printf("Dir: %d\n", dir);
+        //Serial.printf("Page: %d\n", p);
         
         navigation_screen(p);
     }
@@ -80,6 +82,7 @@ digitalWrite(RGB_LED_B, true);
     wifi_init(); // Wifi initialisation
     WS_init(); // Websocket initialisation
     Init_data(); // Data initialisation
+    InitIPEngine(); // IP stuff
 
     Serial.println("Application ready");
 

@@ -23,7 +23,7 @@ static void TV_btn_event_handler(lv_event_t * e) {
     //lv_obj_clean(table);
     //uint16_t r = lv_table_get_row_cnt(table);
 
-    JsonArray JS;
+    JsonDocument doc;
     char buff[256] = {};
 
 #ifdef OLD_DOMOTICZ
@@ -33,7 +33,16 @@ static void TV_btn_event_handler(lv_event_t * e) {
     snprintf(buff, 256, "/json.htm?type=command&param=getdevices&filter=%s&used=true&order=Name",lv_label_get_text(label));
 #endif
 
-    if (!HTTPGETRequestWithReturn(buff, &JS, true)) return;
+    if (!HTTPGETRequestWithReturn(buff, &doc, true)) return;
+
+    JsonArray JS;
+    JS = doc["result"];
+
+    if (JS.isNull())
+    {
+        Serial.println("Json not available\n");
+        return;
+    }
     
     lv_table_set_row_cnt(table, JS.size()); // To prevent multiple memory re allocation
 
@@ -119,6 +128,7 @@ void info_panel_init(lv_obj_t* panel)
     lv_obj_t * cont = lv_obj_create(panel);
     lv_obj_set_size(cont, LV_PCT(100), LV_PCT(100));
     //lv_obj_center(cont);
+    // The tab is not center because of scrollbar.
     lv_obj_add_style(cont, &style_container, LV_PART_MAIN);
     //lv_obj_clear_flag( cont, LV_OBJ_FLAG_SCROLLABLE );
 
@@ -156,9 +166,10 @@ void info_panel_init(lv_obj_t* panel)
     lv_obj_set_style_text_font(table, &font3, 0);
     lv_obj_set_style_pad_all(table, 1, LV_PART_ITEMS);
     lv_obj_set_style_border_width(table, 1, LV_PART_ITEMS);
-    lv_table_set_col_width(table, 1, TFT_WIDTH / 3+25);
-    //lv_obj_set_size(table, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-    lv_table_set_col_width(table, 0, 2 * TFT_WIDTH / 3+25);
+    lv_obj_update_layout(cont);   /*Be sure the sizes are recalculated*/
+    lv_coord_t w = lv_obj_get_content_width(cont)-3;
+    lv_table_set_col_width(table, 1, w/3);
+    lv_table_set_col_width(table, 0, 2*w/3);
 
     lv_table_set_cell_value(table, 0, 0, "Name"); // Fisr column 
     lv_table_set_cell_value(table, 0, 1, "State"); // Second column

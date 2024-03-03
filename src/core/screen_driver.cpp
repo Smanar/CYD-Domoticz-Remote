@@ -27,6 +27,9 @@ static lv_color_t buf[TFT_WIDTH * TFT_HEIGHT / 10];
     #ifdef esp2432S028R
     #include "../drivers/esp32-2432S028R.h"
     #endif
+    #ifdef ESP32_2432S024C
+    #include "../drivers/esp32-2432S024C.h"
+    #endif
 
     LGFX tft;
     static LGFX_Sprite sprite(&tft);
@@ -96,9 +99,9 @@ lv_timer_t *screenSleepTimer;
 void touchscreen_calibrate(bool force)
 {
     if (global_config.screenCalibrated && !force)
-        {
-            return;
-        }
+    {
+        return;
+    }
 
     tft.fillScreen(TFT_BLACK);
     tft.setCursor(20, 140,2); // Not working without font ???
@@ -148,6 +151,19 @@ void touchscreen_calibrate(bool force)
 
     Serial.printf("Calibration coef: %.1f , %.1f\n", global_config.screenCalXMult,global_config.screenCalYMult);
     Serial.printf("Calibration offset: %.1f , %.1f\n", global_config.screenCalXOffset, global_config.screenCalYOffset);
+
+
+#if 0
+//Tool to test the touchpad, need to be disabled, only for debug purpose
+while (true)
+{
+    p = touchscreen.getPoint();
+    p.x = round((p.x * global_config.screenCalXMult) + global_config.screenCalXOffset);
+    p.y = round((p.y * global_config.screenCalYMult) + global_config.screenCalYOffset);
+
+    tft.drawFastHLine(p.x,p.y,2,TFT_RED);
+}
+#endif
 
     global_config.screenCalibrated = true;
     WriteGlobalConfig();

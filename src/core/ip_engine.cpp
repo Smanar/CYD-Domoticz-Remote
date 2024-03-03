@@ -10,6 +10,15 @@ static bool connect_ok = false;
 
 void Update_data(JsonObject RJson2);
 
+JsonDocument filter;
+void InitIPEngine(void)
+{
+    // The filter: it contains "true" for each value we want to keep
+    filter["result"][0]["Data"] = true;
+    filter["result"][0]["idx"] = true;
+    filter["result"][0]["Name"] = true;
+}
+
 
 bool verify_ip(){
     return HTTPGETRequestWithReturn("/json.htm?type=command&param=getServerTime",NULL);
@@ -23,7 +32,7 @@ bool HTTPGETRequest(char * url2)
 // IMPORTANT https://arduinojson.org/v6/how-to/use-arduinojson-with-httpclient/#how-to-parse-a-json-document-from-an-http-response
 // prevent issue DeserializationError::EmptyInput
 //https://github.com/bblanchon/ArduinoJson/issues/1705
-bool HTTPGETRequestWithReturn(const char * url2, JsonArray *JS, bool NeedFilter)
+bool HTTPGETRequestWithReturn(const char * url2, JsonDocument *doc, bool NeedFilter)
 {
     HTTPClient client;
     String url = "http://" + String(global_config.ServerHost) + ":" + String(global_config.ServerPort) + url2;
@@ -31,7 +40,7 @@ bool HTTPGETRequestWithReturn(const char * url2, JsonArray *JS, bool NeedFilter)
     try {
         Serial.println(url);
         client.useHTTP10(true); // Unfortunately, by using the underlying Stream, we bypass the code that handles chunked transfer encoding, so we must switch to HTTP version 1.0.
-        client.setTimeout(500);
+        client.setTimeout(1000);
         client.begin(url);
         httpCode = client.GET();
         if (httpCode != 200)
@@ -41,18 +50,8 @@ bool HTTPGETRequestWithReturn(const char * url2, JsonArray *JS, bool NeedFilter)
         }
 
         //if no need data return
-        if (!JS) return true;
+        if (!doc) return true;
 
-        //Some security
-        double buffer = 90000;
-        if (int(buffer*1.2) > ESP.getMaxAllocHeap())
-        {
-            //Limited by PSRAM ?
-            Serial.printf("Not enought Heap memory to parse json, Available %d, needed %f\n", ESP.getMaxAllocHeap(), buffer*1.2f);
-            return false;
-        }
-
-        DynamicJsonDocument doc(buffer);
         DeserializationError err;
 
         //Need to use filter here, domotocz is too much talkative
@@ -60,27 +59,20 @@ bool HTTPGETRequestWithReturn(const char * url2, JsonArray *JS, bool NeedFilter)
 
         if (NeedFilter)
         {
-            // The filter: it contains "true" for each value we want to keep
-            StaticJsonDocument<200> filter;
-            filter["result"][0]["Data"] = true;
-            filter["result"][0]["idx"] = true;
-            filter["result"][0]["Name"] = true;
-
-            err = deserializeJson(doc, client.getString(), DeserializationOption::Filter(filter));
+            err = deserializeJson(*doc, client.getString(), DeserializationOption::Filter(filter));
         }
         else
         {
             //err = deserializeJson(doc, client.getString());
-            err = deserializeJson(doc, client.getStream());
+            err = deserializeJson(*doc, client.getStream());
         }
 
         if (err)
         {
-
-            Serial.printf("JSON PARSE: %s\n", client.getString());
-
+            //Serial.printf("JSON PARSE: %s\n", client.getString());
             Serial.printf("Can't deserializeJson JSON : %s\n",err.c_str());
             Serial.printf("content Length : %d\n", client.getSize());
+            Serial.printf("Free memory : %d\n", ESP.getMaxAllocHeap());
             return false;
         }
 
@@ -95,14 +87,6 @@ bool HTTPGETRequestWithReturn(const char * url2, JsonArray *JS, bool NeedFilter)
         //Serial.printf("xxx %d\n", JS->size());
         //Serial.printf("Heap Memory Usable (Kb) %d , Max %d, Total %d\n", ESP.getMaxAllocHeap()/1000, ESP.getFreeHeap()/1000, ESP.getHeapSize()/1000); // 45044
         //Serial.printf("RAM Memory Free (Kb) %d , Total %d\n", ESP.getFreePsram()/1000, ESP.getPsramSize()/1000); // 4 M
-
-        *JS = doc["result"].as<JsonArray>();
-
-        if (!*JS)
-        {
-            Serial.println("Json not available\n");
-            return false;
-        }
 
         return true;
 
@@ -149,8 +133,8 @@ static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
 			//Serial.printf("[WSc] get text: %s\n", payload);
             if (length > 0)
             {
-                DynamicJsonDocument doc(4096);
-                //StaticJsonDocument<256> doc; // Si < 1ko
+
+                JsonDocument doc;
 
                 DeserializationError err = deserializeJson(doc, payload, length);
 
@@ -163,8 +147,7 @@ static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
                         if ((doc["event"] == "response") && (doc.containsKey("data")))
                         {
                             //On the request data is a string so need to be deserialized too
-                            //StaticJsonDocument<1024> doc2;
-                            DynamicJsonDocument doc2(4096);
+                            JsonDocument doc2;
                             deserializeJson(doc2, doc["data"].as<const char*>());
                             //JsonObject RJson = doc2.as<JsonObject>();
 
@@ -176,7 +159,7 @@ static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
                            //   Serial.println(keyValue.key().c_str());
                            //}
 
-                            JsonArray result = doc2.as<JsonObject>()["result"];
+                            JsonArray result = doc2["result"];
                             if (result)
                             {
                                 for (JsonObject a : result) {

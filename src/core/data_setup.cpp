@@ -9,8 +9,31 @@
 #define SIZEOF(arr) (sizeof(arr) / sizeof(*arr))
 
 Device myDevices[TOTAL_ICONX*TOTAL_ICONY];
+static char TmpBuffer[255]; // To prevent multiple re-alloc
+static int tab[24]; // Tab for graph
+#if BONUSPAGE > 0
+Device myDevicesP2[TOTAL_ICONX*TOTAL_ICONY];
+#endif
 
 void RefreshHomePage(void);
+
+char * Cleandata(const char *origin, const char *bonus = nullptr) 
+{
+    if (!origin) return TmpBuffer;
+
+    if (strncmp(origin, "Humidity ", 9) == 0) origin+=9;
+    strncpy(TmpBuffer, origin, 255);
+
+    if (bonus)
+    {
+        strncpy(TmpBuffer + strlen(origin), ";", 255 - strlen(origin));
+        strncpy(TmpBuffer + strlen(origin) + 1, bonus, 254 - strlen(origin));
+    }
+
+    for (int i = 0; i<strlen(TmpBuffer); i++) { if (TmpBuffer[i] == ';') TmpBuffer[i] = '\n';}
+
+    return TmpBuffer;
+}
 
 void Init_data(void)
 {
@@ -23,12 +46,16 @@ void Init_data(void)
             {
                 myDevices[i].used = true;
                 Serial.printf("Initialise Domoticz device id: %d , Name : %s\n", global_config.ListDevices[i], myDevices[i].name);
-                delay(100);
+                delay(50);
             }
-        }
-        else
-        {
-            myDevices[i].used = false;
+#if BONUSPAGE > 0
+            if (HttpInitDevice(&myDevicesP2[i], global_config.ListDevices[i]))
+            {
+                myDevicesP2[i].used = true;
+                Serial.printf("Initialise Domoticz device id: %d , Name : %s\n", global_config.ListDevices[i], myDevicesP2[i].name);
+                delay(50);
+            }
+#endif
         }
     }
 }
@@ -75,8 +102,16 @@ void Update_data(JsonObject RJson2)
 
     Serial.printf("Update HP device id: %d\n", ID);
 
-    //some cleaning
-    if (JSondata && strncmp(JSondata, "Humidity ", 9) == 0) JSondata+=9;
+    //Special device
+    char * data;
+    if (RJson2.containsKey("Rain"))
+    {
+        data = Cleandata(JSondata, RJson2["Rain"]);
+    }
+    else
+    {
+        data = Cleandata(JSondata);
+    }
 
     bool NeedUpdate = false;
 
@@ -85,17 +120,17 @@ void Update_data(JsonObject RJson2)
         myDevices[ID].level = JSonLevel;
         NeedUpdate = true;
     }
-    if (strcmp(JSondata, myDevices[ID].data) != 0)
+    if (strcmp(data, myDevices[ID].data) != 0)
     {
         //Use dynamic array, but only 1 time
-        if (strlen(JSondata) > myDevices[ID].lenData)
+        if (strlen(data) > myDevices[ID].lenData)
         {
             if (myDevices[ID].data) free(myDevices[ID].data);
-            myDevices[ID].data = (char*)malloc(strlen(JSondata) + 1);
-            myDevices[ID].lenData = strlen(JSondata);
+            myDevices[ID].data = (char*)malloc(strlen(data) + 1);
+            myDevices[ID].lenData = strlen(data);
         }
 
-        strncpy(myDevices[ID].data, JSondata, myDevices[ID].lenData + 1);
+        strncpy(myDevices[ID].data, data, myDevices[ID].lenData + 1);
         NeedUpdate = true;
     }
 
@@ -105,7 +140,7 @@ void Update_data(JsonObject RJson2)
         if (myDevices[ID].type == TYPE_WARNING)
         {
             // Force popup
-            Select_deviceHP(ID);
+            Select_deviceMemorised((void *)&myDevices[ID]);
         }
         else
         {
@@ -115,8 +150,6 @@ void Update_data(JsonObject RJson2)
 
 }
 
-
-static int tab[24];
 int * GetGraphValue(int type, int idx, int *min, int *max)
 {
 
@@ -143,16 +176,26 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
         case TYPE_PERCENT_SENSOR:
             url = url + "Percentage";
             break;
+        case TYPE_METEO:
+            url = url + "rain";
+            break;
         default:
             //not supported
             return nullptr;
     }
 
-    JsonArray JS;
+    JsonDocument doc;
     url = url + "&idx=" + String(idx) + "&range=day";
-    if (HTTPGETRequestWithReturn((char *)url.c_str(), &JS))
+    if (HTTPGETRequestWithReturn((char *)url.c_str(), &doc))
     {
-        if (!JS) return nullptr;
+        JsonArray JS;
+        JS = doc["result"];
+
+        if (JS.isNull())
+        {
+            Serial.println("Json not available\n");
+            return nullptr;
+        }
 
         double v; // value
         int hour;
@@ -186,9 +229,10 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
 
             if (type == TYPE_TEMPERATURE) v = i["te"];
             if (type == TYPE_HUMIDITY) v = i["hu"];
-            if (type == TYPE_CONSUMPTION) v = i["u"];
+            if (type == TYPE_CONSUMPTION) v = i["eu"];
             if (type == TYPE_POWER) v = i["u"];
             if (type == TYPE_PERCENT_SENSOR) v = i["v"];
+            if (type == TYPE_METEO) v = i["mm"];
 
             // Because of decimal values
             if (type == TYPE_TEMPERATURE) v = v *10;
@@ -221,16 +265,23 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
 
 bool HttpInitDevice(Device *d, int id)
 {
-    JsonArray JS;
+    JsonDocument doc;
 #ifdef OLD_DOMOTICZ
     String url = "/json.htm?type=devices&rid=" + String(id);
 #else
     String url = "/json.htm?type=command&param=getdevices&rid=" + String(id);
 #endif
 
-    if (!HTTPGETRequestWithReturn((char *)url.c_str(), &JS)) return false;
+    if (!HTTPGETRequestWithReturn((char *)url.c_str(), &doc)) return false;
 
-    if (!JS) return false;
+    JsonArray JS;
+    JS = doc["result"];
+
+    if (JS.isNull())
+    {
+        Serial.println("Json not available\n");
+        return false;
+    }
 
     for (auto i : JS)  // Scan the array (only 1)
     {
@@ -254,20 +305,25 @@ bool HttpInitDevice(Device *d, int id)
             return false;
         }
 
-        //do some cleaning
-        if (JSondata && strncmp(JSondata, "Humidity ", 9) == 0) JSondata+=9; // <<< Guru Meditation
-
-        //Use dynamic array, but only 1 time
-        if (strlen(JSondata) > d->lenData)
+        //Special device
+        char * data;
+        if (i.containsKey("Rain"))
+        {
+           data = Cleandata(JSondata, i["Rain"]);
+        }
+        else
+        {
+            data = Cleandata(JSondata);
+        }
+        //Use dynamic array if needed, but only 1 time if needed to prevent fragmentation
+        if (strlen(data) > d->lenData)
         {
             if (d->data) free(d->data);
-            d->data = (char*)malloc(strlen(JSondata) + 1);
-            //Serial.printf("Re-alloc from %d to %d\n", d->lenData, strlen(JSondata));
-            d->lenData = strlen(JSondata);
-           
+            d->data = (char*)malloc(strlen(data) + 1);
+            //Serial.printf("Re-alloc from %d to %d\n", d->lenData, strlen(data));
+            d->lenData = strlen(data);
         }
-        strncpy(d->data, JSondata, d->lenData + 1);
-        //d->data[d->lenData] = '\0';
+        strncpy(d->data, data, d->lenData + 1);
 
         if (d->ID) free(d->ID);
         d->ID = (char*)malloc(strlen(i["ID"]) + 1);
@@ -329,7 +385,6 @@ bool HttpInitDevice(Device *d, int id)
                     d->type = TYPE_SWITCH_SENSOR;
                 }
             }
-
 
         }
         else if (strcmp(type, "Color Switch") == 0)
