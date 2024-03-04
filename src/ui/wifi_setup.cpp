@@ -1,8 +1,8 @@
 #include "lvgl.h"
+#include "WiFi.h"
 #include "wifi_setup.h"
 #include "../conf/global_config.h"
 
-#include "WiFi.h"
 void wifi_init_inner();
 
 static void reset_btn_event_handler(lv_event_t * e) {
@@ -165,13 +165,13 @@ void wifi_init(){
         lv_timer_handler();
         lv_task_handler();
     }
-    Serial.println("Wifi connected");
+    Serial.println(F("Wifi connected"));
 }
 
 void wifi_ok(){
     if (WiFi.status() != WL_CONNECTED)
     {
-        Serial.println("Wifi disconnection, restart");
+        Serial.println(F("Wifi disconnection, restart"));
         ESP.restart();
     }
 }

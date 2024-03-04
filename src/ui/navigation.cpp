@@ -1,9 +1,10 @@
+#include <HTTPClient.h>
+
 #include "lvgl.h"
+#include "navigation.h"
 #include "panels/panel.h"
 #include "../core/data_setup.h"
-#include "navigation.h"
-#include "../core/data_setup.h"
-#include <HTTPClient.h>
+
 
 static lv_obj_t * tv;
 static int actived_panel = 0;

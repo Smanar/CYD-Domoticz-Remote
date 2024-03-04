@@ -106,5 +106,4 @@ void tools_panel_init(lv_obj_t* panel)
     lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_LEFT, 0);
     lv_obj_align_to(label3, label2, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
 
-
 }

@@ -1,6 +1,5 @@
 #include <HTTPClient.h>
 #include <WebSocketsClient.h>
-#include <WebSocketsClient.h>
 
 #include "../conf/global_config.h"
 #include "ip_engine.h"
@@ -8,8 +7,11 @@
 static WebSocketsClient WSclient;
 static bool connect_ok = false;
 
+extern char TmpBuffer[];
+
 void Update_data(JsonObject RJson2);
 
+//Filter json
 JsonDocument filter;
 void InitIPEngine(void)
 {
@@ -18,7 +20,6 @@ void InitIPEngine(void)
     filter["result"][0]["idx"] = true;
     filter["result"][0]["Name"] = true;
 }
-
 
 bool verify_ip(){
     return HTTPGETRequestWithReturn("/json.htm?type=command&param=getServerTime",NULL);
@@ -35,17 +36,18 @@ bool HTTPGETRequest(char * url2)
 bool HTTPGETRequestWithReturn(const char * url2, JsonDocument *doc, bool NeedFilter)
 {
     HTTPClient client;
-    String url = "http://" + String(global_config.ServerHost) + ":" + String(global_config.ServerPort) + url2;
+    snprintf(TmpBuffer, 150, "http://%s:%d%s",global_config.ServerHost, global_config.ServerPort, url2);
+    //String url = "http://" + String(global_config.ServerHost) + ":" + String(global_config.ServerPort) + url2;
     int httpCode;
     try {
-        Serial.println(url);
+        Serial.println(TmpBuffer);
         client.useHTTP10(true); // Unfortunately, by using the underlying Stream, we bypass the code that handles chunked transfer encoding, so we must switch to HTTP version 1.0.
         client.setTimeout(1000);
-        client.begin(url);
+        client.begin(TmpBuffer);
         httpCode = client.GET();
         if (httpCode != 200)
         {
-             Serial.println("Failed to connect 2");
+             Serial.println(F("Failed to connect 2"));
              return false;
         }
 
@@ -92,7 +94,7 @@ bool HTTPGETRequestWithReturn(const char * url2, JsonDocument *doc, bool NeedFil
 
     }
     catch (...) {
-        Serial.println("Failed to connect");
+        Serial.println(F("Failed to connect"));
         return false;
     }
 
@@ -205,7 +207,7 @@ void WS_Run(void)
 {
     connect_ok = false;
 
-    Serial.println("Connecting to Webserver");
+    Serial.println(F("Connecting to Webserver"));
     //Serial.printf("Connecting to %s%s:%d\n",global_config.ServerHost, "/json", global_config.ServerPort);
 
     // server address, port and URL

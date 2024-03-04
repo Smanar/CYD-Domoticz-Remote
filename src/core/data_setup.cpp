@@ -1,18 +1,20 @@
+#include <ArduinoJson.h>
 #include "../src/conf/global_config.h"
-#include "data_setup.h"
 #include "../ui/http_setup.h"
 #include "../ui/panels/panel.h"
 #include "ip_engine.h"
 #include "base64.hpp"
-#include <ArduinoJson.h>
+#include "data_setup.h"
+
 
 #define SIZEOF(arr) (sizeof(arr) / sizeof(*arr))
 
 Device myDevices[TOTAL_ICONX*TOTAL_ICONY];
-static char TmpBuffer[255]; // To prevent multiple re-alloc
+char TmpBuffer[255]; // To prevent multiple re-alloc
 static int tab[24]; // Tab for graph
 #if BONUSPAGE > 0
-Device myDevicesP2[TOTAL_ICONX*TOTAL_ICONY];
+Device myDevicesP2[TOTAL_ICONX*TOTAL_ICONY*BONUSPAGE];
+const static unsigned short TabP2[] = {72, 80, 34, 36, 28, 35, 57, 89, 45};
 #endif
 
 void RefreshHomePage(void);
@@ -30,7 +32,7 @@ char * Cleandata(const char *origin, const char *bonus = nullptr)
         strncpy(TmpBuffer + strlen(origin) + 1, bonus, 254 - strlen(origin));
     }
 
-    for (int i = 0; i<strlen(TmpBuffer); i++) { if (TmpBuffer[i] == ';') TmpBuffer[i] = '\n';}
+    for (int i = 0; i<strlen(TmpBuffer); i++) { if ((TmpBuffer[i] == ';') || (TmpBuffer[i] == ',')) TmpBuffer[i] = '\n';}
 
     return TmpBuffer;
 }
@@ -48,16 +50,25 @@ void Init_data(void)
                 Serial.printf("Initialise Domoticz device id: %d , Name : %s\n", global_config.ListDevices[i], myDevices[i].name);
                 delay(50);
             }
-#if BONUSPAGE > 0
-            if (HttpInitDevice(&myDevicesP2[i], global_config.ListDevices[i]))
-            {
-                myDevicesP2[i].used = true;
-                Serial.printf("Initialise Domoticz device id: %d , Name : %s\n", global_config.ListDevices[i], myDevicesP2[i].name);
-                delay(50);
-            }
-#endif
         }
     }
+
+#if BONUSPAGE > 0
+    for (int i = 0; i < (TOTAL_ICONX*TOTAL_ICONY*BONUSPAGE); i = i + 1)
+    {
+
+        if (i < SIZEOF(TabP2))
+        {
+            if (HttpInitDevice(&myDevicesP2[i], TabP2[i]))
+            {
+                myDevicesP2[i].used = true;
+                Serial.printf("Initialise Domoticz device id: %d , Name : %s\n", TabP2[i], myDevicesP2[i].name);
+                delay(50);
+            }
+        }
+    }
+#endif
+
 }
 
 void FillDeviceData(Device *d, int idx)
@@ -107,6 +118,11 @@ void Update_data(JsonObject RJson2)
     if (RJson2.containsKey("Rain"))
     {
         data = Cleandata(JSondata, RJson2["Rain"]);
+    }
+    else if ((myDevices[ID].type == TYPE_TEXT) || (myDevices[ID].type == TYPE_WARNING))
+    {
+        //Keep it unchnaged
+        data = (char *)JSondata;
     }
     else
     {
@@ -171,6 +187,7 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
         case TYPE_CONSUMPTION:
         case TYPE_POWER:
         case TYPE_LUX:
+        case TYPE_AIR_QUALITY:
             url = url + "counter";
             break;
         case TYPE_PERCENT_SENSOR:
@@ -193,9 +210,11 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
 
         if (JS.isNull())
         {
-            Serial.println("Json not available\n");
+            Serial.println(F("Json not available\n"));
             return nullptr;
         }
+
+        std::fill_n(tab, 24, 0);
 
         double v; // value
         int hour;
@@ -279,7 +298,7 @@ bool HttpInitDevice(Device *d, int id)
 
     if (JS.isNull())
     {
-        Serial.println("Json not available\n");
+        Serial.println(F("Json not available\n"));
         return false;
     }
 
@@ -301,29 +320,9 @@ bool HttpInitDevice(Device *d, int id)
 
         if (!type || !subtype || !JSondata)
         {
-            Serial.println("Json incomplete");
+            Serial.println(F("Json incomplete"));
             return false;
         }
-
-        //Special device
-        char * data;
-        if (i.containsKey("Rain"))
-        {
-           data = Cleandata(JSondata, i["Rain"]);
-        }
-        else
-        {
-            data = Cleandata(JSondata);
-        }
-        //Use dynamic array if needed, but only 1 time if needed to prevent fragmentation
-        if (strlen(data) > d->lenData)
-        {
-            if (d->data) free(d->data);
-            d->data = (char*)malloc(strlen(data) + 1);
-            //Serial.printf("Re-alloc from %d to %d\n", d->lenData, strlen(data));
-            d->lenData = strlen(data);
-        }
-        strncpy(d->data, data, d->lenData + 1);
 
         if (d->ID) free(d->ID);
         d->ID = (char*)malloc(strlen(i["ID"]) + 1);
@@ -411,6 +410,10 @@ bool HttpInitDevice(Device *d, int id)
         {
             d->type = TYPE_CONSUMPTION;
         }
+        else if (strcmp(type, "Air Quality") == 0)
+        {
+            d->type = TYPE_AIR_QUALITY;
+        }
         else if (strcmp(type, "General") == 0)
         {
             d->type = TYPE_SWITCH_SENSOR;
@@ -441,6 +444,31 @@ bool HttpInitDevice(Device *d, int id)
                 d->type = TYPE_SPEAKER;
             }
         }
+
+        //Special device
+        char * data;
+        if (i.containsKey("Rain"))
+        {
+           data = Cleandata(JSondata, i["Rain"]);
+        }
+        else if ((d->type == TYPE_TEXT) || (d->type == TYPE_WARNING))
+        {
+            //Keep it unchnaged
+            data = (char *)JSondata;
+        }
+        else
+        {
+            data = Cleandata(JSondata);
+        }
+        //Use dynamic array if needed, but only 1 time if needed to prevent fragmentation
+        if (strlen(data) > d->lenData)
+        {
+            if (d->data) free(d->data);
+            d->data = (char*)malloc(strlen(data) + 1);
+            //Serial.printf("Re-alloc from %d to %d\n", d->lenData, strlen(data));
+            d->lenData = strlen(data);
+        }
+        strncpy(d->data, data, d->lenData + 1);
 
     }
 

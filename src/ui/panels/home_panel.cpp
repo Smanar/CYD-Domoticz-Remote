@@ -1,11 +1,12 @@
 #include <lvgl.h>
+#include <HTTPClient.h>
+
 #include "panel.h"
 #include "../../core/data_setup.h"
 #include "../../conf/global_config.h"
 #include "../main_ui.h"
 
-#include <HardwareSerial.h>
-#include <HTTPClient.h>
+
 
 extern lv_style_t style_shadow;
 
@@ -17,7 +18,6 @@ int Size_w = int(TFT_HEIGHT/TOTAL_ICONX) -  TOTAL_OFFSET_X;
 int Size_h = int(TFT_WIDTH/TOTAL_ICONY) - TOTAL_OFFSET_Y;
 //Icon size
 //int Size_icon = 35;
-
 
 static void btn_event_cb(lv_event_t * e)
 {
@@ -76,7 +76,7 @@ static void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int 
     lv_label_set_text(label2, desc);                                /*Set the labels text*/
     //lv_obj_center(label2);
     //lv_obj_set_size(label2, Size_w-10, 30);
-    lv_obj_set_width(label2, Size_w-10);
+    lv_obj_set_width(label2, Size_w);
     lv_obj_align_to(label2, Button_icon,  LV_ALIGN_BOTTOM_MID, 0, 10); 
 
 }
@@ -109,13 +109,17 @@ static void Widget_sensor(lv_obj_t* panel, char* desc, char* value, int x, int y
      // Does _local_ is working here ?
     lv_obj_t * label = lv_label_create(Button_icon);
     lv_obj_set_style_text_font(label, &font1, 0);
-    lv_label_set_text(label, value);
-#if DEVICE_SIZE == 1
-    lv_obj_align_to(label, img,  LV_ALIGN_OUT_RIGHT_MID, 0, 0); //Need to use absolute method
-#else
-    lv_obj_align_to(label, img,  LV_ALIGN_OUT_RIGHT_MID, 20, 0); //Need to use absolute method
-#endif
     lv_obj_set_style_text_color(label, color, 0);
+    lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_RIGHT, 0);
+    lv_obj_set_width(label, Size_w /2);
+#if DEVICE_SIZE == 1
+    lv_obj_set_height(label, 30);
+#else
+    lv_obj_set_height(label, 40);
+#endif
+    lv_obj_align_to(label, img,  LV_ALIGN_OUT_RIGHT_TOP, 0, 0);
+    //lv_obj_set_style_border_width(label, 5, 0); // To make it visible
+    lv_label_set_text(label, value);
 
     /*Create description*/
     lv_obj_t * label2 = lv_label_create(Button_icon);
@@ -124,7 +128,7 @@ static void Widget_sensor(lv_obj_t* panel, char* desc, char* value, int x, int y
     lv_obj_set_style_text_font(label2, &font2, 0);
     lv_label_set_text(label2, desc);
     //lv_obj_set_size(label2, Size_w-10, 30);
-    lv_obj_set_width(label2, Size_w-10);
+    lv_obj_set_width(label2, Size_w);
     lv_obj_align_to(label2, Button_icon,  LV_ALIGN_BOTTOM_MID, 0, 10); 
 }
 
@@ -156,6 +160,7 @@ void home_panel_init(lv_obj_t* panel, Device d[])
                 case TYPE_METEO:
                 case TYPE_VALUE_SENSOR:
                 case TYPE_SETPOINT:
+                case TYPE_AIR_QUALITY:
                 {
                     Widget_sensor(panel, d[i].name, d[i].data, cx , cy , Size_w , Size_h, device_color, &d[i],icon);
                 }
