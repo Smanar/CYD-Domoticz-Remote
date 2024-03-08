@@ -1,4 +1,5 @@
 #include <Esp.h>
+
 #include "conf/global_config.h"
 #include "core/screen_driver.h"
 #include "ui/wifi_setup.h"
@@ -26,7 +27,7 @@ static void scr_event_cb(lv_event_t * e)
 {
     int p = GetActivePanel();
 
-    if (p < (3+BONUSPAGE))
+    if (p < MAX_PANEL_SCROLL)
     {
 
         lv_dir_t dir = lv_indev_get_gesture_dir(lv_indev_get_act());
@@ -34,7 +35,7 @@ static void scr_event_cb(lv_event_t * e)
         if (dir == LV_DIR_RIGHT) p -=1;
 
         if (p < 0) p = 0;
-        if (p > (2+BONUSPAGE)) p = (2+BONUSPAGE);
+        if (p >= MAX_PANEL_SCROLL) p = MAX_PANEL_SCROLL - 1;
 
         lv_indev_wait_release(lv_indev_get_act());
 
@@ -47,10 +48,10 @@ static void scr_event_cb(lv_event_t * e)
 
 void setup() {
     Serial.begin(115200);
-    Serial.println("Starting application");
+    Serial.println(F("Starting application"));
     LoadGlobalConfig();
     screen_setup();
-    Serial.println("Screen init done");
+    Serial.println(F("Screen init done"));
 
     //Personnal Settings to don't have to set them at every reset, need to be removed
     #if FORCE_CONFIG
@@ -61,7 +62,7 @@ void setup() {
         global_config.wifiConfigured = true;
         global_config.ipConfigured = true;
 
-        const static int t[] = {37, 75, 16, 36, 28, 35, 57, 89, 45};
+        const static unsigned short t[] = {37, 75, 16, 36, 28, 35, 57, 89, 45};
         for (int i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++)
             global_config.ListDevices[i] = t[i];
         WriteGlobalConfig();
@@ -84,7 +85,7 @@ digitalWrite(RGB_LED_B, true);
     Init_data(); // Data initialisation
     InitIPEngine(); // IP stuff
 
-    Serial.println("Application ready");
+    Serial.println(F("Application ready"));
 
     //Set defaut Style
     nav_style_setup();
@@ -97,7 +98,7 @@ digitalWrite(RGB_LED_B, true);
     lv_obj_clear_flag(lv_scr_act(), LV_OBJ_FLAG_SCROLLABLE);
 
     //Start on Home panel
-    navigation_screen(1);
+    navigation_screen(HOMEPAGE_PANEL);
 
 }
 

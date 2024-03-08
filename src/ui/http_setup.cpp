@@ -1,6 +1,6 @@
+#include "lvgl.h"
 #include "http_setup.h"
 #include "../conf/global_config.h"
-#include "lvgl.h"
 #include "../core/ip_engine.h"
 
 static lv_obj_t * ipEntry;
@@ -112,7 +112,7 @@ void WS_init()
         if (!WS_Running && global_config.ipConfigured && (millis() - last_data_update_ip) > data_update_interval_ip)
         {
 
-            Serial.println("Waiting");
+            Serial.println(F("Waiting"));
 
             //connect_ok = verify_ip();
             //delay(1000);

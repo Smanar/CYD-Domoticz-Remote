@@ -21,7 +21,7 @@ static void tools_btn_event_handler(lv_event_t * e)
 
     if (b == 1)
     {
-        navigation_screen(6);
+        navigation_screen(SETTING_PANEL);
     }
     if (b == 2) ESP.restart();
 
@@ -105,6 +105,5 @@ void tools_panel_init(lv_obj_t* panel)
     lv_obj_set_size(label3, LV_PCT(100), 40);
     lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_LEFT, 0);
     lv_obj_align_to(label3, label2, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
-
 
 }
