@@ -19,7 +19,7 @@ const static unsigned short TabP2[] = {72, 80, 34, // Page 1, 3* 3 icons
                                        57, 89, 45,
                                        28, 80, 45, // Page 2, 3* 3 icons
                                        36, 89, 35,
-                                       57, 89, 45,};
+                                       57, 89, 45 };
 #endif
 
 void RefreshHomePage(void);
