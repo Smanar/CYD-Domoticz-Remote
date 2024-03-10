@@ -223,15 +223,15 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
         std::fill_n(tab, 24, 0);
 
         double v; // value
-        int hour;
+        short hour;
         const char * c = NULL;
 
         // Value are not constant so can be evry 15 mn or 20 mn
-        int s = JS.size();
+        //int s = JS.size();
 
-        int j,k = 0;
-        int actualhour = 0;
-        int diff = 0;
+        short j,k = 0;
+        short actualhour = 0;
+        short diff = 0;
 
         //Just need to memorise the last 24 values
 
@@ -252,12 +252,27 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
 
             actualhour = hour;
 
-            if (type == TYPE_TEMPERATURE) v = i["te"];
-            if (type == TYPE_HUMIDITY) v = i["hu"];
-            if (type == TYPE_CONSUMPTION) v = i["eu"];
-            if (type == TYPE_POWER) v = i["u"];
-            if (type == TYPE_PERCENT_SENSOR) v = i["v"];
-            if (type == TYPE_METEO) v = i["mm"];
+            switch (type)
+            {
+                case TYPE_TEMPERATURE:
+                    v = i["te"];
+                    break;
+                case TYPE_HUMIDITY:
+                    v = i["hu"];
+                    break;
+                case TYPE_CONSUMPTION:
+                    v = i["eu"];
+                    break;
+                case TYPE_POWER:
+                    v = i["u"];
+                    break;
+                case TYPE_PERCENT_SENSOR:
+                    v = i["v"];
+                    break;
+                case TYPE_METEO:
+                    v = i["mm"];
+                    break;
+            }
 
             // Because of decimal values
             if (type == TYPE_TEMPERATURE) v = v *10;
