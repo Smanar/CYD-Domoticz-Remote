@@ -79,10 +79,13 @@ digitalWrite(RGB_LED_G, true);
 digitalWrite(RGB_LED_B, true);
 
 #endif
-    
+    Serial.println(F("Debug 1\n"));
     wifi_init(); // Wifi initialisation
+    Serial.println(F("Debug 2\n"));
     WS_init(); // Websocket initialisation
+    Serial.println(F("Debug 3\n"));
     Init_data(); // Data initialisation
+    Serial.println(F("Debug 4\n"));
     InitIPEngine(); // IP stuff
 
     Serial.println(F("Application ready"));
