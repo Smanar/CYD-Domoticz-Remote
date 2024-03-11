@@ -178,6 +178,5 @@ Arduino_ESP32RGBPanel* rgbpanel = new Arduino_ESP32RGBPanel(
     TFT_HSYNC_PULSE_WIDTH, TFT_HSYNC_BACK_PORCH, TFT_VSYNC_POLARITY, TFT_VSYNC_FRONT_PORCH, TFT_VSYNC_PULSE_WIDTH,
     TFT_VSYNC_BACK_PORCH);
 
-Arduino_GFX* Display = new Arduino_RGB_Display(480, 480, rgbpanel, 0 /* rotation */, TFT_AUTO_FLUSH, bus, TFT_RST,
+Arduino_RGB_Display tft = Arduino_RGB_Display(480, 480, rgbpanel, 0 /* rotation */, TFT_AUTO_FLUSH, bus, TFT_RST,
                               st7701_4848S040_init_operations, sizeof(st7701_4848S040_init_operations));
-

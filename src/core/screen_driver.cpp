@@ -14,7 +14,9 @@ static lv_color_t buf[TFT_WIDTH * TFT_HEIGHT / 10];
     static TFT_eSPI tft = TFT_eSPI();
 
     //Needed for this driver
-    #define XPT2046
+#ifndef TOUCH_XPT2046
+    #define TOUCH_XPT2046
+    #endif
 #endif
 
 #ifdef LOVYANGFX
@@ -40,34 +42,13 @@ static lv_color_t buf[TFT_WIDTH * TFT_HEIGHT / 10];
     #ifdef ESP32_4848S040
     #include "../drivers/esp32-4848S040.h"
     #endif
-
-    class MyTFT
-    {
-        public:
-        MyTFT(Arduino_GFX *d) {this->p = d;}
-        bool init() {return p->begin();}
-        void setBrightness(byte b) {return;}
-        void fillScreen(uint16_t color) {p->fillScreen(color);}
-        void invertDisplay(bool b) {return;}
-        void setTextColor(uint16_t c, uint16_t c2) {p->setTextColor(c);}
-        void setTextSize(uint8_t s) {p->setTextSize(s);}
-        void drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color) {p->drawFastHLine(x, y, w, color);}
-        void drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color) {p->drawFastVLine(x, y, h, color);}
-        void startWrite() {return;}
-        void endWrite() {return;}
-        void setCursor(int16_t x, int16_t y, int font) {p->setCursor(x,y);}
-        void draw16bitRGBBitmap(int16_t x, int16_t y, const uint16_t bitmap[], int16_t w, int16_t h) { p->draw16bitRGBBitmap(x, y, bitmap, w, h);}
-        size_t println(char *c) {return p->println(c);}
-
-        private:
-        Arduino_GFX *p;
-    };
-
-    MyTFT tft(Display);
+    #ifdef esp2432S028R
+    #include "../drivers/esp32-2432S028R(gfx).h"
+    #endif
 
 #endif
 
-#ifdef XPT2046
+#ifdef TOUCH_XPT2046
     #define XPT2046_IRQ 36
     #define XPT2046_MOSI 32
     #define XPT2046_MISO 39
@@ -77,11 +58,11 @@ static lv_color_t buf[TFT_WIDTH * TFT_HEIGHT / 10];
 #endif
 
 
-#ifdef XPT2046
+#ifdef TOUCH_XPT2046
     SPIClass touchscreen_spi = SPIClass(HSPI);
     XPT2046_Touchscreen touchscreen(XPT2046_CS, XPT2046_IRQ);
 #endif
-#ifdef LOVYANTOUCH
+#ifdef TOUCH_LOVYAN
     class TS_Point
     {
         public:
@@ -127,45 +108,110 @@ static lv_color_t buf[TFT_WIDTH * TFT_HEIGHT / 10];
 #include <Wire.h>
 #include "Goodix.h"
 
+//#include "touch_driver.h" // base class
+//#include "touch_helper.h" // i2c scanner
+
 static Goodix touch = Goodix();
 
-    class TS_Point
-    {
-        public:
-            int x, y;
-            TS_Point() : x(0), y(0) {}
-            TS_Point(int x, int y) : x(x), y(y) {}
-    };
-
-    class _TC
-    {
+class TS_Point
+{
     public:
-        bool touched();
-        bool tirqTouched();
-        TS_Point getPoint();
-    private:
-        uint16_t touchX, touchY;
-        TS_Point p;
-    };
+        int x, y;
+        TS_Point() : x(0), y(0) {}
+        TS_Point(int x, int y) : x(x), y(y) {}
+};
 
-    bool _TC::touched(void)
+class _TC
+{
+public:
+    _TC();
+    bool touched();
+    bool tirqTouched();
+    TS_Point getPoint();
+private:
+    uint16_t touchX, touchY;
+    TS_Point p;
+};
+
+_TC::_TC()
+{
+
+    Wire.begin(TOUCH_SDA, TOUCH_SCL, (uint32_t)I2C_TOUCH_FREQUENCY);
+    //touch.setHandler(GT911_setXY); // not used
+    GTInfo* info;
+
+    if(touch.begin(TOUCH_IRQ, TOUCH_RST, I2C_TOUCH_ADDRESS))
     {
-        //return tft.getTouch( &this->touchX, &this->touchY );
+        info = touch.readInfo();
+        if(info->xResolution > 0 && info->yResolution > 0) goto found;
+    }
+    
+#if TOUCH_IRQ == -1
+    // Probe both addresses if IRQ is not connected
+    for(uint8_t i = 0; i < 4; i++)
+        if(touch.begin(TOUCH_IRQ, TOUCH_RST, i < 2 ? 0x5d : 0x14)) {
+            info = touch.readInfo();
+            if(info->xResolution > 0 && info->yResolution > 0) goto found;
+        }
+#endif
+
+found:
+    if(info->xResolution != 0 && info->yResolution != 0) {
+        Serial.printf("Driver GT911 started: (%dx%d)\n", info->xResolution, info->yResolution);
+        // uint8_t len = touch.fwResolution(480, 272);
+    } else {
+        Serial.printf("Driver GT911 failed\n");
     }
 
-    bool _TC::tirqTouched(void)
-    {
-        //return tft.getTouch( &this->touchX, &this->touchY );
+    // Do it again ?
+    Wire.begin(TOUCH_SDA, TOUCH_SCL, (uint32_t)I2C_TOUCH_FREQUENCY);
+
+    Serial.println("Check ACK on addr request on 0x");
+    Serial.println(touch.i2cAddr, HEX);
+
+    Wire.beginTransmission(touch.i2cAddr);  
+    int error = Wire.endTransmission();
+    if (error == 0) {    
+        Serial.println(": SUCCESS");   
+    } else {
+        Serial.print(": ERROR #");
+        Serial.println(error);
     }
 
-    TS_Point _TC::getPoint(void)
+}
+
+
+bool _TC::touched(void)
+{
+    static GTPoint points[5];
+    //GTPoint *points
+
+
+    if(touch.readInput((uint8_t*)&points) > 0)
     {
-        this->p.x = touchX;
-        this->p.y = touchY;
-        return this->p;
+        this->p.x = points[0].x;
+        this->p.y = points[0].y;
+
+        return true;
     }
 
-    _TC touchscreen;
+    return false;
+}
+
+bool _TC::tirqTouched(void)
+{
+    //return tft.getTouch( &this->touchX, &this->touchY );
+    return false;
+}
+
+TS_Point _TC::getPoint(void)
+{
+    this->p.x = touchX;
+    this->p.y = touchY;
+    return this->p;
+}
+
+_TC touchscreen;
 
 #endif
 
@@ -184,9 +230,15 @@ void touchscreen_calibrate(bool force)
     }
 
     tft.fillScreen(TFT_BLACK);
-    tft.setCursor(20, 140, 2); // Not working without font ???
-    tft.setTextColor(TFT_WHITE,TFT_BLACK);
+#ifdef ARDUINO_GFX
+    //tft.setFont(2);
+#else
+    tft.setTextFont(2); // Needed on some library
+#endif
     tft.setTextSize(2);
+    tft.setCursor(20, 140);
+    tft.setTextColor(TFT_WHITE,TFT_BLACK);
+
     tft.println("Calibrate Screen");
 
     TS_Point p;
@@ -252,10 +304,14 @@ while (true)
 
 void screen_setBrightness(byte brightness)
 {
-#ifdef TFT_BL
-analogWrite(TFT_BL, brightness);
+#ifdef ARDUINO_GFX
+    return; // Not supported by this lib
 #else
-tft.setBrightness(brightness);
+    #ifdef TFT_BL
+    analogWrite(TFT_BL, brightness);
+    #else
+    tft.setBrightness(brightness);
+    #endif
 #endif
 }
 
@@ -388,7 +444,7 @@ void set_invert_display(){
 
 void screen_setup()
 {
-#ifdef XPT2046
+#ifdef TOUCH_XPT2046
     touchscreen_spi.begin(XPT2046_CLK, XPT2046_MISO, XPT2046_MOSI, XPT2046_CS);
     touchscreen.begin(touchscreen_spi);
     touchscreen.setRotation(global_config.rotateScreen ? 3 : 1);
@@ -400,8 +456,11 @@ void screen_setup()
 #endif
 
     lv_init();
-
+#ifdef ARDUINO_GFX
+    tft.begin();
+#else
     tft.init();
+#endif
 #ifdef TFT_ESPI
     tft.setRotation(global_config.rotateScreen ? 3 : 1);
 #else
