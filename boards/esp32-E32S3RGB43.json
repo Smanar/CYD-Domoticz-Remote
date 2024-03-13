@@ -1,7 +1,8 @@
 {
   "build": {
-    "arduino": {
-      "ldscript": "esp32_out.ld"
+    "arduino":{
+      "ldscript": "esp32s3_out.ld",
+      "partitions": "default_16MB.csv"
     },
     "extends":"arduino_esp32_v2",
     "core": "esp32",
@@ -66,11 +67,11 @@
   ],
   "name": "esp32-2432S028R",
   "upload": {
-    "flash_size": "8MB",
+    "flash_size": "16MB",
     "maximum_ram_size": 327680,
-    "maximum_size": 4194304,
+    "maximum_size": 16777216,
     "require_upload_port": true,
-    "speed": 921600
+    "speed": 460800
   },
   "url": "https://www.makerfabs.com/esp32-s3-parallel-tft-with-touch-4-3-inch.html",
   "vendor": "Makerfabs"

@@ -12,18 +12,13 @@ static lv_color_t buf[TFT_WIDTH * TFT_HEIGHT / 10];
 #ifdef TFT_ESPI
     #include <TFT_eSPI.h>
     static TFT_eSPI tft = TFT_eSPI();
-
-    //Needed for this driver
-#ifndef TOUCH_XPT2046
-    #define TOUCH_XPT2046
-    #endif
 #endif
 
 #ifdef LOVYANGFX
     #include <LovyanGFX.hpp>
 
     // Driver by device
-    #ifdef esp32E32S3RGB43
+    #ifdef ESP32_E32S3RGB43
     #include "../drivers/esp32-E32S3RGB43.h"
     #endif
     #ifdef esp2432S028R
@@ -31,6 +26,9 @@ static lv_color_t buf[TFT_WIDTH * TFT_HEIGHT / 10];
     #endif
     #ifdef ESP32_2432S024C
     #include "../drivers/esp32-2432S024C.h"
+    #endif
+    #ifdef ESP32_8048S043C
+    #include "../drivers/esp32-8048S043C.h"
     #endif
 
     LGFX tft;
