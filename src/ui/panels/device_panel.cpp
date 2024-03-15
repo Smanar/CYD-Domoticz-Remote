@@ -169,8 +169,6 @@ lv_color_t Getcolor(int type)
 {
     switch (type)
     {
-        case TYPE_TEMPERATURE:
-        case TYPE_HUMIDITY:
         case TYPE_SWITCH_SENSOR:
         case TYPE_LUX:
         case TYPE_PERCENT_SENSOR:
@@ -178,6 +176,8 @@ lv_color_t Getcolor(int type)
         case TYPE_AIR_QUALITY:
             return LV_COLOR_MAKE(0x00, 0x7F, 0xFF);
         case TYPE_METEO:
+        case TYPE_TEMPERATURE:
+        case TYPE_HUMIDITY:
             return LV_COLOR_MAKE(0xFF, 0x33, 0xFF);
         case TYPE_WARNING:
         case TYPE_TEXT:
@@ -212,6 +212,7 @@ LV_IMG_DECLARE(sensor35x35)
 LV_IMG_DECLARE(blinds35x35)
 LV_IMG_DECLARE(unknown35x35)
 LV_IMG_DECLARE(meteo35x35)
+LV_IMG_DECLARE(percent35x35)
 
 // To convert image https://lvgl.io/tools/imageconverter
 const lv_img_dsc_t *Geticon(int type)
@@ -240,10 +241,11 @@ const lv_img_dsc_t *Geticon(int type)
         case TYPE_PUSH:
             return &lampe35x35; 
         case TYPE_BLINDS:
-            return &blinds35x35; 
+            return &blinds35x35;
+        case TYPE_PERCENT_SENSOR:
+            return &percent35x35;
         case TYPE_SWITCH_SENSOR:
         case TYPE_LUX:
-        case TYPE_PERCENT_SENSOR:
         case TYPE_VALUE_SENSOR:
         case TYPE_AIR_QUALITY:
             return &sensor35x35;

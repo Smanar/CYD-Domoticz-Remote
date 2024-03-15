@@ -55,7 +55,30 @@ static lv_color_t buf[TFT_WIDTH * TFT_HEIGHT / 10];
     #include <XPT2046_Touchscreen.h>
 #endif
 
+#ifdef TOUCH_DISABLED
+    class TS_Point
+    {
+        public:
+            int x, y;
+            TS_Point() : x(0), y(0) {}
+            TS_Point(int x, int y) : x(x), y(y) {}
+    };
 
+    class _TC
+    {
+    public:
+        bool touched();
+        bool tirqTouched();
+        TS_Point getPoint();
+        TS_Point p;
+    };
+
+    bool _TC::touched(void) { return false; }
+    bool _TC::tirqTouched(void) { return false; }
+    TS_Point _TC::getPoint(void) { return p; };
+
+    _TC touchscreen;
+#endif
 #ifdef TOUCH_XPT2046
     SPIClass touchscreen_spi = SPIClass(HSPI);
     XPT2046_Touchscreen touchscreen(XPT2046_CS, XPT2046_IRQ);
