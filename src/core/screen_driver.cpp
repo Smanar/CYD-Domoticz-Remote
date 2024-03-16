@@ -55,7 +55,7 @@ static lv_color_t buf[TFT_WIDTH * TFT_HEIGHT / 10];
     #include <XPT2046_Touchscreen.h>
 #endif
 
-#ifdef TOUCH_DISABLED
+#if !defined(TOUCH_911) && !defined(TOUCH_LOVYAN) && !defined(TOUCH_XPT2046)
     class TS_Point
     {
         public:

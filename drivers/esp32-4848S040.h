@@ -180,3 +180,4 @@ Arduino_ESP32RGBPanel* rgbpanel = new Arduino_ESP32RGBPanel(
 
 Arduino_RGB_Display tft = Arduino_RGB_Display(480, 480, rgbpanel, 0 /* rotation */, TFT_AUTO_FLUSH, bus, TFT_RST,
                               st7701_4848S040_init_operations, sizeof(st7701_4848S040_init_operations));
+
