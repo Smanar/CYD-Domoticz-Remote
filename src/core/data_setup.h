@@ -23,19 +23,20 @@ enum {
     TYPE_METEO,
     TYPE_SETPOINT,
     TYPE_TEXT,
+    TYPE_AIR_QUALITY,
     TYPE_PUSH
 };
 
 typedef struct _Device {
     char* name = nullptr;
-    char * ID = nullptr;
-    char *data = nullptr;
-    int level = 0;
-    int  idx = 0;
-    int type = TYPE_UNKNOWN;
+    char* ID = nullptr;
+    char* data = nullptr;
+    char* levelname = nullptr;
+    unsigned short level = 0;
+    unsigned short idx = 0;
+    unsigned short type = TYPE_UNKNOWN;
+    unsigned short lenData = 0;
     bool used = false;
-    char * levelname = nullptr;
-    int lenData=0;
 
     //lv_obj_t * label; // used for device update
 

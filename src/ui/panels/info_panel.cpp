@@ -40,7 +40,7 @@ static void TV_btn_event_handler(lv_event_t * e) {
 
     if (JS.isNull())
     {
-        Serial.println("Json not available\n");
+        Serial.println(F("Json not available\n"));
         return;
     }
     

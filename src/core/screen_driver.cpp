@@ -35,6 +35,38 @@ static lv_color_t buf[TFT_WIDTH * TFT_HEIGHT / 10];
     static LGFX_Sprite sprite(&tft);
 #endif
 
+#ifdef ARDUINO_GFX
+
+    #ifdef ESP32_4848S040
+    #include "../drivers/esp32-4848S040.h"
+    #endif
+
+    class MyTFT
+    {
+        public:
+        MyTFT(Arduino_GFX *d) {this->p = d;}
+        bool init() {return p->begin();}
+        void setBrightness(byte b) {return;}
+        void fillScreen(uint16_t color) {p->fillScreen(color);}
+        void invertDisplay(bool b) {return;}
+        void setTextColor(uint16_t c, uint16_t c2) {p->setTextColor(c);}
+        void setTextSize(uint8_t s) {p->setTextSize(s);}
+        void drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color) {p->drawFastHLine(x, y, w, color);}
+        void drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color) {p->drawFastVLine(x, y, h, color);}
+        void startWrite() {return;}
+        void endWrite() {return;}
+        void setCursor(int16_t x, int16_t y, int font) {p->setCursor(x,y);}
+        void draw16bitRGBBitmap(int16_t x, int16_t y, const uint16_t bitmap[], int16_t w, int16_t h) { p->draw16bitRGBBitmap(x, y, bitmap, w, h);}
+        size_t println(char *c) {return p->println(c);}
+
+        private:
+        Arduino_GFX *p;
+    };
+
+    MyTFT tft(Display);
+
+#endif
+
 #ifdef XPT2046
     #define XPT2046_IRQ 36
     #define XPT2046_MOSI 32
@@ -48,7 +80,8 @@ static lv_color_t buf[TFT_WIDTH * TFT_HEIGHT / 10];
 #ifdef XPT2046
     SPIClass touchscreen_spi = SPIClass(HSPI);
     XPT2046_Touchscreen touchscreen(XPT2046_CS, XPT2046_IRQ);
-#else
+#endif
+#ifdef LOVYANTOUCH
     class TS_Point
     {
         public:
@@ -87,7 +120,54 @@ static lv_color_t buf[TFT_WIDTH * TFT_HEIGHT / 10];
 
     _TC touchscreen;
 #endif
+#ifdef TOUCH_911
 
+//https://github.com/nik-sharky/arduino-goodix/blob/master/examples/GT911_avr_touch/GT911_avr_touch.ino
+
+#include <Wire.h>
+#include "Goodix.h"
+
+static Goodix touch = Goodix();
+
+    class TS_Point
+    {
+        public:
+            int x, y;
+            TS_Point() : x(0), y(0) {}
+            TS_Point(int x, int y) : x(x), y(y) {}
+    };
+
+    class _TC
+    {
+    public:
+        bool touched();
+        bool tirqTouched();
+        TS_Point getPoint();
+    private:
+        uint16_t touchX, touchY;
+        TS_Point p;
+    };
+
+    bool _TC::touched(void)
+    {
+        //return tft.getTouch( &this->touchX, &this->touchY );
+    }
+
+    bool _TC::tirqTouched(void)
+    {
+        //return tft.getTouch( &this->touchX, &this->touchY );
+    }
+
+    TS_Point _TC::getPoint(void)
+    {
+        this->p.x = touchX;
+        this->p.y = touchY;
+        return this->p;
+    }
+
+    _TC touchscreen;
+
+#endif
 
 
 
@@ -104,7 +184,7 @@ void touchscreen_calibrate(bool force)
     }
 
     tft.fillScreen(TFT_BLACK);
-    tft.setCursor(20, 140,2); // Not working without font ???
+    tft.setCursor(20, 140, 2); // Not working without font ???
     tft.setTextColor(TFT_WHITE,TFT_BLACK);
     tft.setTextSize(2);
     tft.println("Calibrate Screen");
@@ -241,12 +321,23 @@ void screen_lv_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *col
     uint32_t h = (area->y2 - area->y1 + 1);
 
     tft.startWrite();
-    tft.setAddrWindow(area->x1, area->y1, w, h);
+
 #ifdef TFT_ESPI
+    tft.setAddrWindow(area->x1, area->y1, w, h);
     tft.pushColors((uint16_t *)&color_p->full, w * h, true);
-#else
+#endif
+#ifdef LOVYANGFX
+    tft.setAddrWindow(area->x1, area->y1, w, h);
     tft.pushPixels((uint16_t *)&color_p->full, w * h, true);
 #endif
+#ifdef ARDUINO_GFX
+    #if (LV_COLOR_16_SWAP != 0)
+        tft.draw16bitBeRGBBitmap(area->x1, area->y1, (uint16_t *)&color_p->full, w, h);
+    #else
+        tft.draw16bitRGBBitmap(area->x1, area->y1, (uint16_t *)&color_p->full, w, h);
+    #endif
+#endif
+
     tft.endWrite();
 
     lv_disp_flush_ready(disp);
@@ -301,6 +392,11 @@ void screen_setup()
     touchscreen_spi.begin(XPT2046_CLK, XPT2046_MISO, XPT2046_MOSI, XPT2046_CS);
     touchscreen.begin(touchscreen_spi);
     touchscreen.setRotation(global_config.rotateScreen ? 3 : 1);
+#endif
+
+#ifdef GFX_BL
+  pinMode(GFX_BL, OUTPUT);
+  digitalWrite(GFX_BL, HIGH);
 #endif
 
     lv_init();

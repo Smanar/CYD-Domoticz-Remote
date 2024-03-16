@@ -30,7 +30,7 @@ void VerifyVersion(){
     preferences.getBytes("global_config", &config, sizeof(config));
     Serial.printf("Config version: %d\n", config.version);
     if (config.version != CONFIG_VERSION) {
-        Serial.println("Clearing Global Config");
+        Serial.println(F("Clearing Global Config"));
         preferences.clear();
     }
 

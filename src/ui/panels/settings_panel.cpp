@@ -48,7 +48,7 @@ static void reset_wifi_click(lv_event_t * e){
 }
 
 static void exit_click(lv_event_t * e){
-    navigation_screen(0);
+    navigation_screen(TOOL_PANEL);
 }
 
 static void light_mode_switch(lv_event_t * e){
@@ -149,7 +149,7 @@ static void edit_device_list_switch(lv_event_t * e)
         }
         WriteGlobalConfig();
         Init_data();
-        navigation_screen(1);
+        navigation_screen(HOMEPAGE_PANEL);
  
     }
  }

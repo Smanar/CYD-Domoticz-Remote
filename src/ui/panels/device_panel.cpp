@@ -1,13 +1,12 @@
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
+
 #include "lvgl.h"
 #include "panel.h"
 #include "../navigation.h"
 #include "../../core/data_setup.h"
 #include "../../conf/global_config.h"
 #include "../main_ui.h"
-
-#include <HardwareSerial.h>
-#include <HTTPClient.h>
-#include <ArduinoJson.h>
 
 
 static lv_obj_t * slider_label; // Label for slider
@@ -155,7 +154,7 @@ void Select_deviceMemorised(void *device)
 {
     //This one is already memorised so just pick it
     SelectedDevice = (Device *)device;
-    navigation_screen(5);
+    navigation_screen(DEVICE_PANEL);
 }
 
 void Select_deviceIDX(int idx)
@@ -163,7 +162,7 @@ void Select_deviceIDX(int idx)
     //This one is empty so get data
     FillDeviceData(&SpecialDevice, idx);
     SelectedDevice = &SpecialDevice;
-    navigation_screen(5);
+    navigation_screen(DEVICE_PANEL);
 }
 
 lv_color_t Getcolor(int type)
@@ -176,6 +175,7 @@ lv_color_t Getcolor(int type)
         case TYPE_LUX:
         case TYPE_PERCENT_SENSOR:
         case TYPE_VALUE_SENSOR:
+        case TYPE_AIR_QUALITY:
             return LV_COLOR_MAKE(0x00, 0x7F, 0xFF);
         case TYPE_METEO:
             return LV_COLOR_MAKE(0xFF, 0x33, 0xFF);
@@ -192,6 +192,7 @@ lv_color_t Getcolor(int type)
         case TYPE_COLOR:
         case TYPE_LIGHT:
         case TYPE_BLINDS:
+        case TYPE_PUSH:
             return LV_COLOR_MAKE(0xFF, 0x2F, 0x2F); 
         default:
         break;
@@ -201,7 +202,7 @@ lv_color_t Getcolor(int type)
 }
 
 LV_IMG_DECLARE(temperature35x35)
-LV_IMG_DECLARE(lampe)
+LV_IMG_DECLARE(lampe35x35)
 LV_IMG_DECLARE(plug35x35)
 LV_IMG_DECLARE(warning35x35)
 LV_IMG_DECLARE(speaker35x35)
@@ -237,13 +238,14 @@ const lv_img_dsc_t *Geticon(int type)
         case TYPE_COLOR:
         case TYPE_LIGHT:
         case TYPE_PUSH:
-            return &lampe; 
+            return &lampe35x35; 
         case TYPE_BLINDS:
             return &blinds35x35; 
         case TYPE_SWITCH_SENSOR:
         case TYPE_LUX:
         case TYPE_PERCENT_SENSOR:
         case TYPE_VALUE_SENSOR:
+        case TYPE_AIR_QUALITY:
             return &sensor35x35;
         case TYPE_METEO:
             return &meteo35x35;
@@ -505,6 +507,10 @@ void device_panel_init(lv_obj_t* panel)
             lv_led_set_color(led, LV_COLOR_MAKE(0xFF, 0xFF, 0x00));
         }
         else if (SelectedDevice->level == 3)
+        {
+            lv_led_set_color(led, LV_COLOR_MAKE(0xFF, 0x80, 0x00));
+        }
+        else if (SelectedDevice->level == 4)
         {
             lv_led_set_color(led, LV_COLOR_MAKE(0xFF, 0x00, 0x00));
         }

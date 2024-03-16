@@ -1,9 +1,10 @@
+#include <HTTPClient.h>
+
 #include "lvgl.h"
+#include "navigation.h"
 #include "panels/panel.h"
 #include "../core/data_setup.h"
-#include "navigation.h"
-#include "../core/data_setup.h"
-#include <HTTPClient.h>
+
 
 static lv_obj_t * tv;
 static int actived_panel = 0;
@@ -31,9 +32,9 @@ void ReturnPreviouspage(void)
 
 void RefreshHomePage(void)
 {
-    if (actived_panel == 1)
+    if (actived_panel == HOMEPAGE_PANEL)
     {                           
-        navigation_screen(1);
+        navigation_screen(HOMEPAGE_PANEL);
     }
 }
 
@@ -57,28 +58,42 @@ void navigation_screen(unsigned char active_panel)
 
     switch (active_panel)
     {
-        case 0: // Tools
+        case TOOL_PANEL: // Tools
             master_panel = active_panel;
             tools_panel_init(panel);
             break;
-        case 1: // Homepage
+        case HOMEPAGE_PANEL: // Homepage
             master_panel = active_panel;
             home_panel_init(panel, myDevices);
             break;
-        case 2: //Info panel
+#ifndef NO_INFO_PAGE
+        case INFO_PANEL: //Info panel
             master_panel = active_panel;
             info_panel_init(panel);
             break;
-        case 3:// Second Device list page
-            master_panel = active_panel;
-#if BONUSPAGE > 0
-            home_panel_init(panel, myDevicesP2);
 #endif
+#if BONUSPAGE > 0
+        case BONUSPAGE_PANEL1:// Second Device list page
+            master_panel = active_panel;
+            home_panel_init(panel, myDevicesP2);
             break;
-        case 5: // Device panel
+#endif
+#if BONUSPAGE > 1
+        case BONUSPAGE_PANEL2:// third  Device list page
+            master_panel = active_panel;
+            home_panel_init(panel, myDevicesP2,1);
+            break;
+#endif
+#if BONUSPAGE > 2
+        case BONUSPAGE_PANEL3:// fourth Device list page
+            master_panel = active_panel;
+            home_panel_init(panel, myDevicesP2,2);
+            break;
+#endif
+        case DEVICE_PANEL: // Device panel
             device_panel_init(panel);
             break;
-        case 6:// Settings
+        case SETTING_PANEL:// Settings
             settings_panel_init(panel);
             break;
     }
