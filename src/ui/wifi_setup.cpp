@@ -153,9 +153,10 @@ const int print_freq = 1000;
 int print_timer = 0;
 
 void wifi_init(){
-    WiFi.mode(WIFI_STA);
+    Serial.println(F("Debug 7\n"));
+    WiFi.mode(WIFI_MODE_STA);
     wifi_init_inner();
-
+    Serial.println(F("Debug 8\n"));
     while (!global_config.wifiConfigured || WiFi.status() != WL_CONNECTED){
         if (millis() - print_timer > print_freq){
             print_timer = millis();
