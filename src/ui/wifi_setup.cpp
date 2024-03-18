@@ -70,9 +70,11 @@ static void wifi_btn_event_handler(lv_event_t * e){
 
 
 void wifi_init_inner(){
+    Serial.println(F("Debug 8\n"));
     WiFi.disconnect();
+    Serial.println(F("Debug 9\n"));
     lv_obj_clean(lv_scr_act());
-
+Serial.println(F("Debug 10\n"));
     if (global_config.wifiConfigured){
         WiFi.begin(global_config.wifiSSID, global_config.wifiPassword);
         
@@ -90,7 +92,7 @@ void wifi_init_inner(){
 
         return;
     } 
-
+Serial.println(F("Debug 11\n"));
     lv_obj_t * label = lv_label_create(lv_scr_act());
     lv_label_set_text_static(label, "Scanning for networks...");
     lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
@@ -118,7 +120,7 @@ void wifi_init_inner(){
     lv_obj_set_size(list, TFT_HEIGHT - 20, TFT_WIDTH - 40 - 5);
 
     int n = WiFi.scanNetworks();
-
+Serial.println(F("Debug 12\n"));
     for (int i = 0; i < n; ++i) {
         String ssid = WiFi.SSID(i);
         char* ssid_copy = (char*)malloc(ssid.length() + 1);
