@@ -485,7 +485,7 @@ void screen_setup()
     tft.setRotation(global_config.rotateScreen ? 3 : 1);
 #endif
 #ifdef LOVYANGFX
-    tft.setRotation(global_config.rotateScreen ? 3 : 1);
+    //tft.setRotation(global_config.rotateScreen ? 3 : 1);
 #endif
     tft.fillScreen(TFT_BLACK);
     set_screen_brightness();
