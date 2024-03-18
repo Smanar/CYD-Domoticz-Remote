@@ -71,7 +71,6 @@ static void wifi_btn_event_handler(lv_event_t * e){
 
 void wifi_init_inner(){
     WiFi.disconnect();
-    Serial.println(F("Debug 19\n"));
     lv_obj_clean(lv_scr_act());
 
     if (global_config.wifiConfigured){
@@ -91,7 +90,7 @@ void wifi_init_inner(){
 
         return;
     } 
-Serial.println(F("Debug 20\n"));
+
     lv_obj_t * label = lv_label_create(lv_scr_act());
     lv_label_set_text_static(label, "Scanning for networks...");
     lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
@@ -99,7 +98,7 @@ Serial.println(F("Debug 20\n"));
     lv_timer_handler();
     lv_task_handler();
     lv_refr_now(NULL);
-Serial.println(F("Debug 21\n"));
+
     lv_obj_clean(lv_scr_act());
 
     lv_obj_t * refreshBtn = lv_btn_create(lv_scr_act());
@@ -119,7 +118,7 @@ Serial.println(F("Debug 21\n"));
     lv_obj_set_size(list, TFT_HEIGHT - 20, TFT_WIDTH - 40 - 5);
 
     int n = WiFi.scanNetworks();
-Serial.println(F("Debug 22\n"));
+
     for (int i = 0; i < n; ++i) {
         String ssid = WiFi.SSID(i);
         char* ssid_copy = (char*)malloc(ssid.length() + 1);
@@ -133,7 +132,7 @@ Serial.println(F("Debug 22\n"));
         }
 
         ssid_copy[j] = '\0';
-Serial.println(F("Debug 23\n"));
+
         lv_obj_t * btn = lv_list_add_btn(list, LV_SYMBOL_WIFI, ssid_copy);
         lv_obj_add_event_cb(btn, wifi_btn_event_handler, LV_EVENT_ALL, (void*)btn);
         free(ssid_copy);
@@ -154,7 +153,6 @@ const int print_freq = 1000;
 int print_timer = 0;
 
 void wifi_init(){
-    Serial.println(F("Debug 18\n"));
     WiFi.mode(WIFI_STA);
     wifi_init_inner();
 

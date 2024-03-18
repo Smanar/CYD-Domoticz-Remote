@@ -485,7 +485,9 @@ void screen_setup()
     tft.setRotation(global_config.rotateScreen ? 3 : 1);
 #endif
 #ifdef LOVYANGFX
-    tft.setRotation(global_config.rotateScreen ? 3 : 1);
+    #ifdef esp2432S028R
+    tft.setRotation(global_config.rotateScreen ? 2 : 0);
+    #endif
 #endif
     tft.fillScreen(TFT_BLACK);
     set_screen_brightness();
