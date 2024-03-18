@@ -15,7 +15,7 @@ class LGFX: public lgfx::LGFX_Device {
     LGFX(void) {
       {
         auto cfg = _bus_instance.config();
-        cfg.panel = & _panel_instance;
+        cfg.panel = &_panel_instance;
         cfg.pin_d0 = 8; // B0
         cfg.pin_d1 = 3; // B1
         cfg.pin_d2 = 46; // B2
@@ -47,7 +47,7 @@ class LGFX: public lgfx::LGFX_Device {
         cfg.vsync_back_porch = 4;
         cfg.pclk_idle_high = 1;
         _bus_instance.config(cfg);
-        _panel_instance.setBus( & _bus_instance);
+        _panel_instance.setBus( &_bus_instance);
       }
 
         {
@@ -74,7 +74,7 @@ class LGFX: public lgfx::LGFX_Device {
           cfg.pwm_channel = 7;
           _light_instance.config(cfg);
         }
-        _panel_instance.light( & _light_instance);
+        _panel_instance.light( &_light_instance);
 
         {
           auto cfg = _touch_instance.config();
@@ -93,9 +93,9 @@ class LGFX: public lgfx::LGFX_Device {
           cfg.freq = 800000; // I2C
           cfg.i2c_addr = 0x5D; // I2C 0x5D or 0x14
           _touch_instance.config(cfg);
-          _panel_instance.setTouch( & _touch_instance);
+          _panel_instance.setTouch( &_touch_instance);
         }
 
-        setPanel( & _panel_instance);
+        setPanel( &_panel_instance);
       }
     };

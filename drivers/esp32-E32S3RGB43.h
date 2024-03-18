@@ -35,7 +35,7 @@ class LGFX: public lgfx::LGFX_Device {
 
     {
       auto cfg = _bus_instance.config();
-      cfg.panel = & _panel_instance;
+      cfg.panel = &_panel_instance;
       cfg.pin_d0 = GPIO_NUM_8; // B0
       cfg.pin_d1 = GPIO_NUM_3; // B1
       cfg.pin_d2 = GPIO_NUM_46; // B2
@@ -70,7 +70,7 @@ class LGFX: public lgfx::LGFX_Device {
       cfg.pclk_idle_high = 1;
       _bus_instance.config(cfg);
     }
-    _panel_instance.setBus( & _bus_instance);
+    _panel_instance.setBus( &_bus_instance);
 
     {
       auto cfg = _light_instance.config();
@@ -78,7 +78,7 @@ class LGFX: public lgfx::LGFX_Device {
       cfg.invert = true; // true to invert backlight brightness
       _light_instance.config(cfg);
     }
-    _panel_instance.light( & _light_instance);
+    _panel_instance.light( &_light_instance);
 
     {
       auto cfg = _touch_instance.config();
@@ -105,9 +105,9 @@ class LGFX: public lgfx::LGFX_Device {
       */
       cfg.freq = 400000;
       _touch_instance.config(cfg);
-      _panel_instance.setTouch( & _touch_instance);
+      _panel_instance.setTouch( &_touch_instance);
     }
 
-    setPanel( & _panel_instance);
+    setPanel( &_panel_instance);
   }
 };
