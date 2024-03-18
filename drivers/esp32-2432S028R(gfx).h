@@ -14,11 +14,11 @@
 #define TFT_PCLK_ACTIVE_NEG 1
 #define  TFT_PREFER_SPEED 12000000
 #define  TFT_AUTO_FLUSH 1
+#endif
 
 //Color
 #define TFT_BLACK       0x0000
 #define TFT_WHITE       0xFFFF
-#endif
 
 #define GFX_BL 21
 

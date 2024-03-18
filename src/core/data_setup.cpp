@@ -117,7 +117,7 @@ void Update_data(JsonObject RJson2)
     if (RJson2.containsKey("Data")) JSondata = RJson2["Data"];
     if (RJson2.containsKey("Level")) JSonLevel = RJson2["Level"];
 
-    Serial.printf("Update HP device id: %d\n", ID);
+    Serial.printf("Update HP device Id: %d, Domo Idx: %d\n", ID, JSonidx);
 
     //Special device
     char * data;
@@ -406,6 +406,10 @@ bool HttpInitDevice(Device *d, int id)
                 }
             }
 
+        }
+        else if (strncmp(type, "Lighting", 8) == 0)
+        {
+            d->type = TYPE_LIGHT;
         }
         else if (strcmp(type, "Color Switch") == 0)
         {

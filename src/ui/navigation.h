@@ -21,6 +21,9 @@ enum {
 #if BONUSPAGE > 2
     BONUSPAGE_PANEL3,
 #endif
+#ifndef NO_GROUP_PAGE
+    GROUP_PANEL,
+#endif
 #ifndef NO_INFO_PAGE
     INFO_PANEL,
 #endif

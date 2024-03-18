@@ -476,20 +476,22 @@ void screen_setup()
   digitalWrite(GFX_BL, HIGH);
 #endif
 
-    lv_init();
 #ifdef ARDUINO_GFX
-    tft.begin();
+    tft.begin(16000000);
 #else
     tft.init();
 #endif
 #ifdef TFT_ESPI
     tft.setRotation(global_config.rotateScreen ? 3 : 1);
-#else
-    //tft.setRotation(4);
+#endif
+#ifdef LOVYANGFX
+    tft.setRotation(global_config.rotateScreen ? 3 : 1);
 #endif
     tft.fillScreen(TFT_BLACK);
     set_screen_brightness();
     set_invert_display();
+
+    lv_init();
 
     touchscreen_calibrate(FORCECALIBRATE);
 

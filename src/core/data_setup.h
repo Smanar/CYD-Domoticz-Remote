@@ -43,7 +43,6 @@ typedef struct _Device {
 } Device;
 
 void Init_data();
-bool HTTPGETRequest(char * url);
 void FillDeviceData(Device *d, int idx);
 bool HttpInitDevice(Device *d, int id);
 int * GetGraphValue(int type, int idx, int *, int *);

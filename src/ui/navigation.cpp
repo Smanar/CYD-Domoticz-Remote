@@ -55,6 +55,7 @@ void navigation_screen(unsigned char active_panel)
     lv_obj_set_style_border_width(panel, 0, 0);
     lv_obj_set_style_bg_opa(panel, LV_OPA_TRANSP, 0);
     lv_obj_set_style_pad_all(panel, 0, 0);
+    //lv_obj_clear_flag(panel, LV_OBJ_FLAG_SCROLLABLE);
 
     switch (active_panel)
     {
@@ -66,6 +67,12 @@ void navigation_screen(unsigned char active_panel)
             master_panel = active_panel;
             home_panel_init(panel, myDevices);
             break;
+#ifndef NO_GROUP_PAGE
+        case GROUP_PANEL: //Group/Scene panel
+            master_panel = active_panel;
+            group_panel_init(panel);
+            break;
+#endif
 #ifndef NO_INFO_PAGE
         case INFO_PANEL: //Info panel
             master_panel = active_panel;

@@ -6,6 +6,7 @@
 #include "../navigation.h"
 #include "../../core/data_setup.h"
 #include "../../conf/global_config.h"
+#include "../../core/ip_engine.h"
 #include "../main_ui.h"
 
 

@@ -169,15 +169,20 @@ static const uint8_t st7701_4848S040_init_operations[] = {
     END_WRITE
 };
 
-Arduino_DataBus* bus            = new Arduino_SWSPI(TFT_DC, TFT_CS, TFT_SCLK, TFT_MOSI, TFT_MISO);
+#define GFX_BL 38 // default backlight pin,
 
+// 9-bit mode SPI
+Arduino_ESP32SPI *bus = new Arduino_ESP32SPI(
+    GFX_NOT_DEFINED /* DC */, TFT_CS /* CS */, TFT_SCLK /* SCK */, TFT_MOSI /* MOSI */, GFX_NOT_DEFINED /* MISO */);
 
+// panel (Hardware) specific
 Arduino_ESP32RGBPanel* rgbpanel = new Arduino_ESP32RGBPanel(
     TFT_DE, TFT_VSYNC, TFT_HSYNC, TFT_PCLK, TFT_R0, TFT_R1, TFT_R2, TFT_R3, TFT_R4, TFT_G0, TFT_G1, TFT_G2, TFT_G3,
     TFT_G4, TFT_G5, TFT_B0, TFT_B1, TFT_B2, TFT_B3, TFT_B4, TFT_HSYNC_POLARITY, TFT_HSYNC_FRONT_PORCH,
     TFT_HSYNC_PULSE_WIDTH, TFT_HSYNC_BACK_PORCH, TFT_VSYNC_POLARITY, TFT_VSYNC_FRONT_PORCH, TFT_VSYNC_PULSE_WIDTH,
     TFT_VSYNC_BACK_PORCH);
 
-Arduino_RGB_Display tft = Arduino_RGB_Display(480, 480, rgbpanel, 0 /* rotation */, TFT_AUTO_FLUSH, bus, TFT_RST,
-                              st7701_4848S040_init_operations, sizeof(st7701_4848S040_init_operations));
-
+// panel parameters & setup
+Arduino_RGB_Display tft = Arduino_RGB_Display(
+    480 /* width */, 480 /* height */, rgbpanel, 0 /* rotation */, true /* auto_flush */,
+    bus, GFX_NOT_DEFINED /* RST */, st7701_type1_init_operations, sizeof(st7701_type1_init_operations));
