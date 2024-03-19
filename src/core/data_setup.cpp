@@ -410,11 +410,6 @@ bool HttpInitDevice(Device *d, int id)
         else if (strncmp(type, "Lighting", 8) == 0)
         {
             d->type = TYPE_LIGHT;
-
-            if (strcmp(subtype,"Impuls") == 0)
-            {
-                d->type = TYPE_PUSH;
-            }
         }
         else if (strcmp(type, "Color Switch") == 0)
         {
