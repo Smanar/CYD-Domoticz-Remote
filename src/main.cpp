@@ -169,6 +169,16 @@ static const uint8_t st7701_4848S040_init_operations[] = {
     END_WRITE
 };
 
+#if 0
+
+//To test with my device, useless for you
+#define GFX_BL 21
+
+Arduino_DataBus *bus = new Arduino_ESP32SPI(2, 15 , 14 , 13 , 12);
+Arduino_ILI9341 *gfx = new Arduino_ILI9341(bus, GFX_NOT_DEFINED /* RST */, 0 /* rotation */, true );
+
+#else
+
 #define GFX_BL 38 // default backlight pin,
 
 // 9-bit mode SPI
@@ -186,6 +196,8 @@ Arduino_ESP32RGBPanel* rgbpanel = new Arduino_ESP32RGBPanel(
 Arduino_RGB_Display *gfx = new Arduino_RGB_Display(
     480 /* width */, 480 /* height */, rgbpanel, 0 /* rotation */, true /* auto_flush */,
     bus, GFX_NOT_DEFINED /* RST */, st7701_type1_init_operations, sizeof(st7701_type1_init_operations));
+#endif
+
 
 /* Change to your screen resolution */
 static uint32_t screenWidth;
@@ -231,8 +243,11 @@ void setup()
   gfx->fillScreen(BLACK);
 
 #ifdef GFX_BL
-  pinMode(GFX_BL, OUTPUT);
-  digitalWrite(GFX_BL, HIGH);
+   //pinMode(GFX_BL, OUTPUT);
+   //digitalWrite(GFX_BL, HIGH);
+   ledcSetup(0, 600, 8);
+   ledcAttachPin(GFX_BL, 0);
+   ledcWrite(0, 150);
 #endif
 
   lv_init();
@@ -246,6 +261,7 @@ void setup()
   bufSize = screenWidth * 40;
 #endif
 
+#if 1
 #ifdef ESP32
   disp_draw_buf = (lv_color_t *)heap_caps_malloc(sizeof(lv_color_t) * bufSize, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
   if (!disp_draw_buf)
@@ -256,6 +272,10 @@ void setup()
 #else
   disp_draw_buf = (lv_color_t *)malloc(sizeof(lv_color_t) * bufSize);
 #endif
+#else
+disp_draw_buf = (lv_color_t *)heap_caps_malloc(sizeof(lv_color_t) * bufSize, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+#endif
+
   if (!disp_draw_buf)
   {
     Serial.println("LVGL disp_draw_buf allocate failed!");
