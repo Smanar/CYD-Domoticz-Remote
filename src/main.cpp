@@ -236,18 +236,18 @@ void setup()
 #endif
 
   // Init Display
-  if (!gfx->begin())
+  if (!gfx->begin(11000000))
   {
     Serial.println("gfx->begin() failed!");
   }
   gfx->fillScreen(BLACK);
 
 #ifdef GFX_BL
-   //pinMode(GFX_BL, OUTPUT);
-   //digitalWrite(GFX_BL, HIGH);
-   ledcSetup(0, 600, 8);
-   ledcAttachPin(GFX_BL, 0);
-   ledcWrite(0, 150);
+   pinMode(GFX_BL, OUTPUT);
+   digitalWrite(GFX_BL, HIGH);
+   //ledcSetup(0, 600, 8);
+   //ledcAttachPin(GFX_BL, 0);
+   //ledcWrite(0, 150);
 #endif
 
   lv_init();
@@ -258,8 +258,9 @@ void setup()
 #ifdef DIRECT_MODE
   bufSize = screenWidth * screenHeight;
 #else
-  bufSize = screenWidth * 40;
+  bufSize = screenWidth * 480;
 #endif
+
 
 #if 1
 #ifdef ESP32
