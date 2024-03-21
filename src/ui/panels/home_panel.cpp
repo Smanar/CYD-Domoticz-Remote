@@ -83,6 +83,16 @@ static void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int 
     lv_obj_set_style_img_recolor_opa(img, 50, 0);
     lv_obj_set_style_img_recolor(img, color, 0);
 
+    // Display a "on" icon
+    if (d->type < 5 && strcmp(d->data, "On") == 0)
+    {
+        lv_obj_t * label = lv_label_create(Button_icon);
+        lv_obj_set_style_text_color(label, color, 0);
+        lv_obj_align_to(label, img,  LV_ALIGN_OUT_RIGHT_BOTTOM, 0, 0);
+        //lv_obj_set_style_border_width(label, 5, 0); // To make it visible
+        lv_label_set_text(label, " "LV_SYMBOL_POWER);
+    }
+
     /*Create description*/
     lv_obj_t * label2 = lv_label_create(Button_icon);               /*Add a label to the button*/
     lv_label_set_long_mode(label2, LV_LABEL_LONG_WRAP);             /*Break the long lines*/
