@@ -145,7 +145,7 @@ void Update_data(JsonObject RJson2)
     if (strcmp(data, myDevices[ID].data) != 0)
     {
         //Use dynamic array, but only 1 time
-        if (strlen(data) > myDevices[ID].lenData)
+        if (strlen(data) >= myDevices[ID].lenData)
         {
             if (myDevices[ID].data) free(myDevices[ID].data);
             myDevices[ID].data = (char*)malloc(strlen(data) + 1);
@@ -485,12 +485,13 @@ bool HttpInitDevice(Device *d, int id)
         {
             data = Cleandata(JSondata);
         }
+
         //Use dynamic array if needed, but only 1 time if needed to prevent fragmentation
-        if (strlen(data) > d->lenData)
+        if (strlen(data) >= d->lenData)
         {
             if (d->data) free(d->data);
             d->data = (char*)malloc(strlen(data) + 1);
-            //Serial.printf("Re-alloc from %d to %d\n", d->lenData, strlen(data));
+            Serial.printf("Re-alloc from %d to %d\n", d->lenData, strlen(data));
             d->lenData = strlen(data);
         }
         strncpy(d->data, data, d->lenData + 1);
