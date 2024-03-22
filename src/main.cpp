@@ -182,8 +182,7 @@ Arduino_ILI9341 *gfx = new Arduino_ILI9341(bus, GFX_NOT_DEFINED /* RST */, 0 /* 
 #define GFX_BL 38 // default backlight pin,
 
 // 9-bit mode SPI
-Arduino_ESP32SPI *bus = new Arduino_ESP32SPI(
-    GFX_NOT_DEFINED /* DC */, TFT_CS /* CS */, TFT_SCLK /* SCK */, TFT_MOSI /* MOSI */, GFX_NOT_DEFINED /* MISO */);
+Arduino_DataBus* bus = new Arduino_SWSPI(TFT_DC, TFT_CS, TFT_SCLK, TFT_MOSI, TFT_MISO);
 
 // panel (Hardware) specific
 Arduino_ESP32RGBPanel* rgbpanel = new Arduino_ESP32RGBPanel(
@@ -281,8 +280,9 @@ void setup()
 
     /* Create simple label */
     lv_obj_t *label = lv_label_create(lv_scr_act());
-    lv_label_set_text(label, "Hello Arduino! (V" GFX_STR(LVGL_VERSION_MAJOR) "." GFX_STR(LVGL_VERSION_MINOR) "." GFX_STR(LVGL_VERSION_PATCH) ")");
-    lv_label_set_text(label, "#0000ff Blue# #00ff00 green# #ff0000 RED# xxxx ");
+    lv_obj_set_style_text_color(label, LV_COLOR_MAKE(0xFF, 0x00, 0x00), 0);
+    //lv_label_set_text(label, "Hello Arduino! (V" GFX_STR(LVGL_VERSION_MAJOR) "." GFX_STR(LVGL_VERSION_MINOR) "." GFX_STR(LVGL_VERSION_PATCH) ")");
+    lv_label_set_text(label, "#0000ff Blue# #00ff00 green# #ff0000 RED# Text ");
     lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
 
     Serial.println("Setup done");
