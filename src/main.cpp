@@ -280,6 +280,7 @@ void setup()
 
     /* Create simple label */
     lv_obj_t *label = lv_label_create(lv_scr_act());
+    lv_label_set_recolor(label, true); 
     lv_obj_set_style_text_color(label, LV_COLOR_MAKE(0xFF, 0x00, 0x00), 0);
     //lv_label_set_text(label, "Hello Arduino! (V" GFX_STR(LVGL_VERSION_MAJOR) "." GFX_STR(LVGL_VERSION_MINOR) "." GFX_STR(LVGL_VERSION_PATCH) ")");
     lv_label_set_text(label, "#0000ff Blue# #00ff00 green# #ff0000 RED# Text ");
