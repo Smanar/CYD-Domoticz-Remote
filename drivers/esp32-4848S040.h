@@ -34,15 +34,15 @@
 // Panel Settings
 #define TFT_HSYNC_POLARITY 1
 #define TFT_HSYNC_FRONT_PORCH 10
-#define TFT_HSYNC_PULSE_WIDTH 8
-#define TFT_HSYNC_BACK_PORCH 50
-#define TFT_VSYNC_POLARITY 1
+#define  TFT_HSYNC_PULSE_WIDTH 8
+#define  TFT_HSYNC_BACK_PORCH 50
+#define  TFT_VSYNC_POLARITY 1
 #define TFT_VSYNC_FRONT_PORCH 10
-#define TFT_VSYNC_PULSE_WIDTH 8
-#define TFT_VSYNC_BACK_PORCH 20
+#define  TFT_VSYNC_PULSE_WIDTH 8
+#define  TFT_VSYNC_BACK_PORCH 20
 #define TFT_PCLK_ACTIVE_NEG 1
-#define TFT_PREFER_SPEED 12000000
-#define TFT_AUTO_FLUSH 1
+#define  TFT_PREFER_SPEED 12000000
+#define  TFT_AUTO_FLUSH 1
 
 //Color
 #define TFT_BLACK       0x0000
@@ -172,8 +172,7 @@ static const uint8_t st7701_4848S040_init_operations[] = {
 #define GFX_BL 38 // default backlight pin,
 
 // 9-bit mode SPI
-Arduino_ESP32SPI *bus = new Arduino_ESP32SPI(
-    GFX_NOT_DEFINED /* DC */, TFT_CS /* CS */, TFT_SCLK /* SCK */, TFT_MOSI /* MOSI */, GFX_NOT_DEFINED /* MISO */);
+Arduino_DataBus* bus = new Arduino_SWSPI(TFT_DC, TFT_CS, TFT_SCLK, TFT_MOSI, TFT_MISO);
 
 // panel (Hardware) specific
 Arduino_ESP32RGBPanel* rgbpanel = new Arduino_ESP32RGBPanel(
@@ -185,4 +184,4 @@ Arduino_ESP32RGBPanel* rgbpanel = new Arduino_ESP32RGBPanel(
 // panel parameters & setup
 Arduino_RGB_Display tft = Arduino_RGB_Display(
     480 /* width */, 480 /* height */, rgbpanel, 0 /* rotation */, true /* auto_flush */,
-    bus, GFX_NOT_DEFINED /* RST */, st7701_type1_init_operations, sizeof(st7701_type1_init_operations));
+    bus, GFX_NOT_DEFINED /* RST */, st7701_4848S040_init_operations, sizeof(st7701_4848S040_init_operations));

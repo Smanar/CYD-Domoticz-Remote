@@ -1,13 +1,39 @@
 #include "screen_driver.h"
 //#include <SPI.h>
-
 #include "../conf/global_config.h"
 #include "lvgl.h"
+
+#ifndef LV_VDB_SIZE
+#if defined(ARDUINO_ARCH_ESP8266)
+#  define LV_VDB_SIZE    (8 * 1024U)   // Minimum 8 Kb
+#elif defined(CONFIG_IDF_TARGET_ESP32S2)
+#  define LV_VDB_SIZE    (16 * 1024U)  // 16kB draw buffer
+#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+#  define LV_VDB_SIZE    (48 * 1024U)  // 16kB draw buffer
+#elif defined(ARDUINO_ARCH_ESP32)
+#  define LV_VDB_SIZE    (32 * 1024U)  // 32kB draw buffer
+#else
+#  define LV_VDB_SIZE    (128 * 1024U) // native app
+#endif
+#endif // LV_VDB_SIZE
+
+// Virtual Device buffer, can be smaller than screen size.
+// Lvgl will use this memory range to draw widgets to be refreshed: if a widget does not fit into the provided range it will be drawn and flushed in more than one go.
+// To maximize performances one would use the entire screen size (in bytes, so pixels divided by 8, so W*H/8)
+#ifndef DYNAMICVDFBUFFER
+static lv_color_t buf[TFT_WIDTH * TFT_HEIGHT / 10];
+const size_t VDBsize = TFT_WIDTH * TFT_HEIGHT / 10;
+#else
+static lv_color_t *buf;
+const size_t VDBsize = LV_VDB_SIZE / sizeof(lv_color_t);
+#endif
+
+
 
 uint32_t LV_EVENT_GET_COMP_CHILD;
 
 static lv_disp_draw_buf_t draw_buf;
-static lv_color_t buf[TFT_WIDTH * TFT_HEIGHT / 10];
+
 
 #ifdef TFT_ESPI
     #include <TFT_eSPI.h>
@@ -397,7 +423,9 @@ void screen_lv_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *col
     uint32_t w = (area->x2 - area->x1 + 1);
     uint32_t h = (area->y2 - area->y1 + 1);
 
+#ifndef ARDUINO_GFX
     tft.startWrite();
+#endif
 
 #ifdef TFT_ESPI
     tft.setAddrWindow(area->x1, area->y1, w, h);
@@ -415,7 +443,9 @@ void screen_lv_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *col
     #endif
 #endif
 
+#ifndef ARDUINO_GFX
     tft.endWrite();
+#endif
 
     lv_disp_flush_ready(disp);
 }
@@ -497,7 +527,28 @@ void screen_setup()
 
     touchscreen_calibrate(FORCECALIBRATE);
 
-    lv_disp_draw_buf_init(&draw_buf, buf, NULL, TFT_WIDTH * TFT_HEIGHT / 10);
+    Serial.printf("Display buffer size: %d bytes\n", VDBsize);
+
+#ifdef DYNAMICVDFBUFFER
+    #ifdef ESP32
+    buf = (lv_color_t *)heap_caps_malloc(sizeof(lv_color_t) * VDBsize, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+    if (!buf)
+    {
+        // remove MALLOC_CAP_INTERNAL flag try again
+        buf = (lv_color_t *)heap_caps_malloc(sizeof(lv_color_t) * VDBsize, MALLOC_CAP_8BIT);
+    }
+    #else
+        buf = (lv_color_t*)malloc(sizeof(lv_color_t) * VDBsize);
+    #endif 
+#endif
+
+    if (!buf)
+    {
+        Serial.println("LVGL disp_draw_buf allocate failed!");
+        return;
+    }
+
+    lv_disp_draw_buf_init(&draw_buf, buf, NULL, VDBsize);
 
     /*Initialize the display*/
     static lv_disp_drv_t disp_drv;
