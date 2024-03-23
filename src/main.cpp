@@ -291,7 +291,7 @@ void setup()
   }
   else
   {
-    lv_disp_draw_buf_init(&draw_buf, disp_draw_buf, NULL, BUFFSIZE);
+    lv_disp_draw_buf_init(&draw_buf, disp_draw_buf, NULL, guiVDBsize);
 
     /* Initialize the display */
     lv_disp_drv_init(&disp_drv);
