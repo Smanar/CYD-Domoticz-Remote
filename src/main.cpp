@@ -197,8 +197,6 @@ Arduino_RGB_Display *gfx = new Arduino_RGB_Display(
     bus, GFX_NOT_DEFINED /* RST */, st7701_4848S040_init_operations, sizeof(st7701_4848S040_init_operations));
 #endif
 
-#define BUFFSIZE 480*480
-
 #ifndef LV_VDB_SIZE
 #if defined(ARDUINO_ARCH_ESP8266)
 #  define LV_VDB_SIZE    (8 * 1024U)   // Minimum 8 Kb
@@ -212,6 +210,12 @@ Arduino_RGB_Display *gfx = new Arduino_RGB_Display(
 #  define LV_VDB_SIZE    (128 * 1024U) // native app
 #endif
 #endif // LV_VDB_SIZE
+
+// Virtual Device buffer, can be smaller than screen size.
+// Lvgl will use this memory range to draw widgets to be refreshed: if a widget does not fit into the provided range it will be drawn and flushed in more than one go.
+// To maximize performances one would use the entire screen size (in bytes, so pixels divided by 8, so W*H/8)
+const size_t VDBsize = LV_VDB_SIZE / sizeof(lv_color_t);
+//const size_t VDBsize = 480*480;
 
 #define OLDCODE 1
 
@@ -268,23 +272,17 @@ void setup()
   screenWidth = gfx->width();
   screenHeight = gfx->height();
 
-#if 1
-  const size_t guiVDBsize = BUFFSIZE;
-  disp_draw_buf = (lv_color_t *)heap_caps_malloc(sizeof(lv_color_t) * BUFFSIZE, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+#ifdef ESP32
+  disp_draw_buf = (lv_color_t *)heap_caps_malloc(sizeof(lv_color_t) * VDBsize, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
   if (!disp_draw_buf)
   {
     // remove MALLOC_CAP_INTERNAL flag try again
-    disp_draw_buf = (lv_color_t *)heap_caps_malloc(sizeof(lv_color_t) * BUFFSIZE, MALLOC_CAP_8BIT);
+    disp_draw_buf = (lv_color_t *)heap_caps_malloc(sizeof(lv_color_t) * VDBsize, MALLOC_CAP_8BIT);
   }
 #else
-    /* Create the Virtual Device Buffers */
-    const size_t guiVDBsize = LV_VDB_SIZE / sizeof(lv_color_t);
-#ifdef ESP32
-    disp_draw_buf =  (lv_color_t*)heap_caps_malloc(sizeof(lv_color_t) * guiVDBsize, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
-#else
-    disp_draw_buf = (lv_color_t*)malloc(sizeof(lv_color_t) * guiVDBsize);
+    disp_draw_buf = (lv_color_t*)malloc(sizeof(lv_color_t) * VDBsize);
 #endif 
-#endif
+
 
   if (!disp_draw_buf)
   {
@@ -292,7 +290,7 @@ void setup()
   }
   else
   {
-    lv_disp_draw_buf_init(&draw_buf, disp_draw_buf, NULL, guiVDBsize);
+    lv_disp_draw_buf_init(&draw_buf, disp_draw_buf, NULL, VDBsize);
 
     /* Initialize the display */
     lv_disp_drv_init(&disp_drv);
