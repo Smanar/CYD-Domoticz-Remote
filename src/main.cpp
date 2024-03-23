@@ -279,10 +279,9 @@ void setup()
     /* Create the Virtual Device Buffers */
     const size_t guiVDBsize = LV_VDB_SIZE / sizeof(lv_color_t);
 #ifdef ESP32
-    static lv_color_t* disp_draw_buf =
-        (lv_color_t*)heap_caps_malloc(sizeof(lv_color_t) * guiVDBsize, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+    disp_draw_buf =  (lv_color_t*)heap_caps_malloc(sizeof(lv_color_t) * guiVDBsize, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
 #else
-    static lv_color_t* disp_draw_buf = (lv_color_t*)malloc(sizeof(lv_color_t) * guiVDBsize);
+    disp_draw_buf = (lv_color_t*)malloc(sizeof(lv_color_t) * guiVDBsize);
 #endif 
 #endif
 
