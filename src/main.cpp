@@ -194,16 +194,39 @@ Arduino_ESP32RGBPanel* rgbpanel = new Arduino_ESP32RGBPanel(
 // panel parameters & setup
 Arduino_RGB_Display *gfx = new Arduino_RGB_Display(
     480 /* width */, 480 /* height */, rgbpanel, 0 /* rotation */, true /* auto_flush */,
-    bus, GFX_NOT_DEFINED /* RST */, st7701_type1_init_operations, sizeof(st7701_type1_init_operations));
+    bus, GFX_NOT_DEFINED /* RST */, st7701_4848S040_init_operations, sizeof(st7701_4848S040_init_operations));
+#endif
+
+#define BUFFSIZE 480*480
+
+#ifndef LV_VDB_SIZE
+#if defined(ARDUINO_ARCH_ESP8266)
+#  define LV_VDB_SIZE    (8 * 1024U)   // Minimum 8 Kb
+#elif defined(CONFIG_IDF_TARGET_ESP32S2)
+#  define LV_VDB_SIZE    (16 * 1024U)  // 16kB draw buffer
+#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+#  define LV_VDB_SIZE    (48 * 1024U)  // 16kB draw buffer
+#elif defined(ARDUINO_ARCH_ESP32)
+#  define LV_VDB_SIZE    (32 * 1024U)  // 32kB draw buffer
+#else
+#  define LV_VDB_SIZE    (128 * 1024U) // native app
+#endif
+#endif // LV_VDB_SIZE
+
+#define OLDCODE 1
+
+#if OLDCODE
+static lv_color_t *disp_draw_buf;
+#else
+static lv_color_t disp_draw_buf[BUFFSIZE];
 #endif
 
 
 /* Change to your screen resolution */
 static uint32_t screenWidth;
 static uint32_t screenHeight;
-static uint32_t bufSize;
+
 static lv_disp_draw_buf_t draw_buf;
-static lv_color_t *disp_draw_buf;
 static lv_disp_drv_t disp_drv;
 
 /* Display flushing */
@@ -222,13 +245,14 @@ void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color
   lv_disp_flush_ready(disp);
 }
 
+
 void setup()
 {
   Serial.begin(115200);
   Serial.println("Arduino_GFX LVGL Hello World example");
 
   // Init Display
-  if (!gfx->begin(11000000))
+  if (!gfx->begin())
   {
     Serial.println("gfx->begin() failed!");
   }
@@ -244,15 +268,23 @@ void setup()
   screenWidth = gfx->width();
   screenHeight = gfx->height();
 
-  bufSize = screenWidth * screenHeight;
-
-
-  disp_draw_buf = (lv_color_t *)heap_caps_malloc(sizeof(lv_color_t) * bufSize, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+#if 0
+  disp_draw_buf = (lv_color_t *)heap_caps_malloc(sizeof(lv_color_t) * BUFFSIZE, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
   if (!disp_draw_buf)
   {
     // remove MALLOC_CAP_INTERNAL flag try again
-    disp_draw_buf = (lv_color_t *)heap_caps_malloc(sizeof(lv_color_t) * bufSize, MALLOC_CAP_8BIT);
+    disp_draw_buf = (lv_color_t *)heap_caps_malloc(sizeof(lv_color_t) * BUFFSIZE, MALLOC_CAP_8BIT);
   }
+#else
+    /* Create the Virtual Device Buffers */
+    const size_t guiVDBsize = LV_VDB_SIZE / sizeof(lv_color_t);
+#ifdef ESP32
+    static lv_color_t* guiVdbBuffer1 =
+        (lv_color_t*)heap_caps_malloc(sizeof(lv_color_t) * guiVDBsize, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+#else
+    static lv_color_t* guiVdbBuffer1 = (lv_color_t*)malloc(sizeof(lv_color_t) * guiVDBsize);
+#endif 
+#endif
 
   if (!disp_draw_buf)
   {
@@ -260,7 +292,7 @@ void setup()
   }
   else
   {
-    lv_disp_draw_buf_init(&draw_buf, disp_draw_buf, NULL, bufSize);
+    lv_disp_draw_buf_init(&draw_buf, disp_draw_buf, NULL, BUFFSIZE);
 
     /* Initialize the display */
     lv_disp_drv_init(&disp_drv);
