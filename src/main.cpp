@@ -268,7 +268,8 @@ void setup()
   screenWidth = gfx->width();
   screenHeight = gfx->height();
 
-#if 0
+#if 1
+  const size_t guiVDBsize = BUFFSIZE;
   disp_draw_buf = (lv_color_t *)heap_caps_malloc(sizeof(lv_color_t) * BUFFSIZE, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
   if (!disp_draw_buf)
   {
