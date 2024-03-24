@@ -48,6 +48,7 @@ static void scr_event_cb(lv_event_t * e)
 
 void setup() {
     Serial.begin(115200);
+    delay(500);    // add a delay to be sure the serial is ready, while(!Serial) has, to my knowledge. no effect on a nodeMcu
     Serial.println(F("Starting application"));
     LoadGlobalConfig();
     screen_setup();

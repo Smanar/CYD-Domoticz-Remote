@@ -72,6 +72,14 @@ static lv_disp_draw_buf_t draw_buf;
 
 #endif
 
+// Touch Driver
+#if !defined(TOUCH_911) && !defined(TOUCH_LOVYAN) && !defined(TOUCH_XPT2046)
+    bool _TC::init(void) { return; }
+    bool _TC::touched(void) { return false; }
+    bool _TC::tirqTouched(void) { return false; }
+    TS_Point _TC::getPoint(void) { return p; };
+#endif
+
 #ifdef TOUCH_XPT2046
     #define XPT2046_IRQ 36
     #define XPT2046_MOSI 32
@@ -79,84 +87,69 @@ static lv_disp_draw_buf_t draw_buf;
     #define XPT2046_CLK 25
     #define XPT2046_CS 33
     #include <XPT2046_Touchscreen.h>
-#endif
 
-#if !defined(TOUCH_911) && !defined(TOUCH_LOVYAN) && !defined(TOUCH_XPT2046)
-    class TS_Point
-    {
-        public:
-            int x, y;
-            TS_Point() : x(0), y(0) {}
-            TS_Point(int x, int y) : x(x), y(y) {}
-    };
-
-    class _TC
-    {
+class _TC
+{
     public:
-        bool touched();
-        bool tirqTouched();
-        TS_Point getPoint();
-        TS_Point p;
+        bool touched(void);
+        bool tirqTouched(void);
+        TS_Point getPoint(void);
+        void init(void);
     };
 
-    bool _TC::touched(void) { return false; }
-    bool _TC::tirqTouched(void) { return false; }
-    TS_Point _TC::getPoint(void) { return p; };
-
-    _TC touchscreen;
-#endif
-#ifdef TOUCH_XPT2046
     SPIClass touchscreen_spi = SPIClass(HSPI);
-    XPT2046_Touchscreen touchscreen(XPT2046_CS, XPT2046_IRQ);
+    XPT2046_Touchscreen touchscreen2(XPT2046_CS, XPT2046_IRQ);
+
+    void _TC::init(void)
+    {
+        touchscreen_spi.begin(XPT2046_CLK, XPT2046_MISO, XPT2046_MOSI, XPT2046_CS);
+        touchscreen2.begin(touchscreen_spi);
+        touchscreen2.setRotation(global_config.rotateScreen ? 3 : 1); 
+    }
+    bool _TC::touched(void) { return touchscreen2.touched(); }
+    bool _TC::tirqTouched(void) { return touchscreen2.tirqTouched(); }
+    TS_Point _TC::getPoint(void) { return touchscreen2.getPoint(); }
 #endif
+
 #ifdef TOUCH_LOVYAN
-    class TS_Point
-    {
-        public:
-            int x, y;
-            TS_Point() : x(0), y(0) {}
-            TS_Point(int x, int y) : x(x), y(y) {}
-    };
 
-    class _TC
-    {
+class TS_Point
+{
     public:
-        bool touched();
-        bool tirqTouched();
-        TS_Point getPoint();
-    private:
-        uint16_t touchX, touchY;
-        TS_Point p;
-    };
+        int x, y;
+        TS_Point() : x(0), y(0) {}
+        TS_Point(int x, int y) : x(x), y(y) {}
+};
 
-    bool _TC::touched(void)
-    {
-        return tft.getTouch( &this->touchX, &this->touchY );
-    }
+class _TC
+{
+public:
+    bool touched();
+    bool tirqTouched();
+    TS_Point getPoint();
+    void init();
+private:
+    uint16_t touchX, touchY;
+    TS_Point p;
+};
 
-    bool _TC::tirqTouched(void)
-    {
-        return tft.getTouch( &this->touchX, &this->touchY );
-    }
-
+    void _TC::init(void) { return; }
+    bool _TC::touched(void) { return tft.getTouch( &this->touchX, &this->touchY ); }
+    bool _TC::tirqTouched(void) { return tft.getTouch( &this->touchX, &this->touchY ); }
     TS_Point _TC::getPoint(void)
     {
         this->p.x = touchX;
         this->p.y = touchY;
         return this->p;
     }
-
-    _TC touchscreen;
 #endif
+
 #ifdef TOUCH_911
 
 //https://github.com/nik-sharky/arduino-goodix/blob/master/examples/GT911_avr_touch/GT911_avr_touch.ino
 
 #include <Wire.h>
 #include "Goodix.h"
-
-//#include "touch_driver.h" // base class
-//#include "touch_helper.h" // i2c scanner
 
 static Goodix touch = Goodix();
 
@@ -171,10 +164,10 @@ class TS_Point
 class _TC
 {
 public:
-    _TC();
     bool touched();
     bool tirqTouched();
     TS_Point getPoint();
+    void init();
 private:
     uint16_t touchX, touchY;
     TS_Point p;
@@ -185,7 +178,7 @@ IRAM_ATTR void GT911_setXY(int8_t contacts, GTPoint* points)
 {
 }
 
-_TC::_TC()
+void _TC::init(void)
 {
     Serial.println("Init 911 driver\n");
 
@@ -280,11 +273,9 @@ TS_Point _TC::getPoint(void)
     return this->p;
 }
 
-_TC touchscreen;
-
 #endif
 
-
+_TC touchscreen;
 
 
 bool isScreenInSleep = false;
@@ -519,11 +510,8 @@ void set_invert_display(){
 
 void screen_setup()
 {
-#ifdef TOUCH_XPT2046
-    touchscreen_spi.begin(XPT2046_CLK, XPT2046_MISO, XPT2046_MOSI, XPT2046_CS);
-    touchscreen.begin(touchscreen_spi);
-    touchscreen.setRotation(global_config.rotateScreen ? 3 : 1);
-#endif
+
+touchscreen.init();
 
 #ifdef GFX_BL
   pinMode(GFX_BL, OUTPUT);
