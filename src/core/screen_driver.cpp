@@ -150,7 +150,7 @@ static lv_disp_draw_buf_t draw_buf;
 #endif
 #ifdef TOUCH_911
 
-//iiiiiiiiiiiiiiii
+//https://github.com/nik-sharky/arduino-goodix/blob/master/examples/GT911_avr_touch/GT911_avr_touch.ino
 
 #include <Wire.h>
 #include "Goodix.h"
@@ -194,7 +194,7 @@ _TC::_TC()
     touch.setHandler(GT911_setXY); // not used
     GTInfo* info;
 Serial.println("44444444444\n");
-#if !DEBUG1
+#if DEBUG1
     if(touch.begin(TOUCH_IRQ, TOUCH_RST, I2C_TOUCH_ADDRESS))
     {
         info = touch.readInfo();
