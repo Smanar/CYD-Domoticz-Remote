@@ -183,33 +183,41 @@ private:
 _TC::_TC()
 {
 
+    Serial.printf("Init 911 driver\n");
+
     Wire.begin(TOUCH_SDA, TOUCH_SCL, (uint32_t)I2C_TOUCH_FREQUENCY);
     //touch.setHandler(GT911_setXY); // not used
     GTInfo* info;
-
+Serial.printf("44444444444\n");
     if(touch.begin(TOUCH_IRQ, TOUCH_RST, I2C_TOUCH_ADDRESS))
     {
         info = touch.readInfo();
         if(info->xResolution > 0 && info->yResolution > 0) goto found;
     }
-    
+    Serial.printf("33333333\n");
 #if TOUCH_IRQ == -1
     // Probe both addresses if IRQ is not connected
     for(uint8_t i = 0; i < 4; i++)
-        if(touch.begin(TOUCH_IRQ, TOUCH_RST, i < 2 ? 0x5d : 0x14)) {
+    {
+        if(touch.begin(TOUCH_IRQ, TOUCH_RST, i < 2 ? 0x5d : 0x14))
+        {
             info = touch.readInfo();
             if(info->xResolution > 0 && info->yResolution > 0) goto found;
         }
+    }
 #endif
-
+Serial.printf("555555555\n");
 found:
-    if(info->xResolution != 0 && info->yResolution != 0) {
+    if(info->xResolution != 0 && info->yResolution != 0)
+    {
         Serial.printf("Driver GT911 started: (%dx%d)\n", info->xResolution, info->yResolution);
         // uint8_t len = touch.fwResolution(480, 272);
-    } else {
+    }
+    else
+    {
         Serial.printf("Driver GT911 failed\n");
     }
-
+Serial.printf("888888888\n");
     // Do it again ?
     Wire.begin(TOUCH_SDA, TOUCH_SCL, (uint32_t)I2C_TOUCH_FREQUENCY);
 
@@ -218,13 +226,16 @@ found:
 
     Wire.beginTransmission(touch.i2cAddr);  
     int error = Wire.endTransmission();
-    if (error == 0) {    
+    if (error == 0)
+    {    
         Serial.println(": SUCCESS");   
-    } else {
+    }
+    else
+    {
         Serial.print(": ERROR #");
         Serial.println(error);
     }
-
+Serial.printf("9999999999\n");
 }
 
 
@@ -275,6 +286,8 @@ void touchscreen_calibrate(bool force)
     {
         return;
     }
+
+    Serial.println(F("Starting calibration"));
 
     tft.fillScreen(TFT_BLACK);
 #ifdef ARDUINO_GFX
@@ -511,6 +524,7 @@ void screen_setup()
 #else
     tft.init();
 #endif
+
 #ifdef TFT_ESPI
     tft.setRotation(global_config.rotateScreen ? 3 : 1);
 #endif
@@ -519,6 +533,7 @@ void screen_setup()
     tft.setRotation(global_config.rotateScreen ? 2 : 0);
     #endif
 #endif
+
     tft.fillScreen(TFT_BLACK);
     set_screen_brightness();
     set_invert_display();
@@ -544,7 +559,7 @@ void screen_setup()
 
     if (!buf)
     {
-        Serial.println("LVGL disp_draw_buf allocate failed!");
+        Serial.println(F("LVGL disp_draw_buf allocate failed!"));
         return;
     }
 
