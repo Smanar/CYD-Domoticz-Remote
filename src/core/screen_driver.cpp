@@ -150,7 +150,7 @@ static lv_disp_draw_buf_t draw_buf;
 #endif
 #ifdef TOUCH_911
 
-//https://github.com/nik-sharky/arduino-goodix/blob/master/examples/GT911_avr_touch/GT911_avr_touch.ino
+//iiiiiiiiiiiiiiii
 
 #include <Wire.h>
 #include "Goodix.h"
@@ -180,22 +180,28 @@ private:
     TS_Point p;
 };
 
+//Nor used, need to keep ?
+IRAM_ATTR void GT911_setXY(int8_t contacts, GTPoint* points)
+{
+}
+
 _TC::_TC()
 {
-#if DEBUG1
-    Serial.printf("Init 911 driver\n");
+    Serial.println("Init 911 driver\n");
 
     Wire.begin(TOUCH_SDA, TOUCH_SCL, (uint32_t)I2C_TOUCH_FREQUENCY);
-    //touch.setHandler(GT911_setXY); // not used
+    delay(500);
+    touch.setHandler(GT911_setXY); // not used
     GTInfo* info;
-Serial.printf("44444444444\n");
-#if DEBUG2
+Serial.println("44444444444\n");
+#if !DEBUG1
     if(touch.begin(TOUCH_IRQ, TOUCH_RST, I2C_TOUCH_ADDRESS))
     {
         info = touch.readInfo();
         if(info->xResolution > 0 && info->yResolution > 0) goto found;
     }
-    Serial.printf("33333333\n");
+Serial.printf("33333333\n");
+
 #if TOUCH_IRQ == -1
     // Probe both addresses if IRQ is not connected
     for(uint8_t i = 0; i < 4; i++)
@@ -210,7 +216,7 @@ Serial.printf("44444444444\n");
 Serial.printf("555555555\n");
 found:
 int v = 0;
-#if DEBUG3
+#if DEBUG2
     if(info->xResolution != 0 && info->yResolution != 0)
     {
         Serial.printf("Driver GT911 started: (%dx%d)\n", info->xResolution, info->yResolution);
@@ -239,7 +245,6 @@ Serial.printf("888888888\n");
         Serial.println(error);
     }
 Serial.printf("9999999999\n");
-#endif
 #endif
 #endif
 }
