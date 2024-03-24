@@ -182,13 +182,14 @@ private:
 
 _TC::_TC()
 {
-
+#if DEBUG1
     Serial.printf("Init 911 driver\n");
 
     Wire.begin(TOUCH_SDA, TOUCH_SCL, (uint32_t)I2C_TOUCH_FREQUENCY);
     //touch.setHandler(GT911_setXY); // not used
     GTInfo* info;
 Serial.printf("44444444444\n");
+#if DEBUG2
     if(touch.begin(TOUCH_IRQ, TOUCH_RST, I2C_TOUCH_ADDRESS))
     {
         info = touch.readInfo();
@@ -208,6 +209,8 @@ Serial.printf("44444444444\n");
 #endif
 Serial.printf("555555555\n");
 found:
+int v = 0;
+#if DEBUG3
     if(info->xResolution != 0 && info->yResolution != 0)
     {
         Serial.printf("Driver GT911 started: (%dx%d)\n", info->xResolution, info->yResolution);
@@ -236,6 +239,9 @@ Serial.printf("888888888\n");
         Serial.println(error);
     }
 Serial.printf("9999999999\n");
+#endif
+#endif
+#endif
 }
 
 
