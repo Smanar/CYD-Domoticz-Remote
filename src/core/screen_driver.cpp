@@ -116,9 +116,9 @@ class _TC
 class TS_Point
 {
     public:
-        int x, y;
+        uint16_t x, y;
         TS_Point() : x(0), y(0) {}
-        TS_Point(int x, int y) : x(x), y(y) {}
+        TS_Point(uint16_t x, uint16_t y) : x(x), y(y) {}
 };
 
 class _TC
@@ -129,19 +129,13 @@ public:
     TS_Point getPoint();
     void init();
 private:
-    uint16_t touchX, touchY;
     TS_Point p;
 };
 
     void _TC::init(void) { return; }
-    bool _TC::touched(void) { return tft.getTouch( &this->touchX, &this->touchY ); }
-    bool _TC::tirqTouched(void) { return tft.getTouch( &this->touchX, &this->touchY ); }
-    TS_Point _TC::getPoint(void)
-    {
-        this->p.x = touchX;
-        this->p.y = touchY;
-        return this->p;
-    }
+    bool _TC::touched(void) { return tft.getTouch( &this->p.x, &this->p.y ); }
+    bool _TC::tirqTouched(void) { return tft.getTouch( &this->p.x, &this->p.y ); }
+    TS_Point _TC::getPoint(void) { return this->p; }
 #endif
 
 #ifdef TOUCH_911
@@ -169,7 +163,6 @@ public:
     TS_Point getPoint();
     void init();
 private:
-    uint16_t touchX, touchY;
     TS_Point p;
 };
 
@@ -186,14 +179,12 @@ void _TC::init(void)
     delay(500);
     touch.setHandler(GT911_setXY); // not used
     GTInfo* info;
-Serial.println("44444444444\n");
-#if DEBUG1
+
     if(touch.begin(TOUCH_IRQ, TOUCH_RST, I2C_TOUCH_ADDRESS))
     {
         info = touch.readInfo();
         if(info->xResolution > 0 && info->yResolution > 0) goto found;
     }
-Serial.printf("33333333\n");
 
 #if TOUCH_IRQ == -1
     // Probe both addresses if IRQ is not connected
@@ -206,10 +197,9 @@ Serial.printf("33333333\n");
         }
     }
 #endif
-Serial.printf("555555555\n");
+
 found:
-int v = 0;
-#if DEBUG2
+
     if(info->xResolution != 0 && info->yResolution != 0)
     {
         Serial.printf("Driver GT911 started: (%dx%d)\n", info->xResolution, info->yResolution);
@@ -219,7 +209,7 @@ int v = 0;
     {
         Serial.printf("Driver GT911 failed\n");
     }
-Serial.printf("888888888\n");
+
     // Do it again ?
     Wire.begin(TOUCH_SDA, TOUCH_SCL, (uint32_t)I2C_TOUCH_FREQUENCY);
 
@@ -237,17 +227,13 @@ Serial.printf("888888888\n");
         Serial.print(": ERROR #");
         Serial.println(error);
     }
-Serial.printf("9999999999\n");
-#endif
-#endif
-}
 
+}
 
 bool _TC::touched(void)
 {
     static GTPoint points[5];
     //GTPoint *points
-
 
     if(touch.readInput((uint8_t*)&points) > 0)
     {
@@ -260,18 +246,8 @@ bool _TC::touched(void)
     return false;
 }
 
-bool _TC::tirqTouched(void)
-{
-    //return tft.getTouch( &this->touchX, &this->touchY );
-    return false;
-}
-
-TS_Point _TC::getPoint(void)
-{
-    this->p.x = touchX;
-    this->p.y = touchY;
-    return this->p;
-}
+bool _TC::tirqTouched(void) { return false; }
+TS_Point _TC::getPoint(void) { return this->p; }
 
 #endif
 

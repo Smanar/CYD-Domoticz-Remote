@@ -71,7 +71,7 @@ static void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int 
     //lv_obj_set_flex_flow(Button_icon, LV_FLEX_FLOW_ROW);
     lv_obj_clear_flag( Button_icon, LV_OBJ_FLAG_SCROLLABLE );                                       // Remove scrollbar
     //lv_obj_set_style_pad_all(Button_icon, 0, 0);                                                  // Remove padding
-    if (d) lv_obj_add_event_cb(Button_icon, btn_event_cb, LV_EVENT_CLICKED, (void *)d);             //Assign a callback to the button
+    if (d) lv_obj_add_event_cb(Button_icon, btn_event_cb, LV_EVENT_CLICKED, (void *)d);             // Assign a callback to the button
     if (idx) lv_obj_add_event_cb(Button_icon, btn_event_cb_group, LV_EVENT_CLICKED, (void *)idx); 
 
     lv_obj_t *img = lv_img_create(Button_icon);
@@ -84,13 +84,13 @@ static void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int 
     lv_obj_set_style_img_recolor(img, color, 0);
 
     // Display a "on" icon
-    if (d->type < 5 && strcmp(d->data, "On") == 0)
+    if (d && d->type < 5 && strcmp(d->data, "On") == 0)
     {
         lv_obj_t * label = lv_label_create(Button_icon);
         lv_obj_set_style_text_color(label, color, 0);
         lv_obj_align_to(label, img,  LV_ALIGN_OUT_RIGHT_BOTTOM, 0, 0);
         //lv_obj_set_style_border_width(label, 5, 0); // To make it visible
-        lv_label_set_text(label, " "LV_SYMBOL_POWER);
+        lv_label_set_text(label, " On");
     }
 
     /*Create description*/
@@ -240,7 +240,6 @@ void group_panel_init(lv_obj_t* panel)
         return;
     }
     
-
     short x,y = 0;
     short cx,cy;
     int idx = 0;
