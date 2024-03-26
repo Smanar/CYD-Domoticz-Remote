@@ -134,7 +134,7 @@ private:
 
     void _TC::init(void) { return; }
     bool _TC::touched(void) { return tft.getTouch( &this->p.x, &this->p.y ); }
-    bool _TC::tirqTouched(void) { return tft.getTouch( &this->p.x, &this->p.y ); }
+    bool _TC::tirqTouched(void) { return true; }
     TS_Point _TC::getPoint(void) { return this->p; }
 #endif
 
@@ -246,7 +246,7 @@ bool _TC::touched(void)
     return false;
 }
 
-bool _TC::tirqTouched(void) { return false; }
+bool _TC::tirqTouched(void) { return true; }
 TS_Point _TC::getPoint(void) { return this->p; }
 
 #endif
