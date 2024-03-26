@@ -183,27 +183,25 @@ void _TC::init(void)
     if(touch.begin(TOUCH_IRQ, TOUCH_RST, I2C_TOUCH_ADDRESS))
     {
         info = touch.readInfo();
-        if(info->xResolution > 0 && info->yResolution > 0) goto found;
     }
 
 #if TOUCH_IRQ == -1
-    // Probe both addresses if IRQ is not connected
-    for(uint8_t i = 0; i < 4; i++)
-    {
-        if(touch.begin(TOUCH_IRQ, TOUCH_RST, i < 2 ? 0x5d : 0x14))
+    if(info->xResolution == 0 || info->yResolution == 0)
+        // Probe both addresses if IRQ is not connected
+        for(uint8_t i = 0; i < 4; i++)
         {
-            info = touch.readInfo();
-            if(info->xResolution > 0 && info->yResolution > 0) goto found;
+            if(touch.begin(TOUCH_IRQ, TOUCH_RST, i < 2 ? 0x5d : 0x14))
+            {
+                info = touch.readInfo();
+                if(info->xResolution > 0 && info->yResolution > 0) break;
+            }
         }
     }
 #endif
 
-found:
-
     if(info->xResolution != 0 && info->yResolution != 0)
     {
         Serial.printf("Driver GT911 started: (%dx%d)\n", info->xResolution, info->yResolution);
-        // uint8_t len = touch.fwResolution(480, 272);
     }
     else
     {
@@ -487,34 +485,49 @@ void set_invert_display(){
 void screen_setup()
 {
 
-touchscreen.init();
+    //Touch Initialisation
+    touchscreen.init();
 
+//Need to be done before the init for this lib.
 #ifdef GFX_BL
-  pinMode(GFX_BL, OUTPUT);
-  digitalWrite(GFX_BL, HIGH);
+    //Normal mode
+    pinMode(GFX_BL, OUTPUT);
+    digitalWrite(GFX_BL, HIGH);
+    //With brightness support
+    //ledcSetup(0 /* LEDChannel */, 12000 /* freq */, 8 /* resolution */);
+    //ledcAttachPin(GFX_BL, 0 /* LEDChannel */);
+    //ledcWrite(0 /* LEDChannel */, 50); /* 0-255 */
 #endif
 
-#ifdef ARDUINO_GFX
-    tft.begin(16000000);
-#else
-    tft.init();
-#endif
-
-#ifdef TFT_ESPI
-    tft.setRotation(global_config.rotateScreen ? 3 : 1);
-#endif
-#ifdef LOVYANGFX
-    #ifdef esp2432S028R
-    tft.setRotation(global_config.rotateScreen ? 2 : 0);
+    //Display initialisation
+    #ifdef ARDUINO_GFX
+        tft.begin(16000000);
+    #else
+        tft.init();
     #endif
-#endif
 
-    tft.fillScreen(TFT_BLACK);
+    // brightness option and set backlight
     set_screen_brightness();
+
+    // Rotation option
+    #ifdef TFT_ESPI
+        tft.setRotation(global_config.rotateScreen ? 3 : 1);
+    #endif
+    #ifdef LOVYANGFX
+        #ifdef esp2432S028R
+        tft.setRotation(global_config.rotateScreen ? 2 : 0);
+        #endif
+    #endif
+
+    // Color Invertion option
     set_invert_display();
+
+    //Clear screen
+    tft.fillScreen(TFT_BLACK);
 
     lv_init();
 
+    //Need calibration ?
     touchscreen_calibrate(FORCECALIBRATE);
 
     Serial.printf("Display buffer size: %d bytes\n", VDBsize);

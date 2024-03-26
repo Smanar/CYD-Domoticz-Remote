@@ -78,6 +78,10 @@ bool HTTPGETRequestWithReturn(const char * url2, JsonDocument *doc, bool NeedFil
             return false;
         }
 
+        //Serial.printf("Can't deserializeJson JSON : %s\n",err.c_str());
+        //Serial.printf("content Length : %d\n", client.getSize());
+        //Serial.printf("Free memory : %d\n", ESP.getMaxAllocHeap());
+
         // Some debug
         //char buffer2[4096];
         //serializeJsonPretty(doc, buffer2);
