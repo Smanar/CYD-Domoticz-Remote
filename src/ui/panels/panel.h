@@ -5,8 +5,9 @@
 #define SIZEOF(arr) (sizeof(arr) / sizeof(*arr))
 
 void settings_panel_init(lv_obj_t* panel);
-void home_panel_init(lv_obj_t* panel, Device d[]);
+void home_panel_init(lv_obj_t* panel, Device d[], short page = 0);
 void info_panel_init(lv_obj_t* panel);
+void group_panel_init(lv_obj_t* panel);
 void device_panel_init(lv_obj_t* panel);
 void tools_panel_init(lv_obj_t* panel);
 
