@@ -494,7 +494,7 @@ void screen_setup()
     pinMode(GFX_BL, OUTPUT);
     digitalWrite(GFX_BL, HIGH);
     //With brightness support
-    //ledcSetup(0 /* LEDChannel */, 12000 /* freq */, 8 /* resolution */);
+    //ledcSetup(0 /* LEDChannel */, 12000 /* freq */, 8 /* resolution */); // Can use lower for freq > 1000
     //ledcAttachPin(GFX_BL, 0 /* LEDChannel */);
     //ledcWrite(0 /* LEDChannel */, 50); /* 0-255 */
 #endif
