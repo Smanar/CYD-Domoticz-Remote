@@ -18,6 +18,7 @@ static Device SpecialDevice; // structure for an actual one that is not on HP
 static Device *SelectedDevice; // The selected one
 
 extern lv_style_t style_shadow;
+extern lv_color_t background;
 
 static void return_btn_event_handler(lv_event_t * e) {
     lv_event_code_t code = lv_event_get_code(e);
@@ -289,8 +290,9 @@ void device_panel_init(lv_obj_t* panel)
     lv_obj_t * GridTop = lv_obj_create(cont);
     lv_obj_set_size(GridTop, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
     lv_obj_set_grid_cell(GridTop, LV_GRID_ALIGN_STRETCH, 0, 3, LV_GRID_ALIGN_STRETCH, 0, 1);
+    lv_obj_set_style_border_color(GridTop, lv_palette_main(LV_PALETTE_GREY), 0);
     //lv_obj_set_local_style_prop_meta(GridTop, LV_STYLE_TEXT_COLOR, LV_STYLE_PROP_META_INHERIT, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(GridTop, lv_palette_darken(LV_PALETTE_GREY, 4),0);
+    lv_obj_set_style_bg_color(GridTop, background, 0);
     lv_obj_set_style_border_width(GridTop, 4, 0);
     //lv_obj_set_style_border_color(cw, lv_color_hex(0xFFFFFF), LV_PART_KNOB | LV_STATE_DEFAULT);
     //lv_obj_set_style_border_opa(cw, 255, LV_PART_KNOB | LV_STATE_DEFAULT);
@@ -299,14 +301,14 @@ void device_panel_init(lv_obj_t* panel)
     lv_obj_t * GridSmall = lv_obj_create(cont);
     lv_obj_set_size(GridSmall, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
     lv_obj_set_grid_cell(GridSmall, LV_GRID_ALIGN_STRETCH, 2, 1,LV_GRID_ALIGN_STRETCH, 1, 1);
-    lv_obj_set_style_bg_color(GridSmall, lv_palette_darken(LV_PALETTE_GREY, 4),0);
+    lv_obj_set_style_bg_color(GridSmall, background, 0);
     lv_obj_set_style_border_width(GridSmall, 0, 0);
 
 
     lv_obj_t * GridBig = lv_obj_create(cont);
     lv_obj_set_size(GridBig, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
     lv_obj_set_grid_cell(GridBig, LV_GRID_ALIGN_STRETCH, 0, 2, LV_GRID_ALIGN_STRETCH, 1, 2);
-    lv_obj_set_style_bg_color(GridBig, lv_palette_darken(LV_PALETTE_GREY, 4),0);
+    lv_obj_set_style_bg_color(GridBig, background, 0);
     lv_obj_set_style_border_width(GridBig, 0, 0);
 
 
@@ -314,7 +316,7 @@ void device_panel_init(lv_obj_t* panel)
     lv_obj_set_size(GridExit, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
     lv_obj_clear_flag( GridExit, LV_OBJ_FLAG_SCROLLABLE );
     lv_obj_set_grid_cell(GridExit, LV_GRID_ALIGN_STRETCH, 2, 1, LV_GRID_ALIGN_STRETCH, 2, 1);
-    lv_obj_set_style_bg_color(GridExit, lv_palette_darken(LV_PALETTE_GREY, 4),0);
+    lv_obj_set_style_bg_color(GridExit, background, 0);
     lv_obj_set_style_border_width(GridExit, 0, 0);
     lv_obj_set_style_pad_all(GridExit, 0, 0);
 

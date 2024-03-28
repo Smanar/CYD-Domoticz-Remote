@@ -1,6 +1,7 @@
 #include "screen_driver.h"
 //#include <SPI.h>
 #include "../conf/global_config.h"
+#include "../ui/main_ui.h"
 #include "lvgl.h"
 
 #ifndef LV_VDB_SIZE
@@ -187,6 +188,7 @@ void _TC::init(void)
 
 #if TOUCH_IRQ == -1
     if(info->xResolution == 0 || info->yResolution == 0)
+    {
         // Probe both addresses if IRQ is not connected
         for(uint8_t i = 0; i < 4; i++)
         {
@@ -476,6 +478,7 @@ void set_color_scheme(){
     lv_disp_t *dispp = lv_disp_get_default();
     lv_theme_t *theme = lv_theme_default_init(dispp, lv_palette_main(color_defs[global_config.color_scheme].primary_color), lv_palette_main(color_defs[global_config.color_scheme].secondary_color), !global_config.lightMode, LV_FONT_DEFAULT);
     lv_disp_set_theme(dispp, theme);
+    ResetColorTheme();
 }
 
 void set_invert_display(){
@@ -494,7 +497,7 @@ void screen_setup()
     pinMode(GFX_BL, OUTPUT);
     digitalWrite(GFX_BL, HIGH);
     //With brightness support
-    //ledcSetup(0 /* LEDChannel */, 12000 /* freq */, 8 /* resolution */);
+    //ledcSetup(0 /* LEDChannel */, 12000 /* freq */, 8 /* resolution */); // Can use lower for freq > 1000
     //ledcAttachPin(GFX_BL, 0 /* LEDChannel */);
     //ledcWrite(0 /* LEDChannel */, 50); /* 0-255 */
 #endif
