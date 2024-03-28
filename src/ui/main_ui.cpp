@@ -26,6 +26,13 @@ void main_ui_setup(){
     lv_style_init(&style_shadow);
     lv_style_set_shadow_width(&style_shadow,  8);
     lv_style_set_shadow_spread(&style_shadow,  4);
+
+    ResetColorTheme();
+    
+}
+
+void ResetColorTheme(void)
+{
     if (global_config.lightMode)
     {
         background = lv_color_hex(0xffffff);
