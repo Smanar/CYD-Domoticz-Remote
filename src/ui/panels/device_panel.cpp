@@ -607,7 +607,11 @@ void device_panel_init(lv_obj_t* panel)
             lv_chart_series_t * ser1 = lv_chart_add_series(chart, lv_palette_main(LV_PALETTE_GREEN), LV_CHART_AXIS_PRIMARY_Y);
 
             // Make a scale
-            lv_chart_set_axis_tick(chart, LV_CHART_AXIS_PRIMARY_Y, 3, 2, 3, 1, true, 25);
+#if DEVICE_SIZE == 1
+            lv_chart_set_axis_tick(chart, LV_CHART_AXIS_PRIMARY_Y, 3, 2, 4, 1, true, 25);
+#else
+            lv_chart_set_axis_tick(chart, LV_CHART_AXIS_PRIMARY_Y, 3, 2, 4, 1, true, 35);
+#endif
             lv_obj_set_style_text_font(chart, &font2, 0);
 
             Serial.printf("Making chart with Range %d > %d\n",min , max);
@@ -620,7 +624,7 @@ void device_panel_init(lv_obj_t* panel)
             }
 
             //For float value
-            if (SelectedDevice->type == TYPE_TEMPERATURE)
+            if (SelectedDevice->type == TYPE_TEMPERATURE || SelectedDevice->type == TYPE_METEO)
             {
                 lv_obj_add_event_cb(chart, hist_chart_event_cb, LV_EVENT_DRAW_PART_BEGIN, (void *)10);
             }

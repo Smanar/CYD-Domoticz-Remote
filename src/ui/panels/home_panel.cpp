@@ -23,17 +23,29 @@ int Size_h = int(TFT_WIDTH/TOTAL_ICONY) - TOTAL_OFFSET_Y;
 static void btn_event_cb_group(lv_event_t * e)
 {
     int idx = (int)lv_event_get_user_data(e);
-    //Serial.printf("Clic sur boutton: %d", idx);
+    lv_obj_t * btn = lv_event_get_target(e);
+    lv_event_code_t code = lv_event_get_code(e);
+    
+    //Serial.printf("Clic sur boutton: %d with code %d\n", idx, code);
     
     char buff[256] = {};
-    if (idx > 0)
-    {
+
+    if(code == LV_EVENT_CLICKED) {
         lv_snprintf(buff, 256, "/json.htm?type=command&param=switchscene&idx=%d&switchcmd=%s", idx, "On");
     }
-    else
-    {
-        lv_snprintf(buff, 256, "/json.htm?type=command&param=switchscene&idx=%d&switchcmd=%s", -idx, "Off");
+    else if(code == LV_EVENT_VALUE_CHANGED) {
+        if (lv_obj_has_state(btn, LV_STATE_CHECKED))
+        {
+            lv_obj_set_style_opa(btn, LV_OPA_50, 0);
+            lv_snprintf(buff, 256, "/json.htm?type=command&param=switchscene&idx=%d&switchcmd=%s", idx, "Off");
+        }
+        else
+        {
+            lv_obj_set_style_opa(btn, LV_OPA_100, 0);
+            lv_snprintf(buff, 256, "/json.htm?type=command&param=switchscene&idx=%d&switchcmd=%s", idx, "On");
+        }
     }
+
     HTTPGETRequest(buff);
 }
 
@@ -58,7 +70,7 @@ static void btn_event_cb(lv_event_t * e)
         Select_deviceMemorised(d);
 }
 
-static void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int h, lv_color_t color, Device *d, const lv_img_dsc_t* icon, int idx)
+static void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int h, lv_color_t color, Device *d, const lv_img_dsc_t* icon)
 {
 
     /*Create a container with ROW flex direction*/
@@ -69,10 +81,9 @@ static void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int 
     lv_obj_add_style(Button_icon, &style_shadow, LV_PART_MAIN);
     //lv_obj_set_drag(Button_icon, false);
     //lv_obj_set_flex_flow(Button_icon, LV_FLEX_FLOW_ROW);
-    lv_obj_clear_flag( Button_icon, LV_OBJ_FLAG_SCROLLABLE );                                       // Remove scrollbar
-    //lv_obj_set_style_pad_all(Button_icon, 0, 0);                                                  // Remove padding
-    if (d) lv_obj_add_event_cb(Button_icon, btn_event_cb, LV_EVENT_CLICKED, (void *)d);             // Assign a callback to the button
-    if (idx) lv_obj_add_event_cb(Button_icon, btn_event_cb_group, LV_EVENT_CLICKED, (void *)idx); 
+    lv_obj_clear_flag( Button_icon, LV_OBJ_FLAG_SCROLLABLE );                                // Remove scrollbar
+    //lv_obj_set_style_pad_all(Button_icon, 0, 0);                                           // Remove padding
+    lv_obj_add_event_cb(Button_icon, btn_event_cb, LV_EVENT_CLICKED, (void *)d);             // Assign a callback to the button
 
     lv_obj_t *img = lv_img_create(Button_icon);
     //lv_img_set_src(img, LV_SYMBOL_OK "Accept");
@@ -84,7 +95,7 @@ static void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int 
     lv_obj_set_style_img_recolor(img, color, 0);
 
     // Display a "on" icon
-    if (d && d->type < 5 && strcmp(d->data, "On") == 0)
+    if (d->type < 5 && strcmp(d->data, "On") == 0)
     {
         lv_obj_t * label = lv_label_create(Button_icon);
         lv_obj_set_style_text_color(label, color, 0);
@@ -158,6 +169,49 @@ static void Widget_sensor(lv_obj_t* panel, char* desc, char* value, int x, int y
     lv_obj_align_to(label2, Button_icon,  LV_ALIGN_BOTTOM_MID, 0, 10); 
 }
 
+
+static void Widget_button_group(lv_obj_t* panel, char* desc, int x, int y, int w, int h, lv_color_t color, int idx, const lv_img_dsc_t* icon, bool state, bool group)
+{
+
+    /*Create a container with ROW flex direction*/
+    lv_obj_t * Button_icon = lv_obj_create(panel);
+    lv_obj_set_size(Button_icon, w, h);
+    lv_obj_set_pos(Button_icon, x, y);
+    lv_obj_add_style(Button_icon, &style_shadow, LV_PART_MAIN);
+    lv_obj_clear_flag( Button_icon, LV_OBJ_FLAG_SCROLLABLE );   // Remove scrollbar
+
+    if (group)
+    {
+        lv_obj_add_event_cb(Button_icon, btn_event_cb_group, LV_EVENT_VALUE_CHANGED, (void *)idx);
+        lv_obj_add_flag(Button_icon, LV_OBJ_FLAG_CHECKABLE);
+        if (!state)
+        {
+            lv_obj_set_style_opa(Button_icon, LV_OPA_50, 0);
+            lv_obj_add_state(Button_icon, LV_STATE_CHECKED);
+        }
+    }
+    else
+    {
+        lv_obj_add_event_cb(Button_icon, btn_event_cb_group, LV_EVENT_CLICKED, (void *)idx);
+    }
+
+    lv_obj_t *img = lv_img_create(Button_icon);
+    lv_img_set_src(img, icon);
+    lv_obj_align(img, LV_ALIGN_TOP_MID , 0, -10);
+    lv_obj_set_style_img_recolor_opa(img, 50, 0);
+    lv_obj_set_style_img_recolor(img, color, 0);
+
+    /*Create description*/
+    lv_obj_t * label2 = lv_label_create(Button_icon);               /*Add a label to the button*/
+    lv_label_set_long_mode(label2, LV_LABEL_LONG_WRAP);             /*Break the long lines*/
+    lv_obj_set_style_text_font(label2, &font2, 0);
+    lv_obj_set_style_text_align(label2, LV_TEXT_ALIGN_CENTER, 0);
+    lv_label_set_text(label2, desc);                                /*Set the labels text*/
+    lv_obj_set_width(label2, Size_w);
+    lv_obj_align_to(label2, Button_icon,  LV_ALIGN_BOTTOM_MID, 0, 10); 
+
+}
+
 void home_panel_init(lv_obj_t* panel, Device d[], short page)
 {
     short x,y;
@@ -204,7 +258,7 @@ void home_panel_init(lv_obj_t* panel, Device d[], short page)
                 case TYPE_WARNING: // This one is a sensor, but too much text to be displayed on homepage
                 case TYPE_TEXT: // This one is a sensor, but too much text to be displayed on homepage
                 {
-                    Widget_button(panel, d[i].name, cx, cy, Size_w , Size_h, device_color, &d[i], icon, 0); 
+                    Widget_button(panel, d[i].name, cx, cy, Size_w , Size_h, device_color, &d[i], icon); 
                 }
                 break;
                 default:
@@ -217,6 +271,12 @@ void home_panel_init(lv_obj_t* panel, Device d[], short page)
     }
 
 }
+
+struct _Group
+{
+    bool scene;
+    bool on;
+};
 
 void group_panel_init(lv_obj_t* panel)
 {
@@ -255,15 +315,11 @@ void group_panel_init(lv_obj_t* panel)
 
         name = i["Name"];
         if (i.containsKey("idx")) idx = atoi(i["idx"]);
-        
-        device_color = lv_color_make(0xFF, 0x2F, 0x2F);
-        if (strcmp(i["Status"], "Off") == 0) device_color = lv_color_make(0x7F, 0x2F, 0x2F);
-        if (strcmp(i["Type"], "Group") == 0)
-        {
-            if (strcmp(i["Status"], "On") == 0) idx = -idx;
-        }
 
-        Widget_button(panel, (char*)name, cx, cy, Size_w , Size_h, device_color, nullptr, Geticon(TYPE_LIGHT), idx);
+        device_color = lv_color_make(0xFF, 0x2F, 0x2F);
+        if (strcmp(i["Type"], "Group") == 0) device_color = lv_color_make(0x2F, 0x2F, 0xFF);
+
+        Widget_button_group(panel, (char*)name, cx, cy, Size_w , Size_h, device_color, idx, Geticon(TYPE_LIGHT), strcmp(i["Status"], "On") == 0,  strcmp(i["Type"], "Group") == 0);
 
         x += 1;
         if (x >= TOTAL_ICONX)

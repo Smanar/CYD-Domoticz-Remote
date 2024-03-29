@@ -275,7 +275,7 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
             }
 
             // Because of decimal values
-            if (type == TYPE_TEMPERATURE) v = v *10;
+            if (type == TYPE_TEMPERATURE || type == TYPE_METEO) v = v *10;
 
             if (v > *max) *max = v;
             if (v < *min) *min = v;
