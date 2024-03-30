@@ -197,6 +197,7 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
             url = url + "counter";
             break;
         case TYPE_PERCENT_SENSOR:
+        case TYPE_VALUE_SENSOR:
             url = url + "Percentage";
             break;
         case TYPE_METEO:
@@ -267,6 +268,7 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
                     v = i["u"];
                     break;
                 case TYPE_PERCENT_SENSOR:
+                case TYPE_VALUE_SENSOR:
                     v = i["v"];
                     break;
                 case TYPE_METEO:
@@ -277,9 +279,6 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
             // Because of decimal values
             if (type == TYPE_TEMPERATURE || type == TYPE_METEO) v = v *10;
 
-            if (v > *max) *max = v;
-            if (v < *min) *min = v;
-
             //swift the table
             for (j = 0; j < diff; j++)
             {
@@ -288,12 +287,19 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
                     tab[k] = tab[k+1];
                 }
                 tab[23] = v;
+                Serial.printf("Value %d\n", tab[23]);
             }
 
         }
 
+        // Scale calcul
+        for (k = 0; k < 23; k++)
+        {
+            if (tab[k] > *max) *max = tab[k];
+            if (tab[k] < *min) *min = tab[k];
+        }
         v = (*max - *min) / 10;
-        *min = *min - v;
+        if (*min != 0) *min = *min - v;
         *max = *max + v;
 
         return tab;
@@ -447,6 +453,7 @@ bool HttpInitDevice(Device *d, int id)
             else if (strcmp(subtype,"Percentage") == 0) d->type = TYPE_PERCENT_SENSOR;
             else if (strcmp(subtype,"Text") == 0) d->type = TYPE_TEXT;
             else if (strcmp(subtype,"kWh") == 0) d->type = TYPE_CONSUMPTION;
+            else if (strcmp(subtype,"Custom Sensor") == 0) d->type = TYPE_VALUE_SENSOR;
         }
         else if (strcmp(type, "Lux") == 0)
         {

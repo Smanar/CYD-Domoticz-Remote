@@ -95,7 +95,7 @@ static void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int 
     lv_obj_set_style_img_recolor(img, color, 0);
 
     // Display a "on" icon
-    if (d->type < 5 && strcmp(d->data, "On") == 0)
+    if (d->type < TYPE_SWITCH && strcmp(d->data, "On") == 0)
     {
         lv_obj_t * label = lv_label_create(Button_icon);
         lv_obj_set_style_text_color(label, color, 0);
@@ -178,7 +178,9 @@ static void Widget_button_group(lv_obj_t* panel, char* desc, int x, int y, int w
     lv_obj_set_size(Button_icon, w, h);
     lv_obj_set_pos(Button_icon, x, y);
     lv_obj_add_style(Button_icon, &style_shadow, LV_PART_MAIN);
-    lv_obj_clear_flag( Button_icon, LV_OBJ_FLAG_SCROLLABLE );   // Remove scrollbar
+    lv_obj_clear_flag( Button_icon, LV_OBJ_FLAG_SCROLLABLE );         // Remove scrollbar
+    //lv_obj_add_flag( Button_icon, LV_OBJ_FLAG_CLICKABLE );
+    //lv_obj_add_style(Button_icon, &style_pr, LV_STATE_PRESSED);     // Set a style when pressed
 
     if (group)
     {

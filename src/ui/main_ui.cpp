@@ -22,13 +22,17 @@ void main_ui_setup(){
     lv_msg_subscribe(DATA_REMOTE_STATE, on_state_change, NULL);
     on_state_change(NULL, NULL);
 
-    //defaut theme for button
+    //Style when pressed
+    //lv_style_init(&style_btn_red);
+    //lv_style_set_bg_color(&style_btn_red, lv_palette_main(LV_PALETTE_RED));
+    //lv_style_set_bg_grad_color(&style_btn_red, lv_palette_lighten(LV_PALETTE_RED, 3));
+
+    //Style for buttons
     lv_style_init(&style_shadow);
     lv_style_set_shadow_width(&style_shadow,  8);
     lv_style_set_shadow_spread(&style_shadow,  4);
-
     ResetColorTheme();
-    
+
 }
 
 void ResetColorTheme(void)
