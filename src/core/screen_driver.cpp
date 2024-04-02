@@ -22,8 +22,8 @@
 // Lvgl will use this memory range to draw widgets to be refreshed: if a widget does not fit into the provided range it will be drawn and flushed in more than one go.
 // To maximize performances one would use the entire screen size (in bytes, so pixels divided by 8, so W*H/8)
 #ifndef DYNAMICVDFBUFFER
-static lv_color_t buf[TFT_WIDTH * TFT_HEIGHT / 10];
-const size_t VDBsize = TFT_WIDTH * TFT_HEIGHT / 10;
+static lv_color_t buf[TFT_HEIGHT * TFT_WIDTH / 10];
+const size_t VDBsize = TFT_HEIGHT * TFT_WIDTH / 10;
 #else
 static lv_color_t *buf;
 const size_t VDBsize = LV_VDB_SIZE / sizeof(lv_color_t);
@@ -60,7 +60,6 @@ static lv_disp_draw_buf_t draw_buf;
     #ifdef ESP32_8048S070C
     #include "../drivers/esp32-8048S070C.h"
     #endif
-
 
     LGFX tft;
     static LGFX_Sprite sprite(&tft);
@@ -302,8 +301,8 @@ void touchscreen_calibrate(bool force)
 
     while (touchscreen.touched())
         ;
-    tft.drawFastHLine(TFT_HEIGHT-20, TFT_WIDTH-10, 20, TFT_WHITE);
-    tft.drawFastVLine(TFT_HEIGHT-10, TFT_WIDTH-20, 20, TFT_WHITE);
+    tft.drawFastHLine(TFT_WIDTH-20, TFT_HEIGHT-10, 20, TFT_WHITE);
+    tft.drawFastVLine(TFT_WIDTH-10, TFT_HEIGHT-20, 20, TFT_WHITE);
 
     while (!touchscreen.touched())
         ;
@@ -311,11 +310,11 @@ void touchscreen_calibrate(bool force)
     p = touchscreen.getPoint();
     x2 = p.x;
     y2 = p.y;
-    tft.drawFastHLine(TFT_HEIGHT-20, TFT_WIDTH-10, 20, TFT_BLACK);
-    tft.drawFastVLine(TFT_HEIGHT-10, TFT_WIDTH-20, 20, TFT_BLACK);
+    tft.drawFastHLine(TFT_WIDTH-20, TFT_HEIGHT-10, 20, TFT_BLACK);
+    tft.drawFastVLine(TFT_WIDTH-10, TFT_HEIGHT-20, 20, TFT_BLACK);
 
-    int16_t xDist = TFT_HEIGHT - 40;
-    int16_t yDist = TFT_WIDTH - 40;
+    int16_t xDist = TFT_WIDTH - 40;
+    int16_t yDist = TFT_HEIGHT - 40;
 
     global_config.screenCalXMult = (float)xDist / (float)(x2 - x1);
     global_config.screenCalXOffset = 20.0 - ((float)x1 * global_config.screenCalXMult);
@@ -486,7 +485,11 @@ void set_color_scheme(){
 }
 
 void set_invert_display(){
+#if TFT_INVERSION_ON == 1
     tft.invertDisplay(!global_config.invertColors);
+#else
+    tft.invertDisplay(global_config.invertColors);
+#endif
 }
 
 void screen_setup()
@@ -518,7 +521,7 @@ void screen_setup()
 
     // Rotation option
     #ifdef TFT_ESPI
-        tft.setRotation(global_config.rotateScreen ? 3 : 1);
+        tft.setRotation(global_config.rotateScreen ? 0 : 2);
     #endif
     #ifdef LOVYANGFX
         #ifdef esp2432S028R
@@ -563,8 +566,8 @@ void screen_setup()
     /*Initialize the display*/
     static lv_disp_drv_t disp_drv;
     lv_disp_drv_init(&disp_drv);
-    disp_drv.hor_res = TFT_HEIGHT;
-    disp_drv.ver_res = TFT_WIDTH;
+    disp_drv.hor_res = TFT_WIDTH;
+    disp_drv.ver_res = TFT_HEIGHT;
     disp_drv.flush_cb = screen_lv_flush;
     disp_drv.draw_buf = &draw_buf;
     lv_disp_drv_register(&disp_drv);

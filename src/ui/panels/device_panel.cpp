@@ -333,7 +333,7 @@ void device_panel_init(lv_obj_t* panel)
     lv_label_set_text(label, SelectedDevice->name);
     //lv_obj_align(label, LV_ALIGN_RIGHT_MID, 0, 0);
     lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_set_size(label, TFT_WIDTH - 50, 30);
+    lv_obj_set_size(label, TFT_HEIGHT - 50, 30);
     lv_obj_align_to(label, img,  LV_ALIGN_OUT_RIGHT_MID, 0, 0);
 
     //Options

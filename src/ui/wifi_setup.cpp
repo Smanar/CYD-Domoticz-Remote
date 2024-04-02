@@ -49,7 +49,7 @@ void wifi_pass_entry(const char* ssid){
     lv_textarea_set_text(passEntry, "");
     lv_obj_align(passEntry, LV_ALIGN_TOP_LEFT, 10, 40);
     lv_obj_add_event_cb(passEntry, ta_event_cb, LV_EVENT_ALL, NULL);
-    lv_obj_set_size(passEntry, TFT_HEIGHT - 20, 60);
+    lv_obj_set_size(passEntry, TFT_WIDTH - 20, 60);
 
     lv_obj_t * keyboard = lv_keyboard_create(lv_scr_act());
     lv_keyboard_set_textarea(keyboard, passEntry);
@@ -115,7 +115,7 @@ void wifi_init_inner(){
 
     lv_obj_t * list = lv_list_create(lv_scr_act());
     lv_obj_align(list, LV_ALIGN_TOP_LEFT, 10, 40);
-    lv_obj_set_size(list, TFT_HEIGHT - 20, TFT_WIDTH - 40 - 5);
+    lv_obj_set_size(list, TFT_WIDTH - 20, TFT_HEIGHT - 40 - 5);
 
     int n = WiFi.scanNetworks();
 

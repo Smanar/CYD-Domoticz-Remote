@@ -287,7 +287,6 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
                     tab[k] = tab[k+1];
                 }
                 tab[23] = v;
-                Serial.printf("Value %d\n", tab[23]);
             }
 
         }

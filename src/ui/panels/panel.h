@@ -19,14 +19,21 @@ void Select_deviceIDX(int idx);
 lv_color_t Getcolor(int type);
 const lv_img_dsc_t *Geticon(int type);
 
-//Define font
+//Define font.
+// To make new one use :
+// - Montserrat police https://fonts.google.com/specimen/Montserrat
+// - Editor https://lvgl.io/tools/fontconverter
+// With setting bpp = 4 , range 32-126, and with sepcial char €°µ¥£²³
+// Montserrat-Regular.ttf and Montserrat-Bold.ttf
+
 #if DEVICE_SIZE == 1
 LV_FONT_DECLARE(Montserrat_Bold_14)
 const lv_font_t font1 = Montserrat_Bold_14;
 const lv_font_t font3 = lv_font_montserrat_12;
 const lv_font_t font2 = lv_font_montserrat_10;
 #else
-const lv_font_t font1 = lv_font_montserrat_18;
+LV_FONT_DECLARE(Montserrat_Bold_18)
+const lv_font_t font1 = Montserrat_Bold_18;
 const lv_font_t font3 = lv_font_montserrat_16;
 const lv_font_t font2 = lv_font_montserrat_14;
 #endif

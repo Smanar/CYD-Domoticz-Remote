@@ -52,10 +52,10 @@ class LGFX: public lgfx::LGFX_Device {
 
         {
           auto cfg = _panel_instance.config();
-          cfg.memory_width = TFT_HEIGHT;
-          cfg.memory_height = TFT_WIDTH;
-          cfg.panel_width = TFT_HEIGHT;
-          cfg.panel_height = TFT_WIDTH;
+          cfg.memory_width = TFT_WIDTH;
+          cfg.memory_height = TFT_HEIGHT;
+          cfg.panel_width = TFT_WIDTH;
+          cfg.panel_height = TFT_HEIGHT;
           cfg.offset_x = 1000;
           cfg.offset_y = 2000;
           _panel_instance.config(cfg);

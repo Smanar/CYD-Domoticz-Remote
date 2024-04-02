@@ -32,18 +32,18 @@ class LGFX : public lgfx::LGFX_Device
         cfg.pin_cs           =    TFT_CS;
         cfg.pin_rst          =    TFT_RST;
         cfg.pin_busy         =    TFT_BUSY;
-        cfg.memory_width     =    TFT_HEIGHT;
-        cfg.memory_height    =    TFT_WIDTH;
-        cfg.panel_width      =    TFT_HEIGHT;
-        cfg.panel_height     =    TFT_WIDTH;
+        cfg.memory_width     =    TFT_WIDTH;
+        cfg.memory_height    =    TFT_HEIGHT;
+        cfg.panel_width      =    TFT_WIDTH;
+        cfg.panel_height     =    TFT_HEIGHT;
         cfg.offset_x         =     0;
         cfg.offset_y         =     0;
         cfg.offset_rotation  =     TFT_ROTATION;
         cfg.dummy_read_pixel =     8;
         cfg.dummy_read_bits  =     1;
         cfg.readable         = true;
-        cfg.invert           = !TFT_INVERSION_ON;
-        cfg.rgb_order        = !TFT_RGB_ORDER;
+        cfg.invert           = TFT_INVERSION_ON;
+        cfg.rgb_order        = TFT_RGB_ORDER;
         cfg.dlen_16bit       = false;
         cfg.bus_shared       = false;
 
@@ -65,9 +65,9 @@ class LGFX : public lgfx::LGFX_Device
         auto cfg = _touch_instance.config();
 
         cfg.x_min      = 0;              // The minimum X value obtained from the touchscreen (raw value).
-        cfg.x_max      = TFT_WIDTH - 1;  // The maximum X value obtained from the touchscreen (raw value).
+        cfg.x_max      = TFT_HEIGHT - 1;  // The maximum X value obtained from the touchscreen (raw value).
         cfg.y_min      = 0;              // The minimum Y value obtained from the touchscreen (raw value).
-        cfg.y_max      = TFT_HEIGHT - 1; // The maximum Y value obtained from the touchscreen (raw value).
+        cfg.y_max      = TFT_WIDTH - 1; // The maximum Y value obtained from the touchscreen (raw value).
         cfg.bus_shared = true;           // If using a common bus with the screen, set it to true.
         cfg.offset_rotation = TOUCH_OFFSET_ROTATION; // Adjustment when the display orientation does not match the touch orientation. Set in values from 0 to 7.
 
