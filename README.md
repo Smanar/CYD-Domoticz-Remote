@@ -10,7 +10,6 @@ In reality the project is not finished so lot of settings are hard coded on the 
 
 You can found some captures here https://www.domoticz.com/forum/viewtopic.php?t=41232
 
-ATM, I m aking tries on the 2.8'' device a ESP32-2432S028R.
 
 ## Installation   
 
@@ -38,13 +37,21 @@ The project is still WIP so some settings are still hard coded.
 - By defaut, defaut devices displayed on Homepage will be 1,2,3,4,5,6,7,8,9 so you need to change them on the application setting panel.
 - Mains settings are in the file platformio.ini
 ``` 
-  	-DUSER_SETUP_LOADED=1 #To enable multiple config for TFT_eSPI
 	#-DFORCE_CONFIG # Enable or disable the forced network configuration.
-	-DFORCECALIBRATE=false #Reset the calibration at every restart, used to reset it after a config change.
-	#-DOLD_DOMOTICZ #If you are using older Domoticz version < 2023.2
-	-DBONUSPAGE=0 # Special page to add, similar to Homepage but not updated
+	-DFORCECALIBRATE=true # Reset the calibration at every restart, used to reset it after a config change.
+	#-DOLD_DOMOTICZ # If you are using older Domoticz version < 2023.2
+	-DBONUSPAGE=0 # Special page to add, similar to Homepage but not updated, from 1 to 3
 	#-DFASTCLIC # Enable 1 clic action for some widget
+	#-DNO_INFO_PAGE # Disable the Info panel
+	-DNO_GROUP_PAGE # Disable the Group/scene panel
 ``` 
+
+## Tested devices, working nativley
+- esp32-2432S028R
+- esp32-2432S024C
+- esp32-E32S3RGB43
+- esp32-4848S040
+- esp32-8048S043C
 
 ## Actuals issues   
 - Memory ^^, lot of feature are still in Beta test. For exemple Domoticz JSON are too big to be handled by the device, it cause problem for chart for exemple.

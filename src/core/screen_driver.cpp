@@ -57,6 +57,10 @@ static lv_disp_draw_buf_t draw_buf;
     #ifdef ESP32_8048S043C
     #include "../drivers/esp32-8048S043C.h"
     #endif
+    #ifdef ESP32_8048S070C
+    #include "../drivers/esp32-8048S070C.h"
+    #endif
+
 
     LGFX tft;
     static LGFX_Sprite sprite(&tft);
