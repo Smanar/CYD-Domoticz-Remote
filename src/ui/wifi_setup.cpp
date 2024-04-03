@@ -5,21 +5,15 @@
 
 void wifi_init_inner();
 
-static void refresh_btn_event_handler(lv_event_t * e) {
-    lv_event_code_t code = lv_event_get_code(e);
-
-    if(code == LV_EVENT_CLICKED) {
-        wifi_init_inner();
-    }
+static void refresh_btn_event_handler(lv_event_t * e)
+{
+    wifi_init_inner();
 }
 
-static void reset_btn_event_handler(lv_event_t * e){
-    lv_event_code_t code = lv_event_get_code(e);
-
-    if(code == LV_EVENT_CLICKED) {
-        global_config.ipConfigured = false;
-        ESP.restart();
-    }
+static void reset_btn_event_handler(lv_event_t * e)
+{
+    global_config.ipConfigured = false;
+    ESP.restart();
 }
 
 static void ta_event_cb(lv_event_t * e) {
@@ -33,7 +27,7 @@ static void ta_event_cb(lv_event_t * e) {
         if (len > 0)
         {
             global_config.wifiConfigured = true;
-            //strcpy(global_config.wifiPassword, txt); // To remove
+            strcpy(global_config.wifiPassword, txt);
             //Serial.println(txt); // Don't print pass on log
             WriteGlobalConfig();
         }
@@ -84,7 +78,7 @@ void wifi_Connecting_screen(void)
     lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
 
     lv_obj_t * resetBtn = lv_btn_create(lv_scr_act());
-    lv_obj_add_event_cb(resetBtn, reset_btn_event_handler, LV_EVENT_ALL, NULL);
+    lv_obj_add_event_cb(resetBtn, reset_btn_event_handler, LV_EVENT_CLICKED, NULL);
     lv_obj_align(resetBtn, LV_ALIGN_CENTER, 0, 40);
 
     label = lv_label_create(resetBtn);
@@ -107,7 +101,7 @@ void wifi_init_inner(){
     lv_obj_clean(lv_scr_act());
 
     lv_obj_t * refreshBtn = lv_btn_create(lv_scr_act());
-    lv_obj_add_event_cb(refreshBtn, refresh_btn_event_handler, LV_EVENT_ALL, NULL);
+    lv_obj_add_event_cb(refreshBtn, refresh_btn_event_handler, LV_EVENT_CLICKED, NULL);
     lv_obj_align(refreshBtn, LV_ALIGN_TOP_RIGHT, -5, 5 - 1);
 
     label = lv_label_create(refreshBtn);
