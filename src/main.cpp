@@ -13,16 +13,6 @@
 
 void Websocket_loop(void);
 
-static void event_handler(lv_event_t * e){
-    lv_event_code_t code = lv_event_get_code(e);
-
-    if(code == LV_EVENT_CLICKED) {
-        global_config.version = 0;
-        WriteGlobalConfig();
-        ESP.restart();
-    }
-}
-
 static void scr_event_cb(lv_event_t * e)
 {
     int p = GetActivePanel();
