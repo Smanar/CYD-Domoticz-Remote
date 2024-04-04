@@ -175,7 +175,6 @@ void wifi_init()
         if (millis() - print_timer > print_freq){
             print_timer = millis();
             Serial.printf("WiFi Status: %s\n", errs[WiFi.status()]);
-            Serial.println(WiFi.status());
         }
         
         lv_timer_handler();

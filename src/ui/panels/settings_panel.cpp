@@ -85,8 +85,8 @@ static void wake_timeout_dropdown(lv_event_t * e){
     const lv_obj_t * dropdown = lv_event_get_target(e);
     auto selected = lv_dropdown_get_selected(dropdown);
     global_config.screenTimeout = wake_timeout_options_values[selected];
-    set_screen_timer_period();
     WriteGlobalConfig();
+    set_screen_timer_period();
 }
 
 static void rotate_screen_switch(lv_event_t* e){

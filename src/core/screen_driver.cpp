@@ -403,12 +403,14 @@ void screen_timer_stop()
 
 void screen_timer_period(uint32_t period)
 {
-    lv_timer_set_period(screenSleepTimer, period);
+    if (period > 0) lv_timer_set_period(screenSleepTimer, period);
+    else lv_timer_pause(screenSleepTimer);
 }
 
 void set_screen_timer_period()
 {
     screen_timer_period(global_config.screenTimeout * 1000 * 60);
+    screen_timer_start();
 }
 
 

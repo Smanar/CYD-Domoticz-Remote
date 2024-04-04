@@ -48,10 +48,9 @@ void Init_data(void)
     {
         if (i < SIZEOF(global_config.ListDevices))
         {
-
+            myDevices[i].type = TYPE_UNUSED;
             if (HttpInitDevice(&myDevices[i], global_config.ListDevices[i]))
             {
-                myDevices[i].used = true;
                 Serial.printf("Initialise Domoticz device id: %d , Name : %s\n", global_config.ListDevices[i], myDevices[i].name);
                 delay(50);
             }
@@ -64,9 +63,8 @@ void Init_data(void)
 
         if (i < SIZEOF(TabP2))
         {
+            myDevicesP2[i].type = TYPE_UNUSED;
             if (HttpInitDevice(&myDevicesP2[i], TabP2[i]))
-            {
-                myDevicesP2[i].used = true;
                 Serial.printf("Initialise Domoticz device id: %d , Name : %s\n", TabP2[i], myDevicesP2[i].name);
                 delay(50);
             }
@@ -80,7 +78,6 @@ void FillDeviceData(Device *d, int idx)
 {
     if (HttpInitDevice(d, idx))
     {
-        d->used = true;
         Serial.printf("Initialise Domoticz device id: %d , Name : %s\n", idx, d->name);
     }
 }
@@ -501,7 +498,6 @@ bool HttpInitDevice(Device *d, int id)
             d->lenData = strlen(data);
         }
         strncpy(d->data, data, d->lenData + 1);
-
     }
 
     return true;

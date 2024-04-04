@@ -2,6 +2,7 @@
 #define DATA_SETUP_H
 
 enum {
+    TYPE_UNUSED,
     TYPE_UNKNOWN,
     TYPE_PLUG,
     TYPE_COLOR,
@@ -34,9 +35,8 @@ typedef struct _Device {
     char* levelname = nullptr;
     unsigned short level = 0;
     unsigned short idx = 0;
-    unsigned short type = TYPE_UNKNOWN;
+    unsigned short type = TYPE_UNUSED;
     unsigned short lenData = 0;
-    bool used = false;
 
     //lv_obj_t * label; // used for device update
 

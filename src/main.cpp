@@ -81,13 +81,13 @@ digitalWrite(RGB_LED_B, true);
     //Set defaut Style
     nav_style_setup();
     Init_Info_Style();
-    
+    Serial.println(F("1\n")); 
     main_ui_setup();
-
+Serial.println(F("2\n")); 
     //Set base display
     lv_obj_add_event_cb(lv_scr_act(), scr_event_cb , LV_EVENT_GESTURE , NULL);
     lv_obj_clear_flag(lv_scr_act(), LV_OBJ_FLAG_SCROLLABLE);
-
+Serial.println(F("3\n")); 
     //Start on Home panel
     navigation_screen(HOMEPAGE_PANEL);
 

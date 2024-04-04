@@ -41,12 +41,8 @@ static void ta_event_cb(lv_event_t * e) {
 }
 
 static void reset_btn_event_handler(lv_event_t * e){
-    lv_event_code_t code = lv_event_get_code(e);
-
-    if(code == LV_EVENT_CLICKED) {
-        global_config.ipConfigured = false;
-        ESP.restart();
-    }
+    global_config.ipConfigured = false;
+    ESP.restart();
 }
 
 void WS_Connecting_screen(void)
@@ -58,7 +54,7 @@ void WS_Connecting_screen(void)
     lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
 
     lv_obj_t * resetBtn = lv_btn_create(lv_scr_act());
-    lv_obj_add_event_cb(resetBtn, reset_btn_event_handler, LV_EVENT_ALL, NULL);
+    lv_obj_add_event_cb(resetBtn, reset_btn_event_handler, LV_EVENT_CLICKED, NULL);
     lv_obj_align(resetBtn, LV_ALIGN_CENTER, 0, 40);
 
     lv_obj_t * btnLabel = lv_label_create(resetBtn);

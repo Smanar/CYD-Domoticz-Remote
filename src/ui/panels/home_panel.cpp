@@ -233,6 +233,7 @@ void home_panel_init(lv_obj_t* panel, Device d[], short page)
             switch (d[i].type)
             {
                 case TYPE_UNKNOWN: // Unknown type
+                case TYPE_UNUSED:  // Not used device
                 break;
                 case TYPE_TEMPERATURE:
                 case TYPE_HUMIDITY:
