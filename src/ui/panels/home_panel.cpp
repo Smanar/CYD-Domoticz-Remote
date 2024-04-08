@@ -152,7 +152,7 @@ static void Widget_sensor(lv_obj_t* panel, char* desc, char* value, int x, int y
 #if DEVICE_SIZE == 1
     lv_obj_set_height(label, 30);
 #else
-    lv_obj_set_height(label, 40);
+    lv_obj_set_height(label, 55);
 #endif
     lv_obj_align_to(label, img,  LV_ALIGN_OUT_RIGHT_TOP, 0, 0);
     //lv_obj_set_style_border_width(label, 5, 0); // To make it visible
@@ -232,7 +232,6 @@ void home_panel_init(lv_obj_t* panel, Device d[], short page)
 
             switch (d[i].type)
             {
-                case TYPE_UNKNOWN: // Unknown type
                 case TYPE_UNUSED:  // Not used device
                 break;
                 case TYPE_TEMPERATURE:
@@ -249,6 +248,7 @@ void home_panel_init(lv_obj_t* panel, Device d[], short page)
                     Widget_sensor(panel, d[i].name, d[i].data, cx , cy , Size_w , Size_h, device_color, &d[i],icon);
                 }
                 break;
+                case TYPE_UNKNOWN: // Unknown type
                 case TYPE_SWITCH:
                 case TYPE_SPEAKER:
                 case TYPE_SELECTOR:

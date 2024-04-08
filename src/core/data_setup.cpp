@@ -60,11 +60,11 @@ void Init_data(void)
 #if BONUSPAGE > 0
     for (int i = 0; i < (TOTAL_ICONX*TOTAL_ICONY*BONUSPAGE); i = i + 1)
     {
-
         if (i < SIZEOF(TabP2))
         {
             myDevicesP2[i].type = TYPE_UNUSED;
             if (HttpInitDevice(&myDevicesP2[i], TabP2[i]))
+            {
                 Serial.printf("Initialise Domoticz device id: %d , Name : %s\n", TabP2[i], myDevicesP2[i].name);
                 delay(50);
             }
@@ -124,7 +124,7 @@ void Update_data(JsonObject RJson2)
     }
     else if ((myDevices[ID].type == TYPE_TEXT) || (myDevices[ID].type == TYPE_WARNING))
     {
-        //Keep it unchnaged
+        //Keep it unchanged
         data = (char *)JSondata;
     }
     else
@@ -481,7 +481,7 @@ bool HttpInitDevice(Device *d, int id)
         }
         else if ((d->type == TYPE_TEXT) || (d->type == TYPE_WARNING))
         {
-            //Keep it unchnaged
+            //Keep it unchanged
             data = (char *)JSondata;
         }
         else

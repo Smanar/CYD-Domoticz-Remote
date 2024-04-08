@@ -37,7 +37,7 @@ static void colorwheel_event_cb(lv_event_t * e)
         lv_color_t c = lv_colorwheel_get_rgb(cw);
 
         char buff[256] = {};
-        snprintf(buff, 256, "/json.htm?type=command&param=setcolbrightnessvalue&idx=%d&color={\"m\":3,\"t\":0,\"r\":%d,\"g\":%d,\"b\":%d,\"cw\":0,\"ww\":0}&brightness=%d",
+        lv_snprintf(buff, 256, "/json.htm?type=command&param=setcolbrightnessvalue&idx=%d&color={\"m\":3,\"t\":0,\"r\":%d,\"g\":%d,\"b\":%d,\"cw\":0,\"ww\":0}&brightness=%d",
                         SelectedDevice->idx, c.ch.red, c.ch.green, c.ch.blue, SelectedDevice->level);
         HTTPGETRequest(buff);
     }
@@ -176,6 +176,7 @@ lv_color_t Getcolor(int type)
         case TYPE_PERCENT_SENSOR:
         case TYPE_VALUE_SENSOR:
         case TYPE_AIR_QUALITY:
+        case TYPE_UNKNOWN:
             return LV_COLOR_MAKE(0x00, 0x7F, 0xFF);
         case TYPE_METEO:
         case TYPE_TEMPERATURE:
@@ -250,6 +251,7 @@ const lv_img_dsc_t *Geticon(int type)
         case TYPE_LUX:
         case TYPE_VALUE_SENSOR:
         case TYPE_AIR_QUALITY:
+        case TYPE_UNKNOWN:
             return &sensor35x35;
         case TYPE_METEO:
             return &meteo35x35;

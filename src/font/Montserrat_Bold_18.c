@@ -1276,7 +1276,7 @@ lv_font_t Montserrat_Bold_18 = {
 #endif
     .dsc = &font_dsc,          /*The custom font data. Will be accessed by `get_glyph_bitmap/dsc` */
     .fallback = NULL,
-    .user_data = NULL,
+    .user_data = NULL
 };
 
 

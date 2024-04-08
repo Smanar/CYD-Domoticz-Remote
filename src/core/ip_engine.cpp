@@ -36,7 +36,7 @@ bool HTTPGETRequest(char * url2)
 bool HTTPGETRequestWithReturn(const char * url2, JsonDocument *doc, bool NeedFilter)
 {
     HTTPClient client;
-    snprintf(TmpBuffer, 150, "http://%s:%d%s",global_config.ServerHost, global_config.ServerPort, url2);
+    lv_snprintf(TmpBuffer, 150, "http://%s:%d%s",global_config.ServerHost, global_config.ServerPort, url2);
     //String url = "http://" + String(global_config.ServerHost) + ":" + String(global_config.ServerPort) + url2;
     int httpCode;
     try {
@@ -107,7 +107,7 @@ bool HTTPGETRequestWithReturn(const char * url2, JsonDocument *doc, bool NeedFil
 }
 
 
-
+#if 0
 static void hexdump(const void *mem, uint32_t len, uint8_t cols = 16) {
 	const uint8_t* src = (const uint8_t*) mem;
 	Serial.printf("\n[HEXDUMP] Address: 0x%08X len: 0x%X (%d)", (ptrdiff_t)src, len, len);
@@ -120,6 +120,7 @@ static void hexdump(const void *mem, uint32_t len, uint8_t cols = 16) {
 	}
 	Serial.printf("\n");
 }
+#endif
 
 static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
 {
@@ -183,7 +184,7 @@ static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
 			break;
 		case WStype_BIN:
 			Serial.printf("[WSc] get binary length: %u\n", length);
-			hexdump(payload, length);
+			//hexdump(payload, length);
 
 			// send data to server
 			// webSocket.sendBIN(payload, length);
