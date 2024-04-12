@@ -148,11 +148,12 @@ static void Widget_sensor(lv_obj_t* panel, char* desc, char* value, int x, int y
     lv_obj_set_style_text_font(label, &font1, 0);
     lv_obj_set_style_text_color(label, color, 0);
     lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_RIGHT, 0);
-    lv_obj_set_width(label, Size_w /2);
 #if DEVICE_SIZE == 1
     lv_obj_set_height(label, 30);
+    lv_obj_set_width(label, Size_w /2);
 #else
     lv_obj_set_height(label, 55);
+    lv_obj_set_width(label, 2* Size_w /3);
 #endif
     lv_obj_align_to(label, img,  LV_ALIGN_OUT_RIGHT_TOP, 0, 0);
     //lv_obj_set_style_border_width(label, 5, 0); // To make it visible
