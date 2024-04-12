@@ -52,6 +52,7 @@ The project is still WIP so some settings are still hard coded.
 - esp32-E32S3RGB43
 - esp32-4848S040
 - esp32-8048S043C
+- esp32-8048S070C
 
 ## Actuals issues   
 - Memory ^^, lot of feature are still in Beta test. For exemple Domoticz JSON are too big to be handled by the device, it cause problem for chart for exemple.
