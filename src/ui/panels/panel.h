@@ -27,13 +27,27 @@ const lv_img_dsc_t *Geticon(int type);
 // Montserrat-Regular.ttf and Montserrat-Bold.ttf
 
 #if DEVICE_SIZE == 1
-LV_FONT_DECLARE(Montserrat_Bold_14)
-const lv_font_t font1 = Montserrat_Bold_14;
-const lv_font_t font3 = lv_font_montserrat_12;
-const lv_font_t font2 = lv_font_montserrat_10;
+    LV_FONT_DECLARE(Montserrat_Bold_14)
+    const lv_font_t font1 = Montserrat_Bold_14;
+    #ifdef CUSTOM_FONT
+        LV_FONT_DECLARE(Montserrat_12)
+        const lv_font_t font3 = Montserrat_12;
+        LV_FONT_DECLARE(Montserrat_10)
+        const lv_font_t font2 = Montserrat_10;
+    #else
+        const lv_font_t font3 = lv_font_montserrat_12;
+        const lv_font_t font2 = lv_font_montserrat_10;
+    #endif
 #else
-LV_FONT_DECLARE(Montserrat_Bold_18)
-const lv_font_t font1 = Montserrat_Bold_18;
-const lv_font_t font3 = lv_font_montserrat_16;
-const lv_font_t font2 = lv_font_montserrat_14;
+    LV_FONT_DECLARE(Montserrat_Bold_18)
+    const lv_font_t font1 = Montserrat_Bold_18;
+    #ifdef CUSTOM_FONT
+        LV_FONT_DECLARE(Montserrat_16)
+        onst lv_font_t font3 = Montserrat_16;
+        LV_FONT_DECLARE(Montserrat_14)
+        const lv_font_t font2 = Montserrat_14;
+    #else
+        const lv_font_t font3 = lv_font_montserrat_16;
+        const lv_font_t font2 = lv_font_montserrat_14;
+    #endif
 #endif
