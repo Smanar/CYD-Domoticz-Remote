@@ -51,3 +51,4 @@ const lv_img_dsc_t *Geticon(int type);
         const lv_font_t font2 = lv_font_montserrat_14;
     #endif
 #endif
+

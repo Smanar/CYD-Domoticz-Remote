@@ -331,6 +331,7 @@ void device_panel_init(lv_obj_t* panel)
     lv_obj_set_style_img_recolor(img, color, 0);
     //Label
     label = lv_label_create(GridTop);
+    lv_obj_set_style_text_font(label, &font1, 0);
     lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP); 
     lv_label_set_text(label, SelectedDevice->name);
     //lv_obj_align(label, LV_ALIGN_RIGHT_MID, 0, 0);
@@ -568,7 +569,6 @@ void device_panel_init(lv_obj_t* panel)
         lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
         lv_obj_set_pos(obj, 0, LV_PCT(66));
         lv_obj_add_event_cb(obj, TH_btn_event_handler, LV_EVENT_CLICKED, (char *)3);
-
     }
 
     // Other sensors

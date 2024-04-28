@@ -49,4 +49,5 @@ void ResetColorTheme(void)
         lv_style_set_shadow_color(&style_shadow,  lv_palette_darken(LV_PALETTE_GREY, 2));
     }
     lv_style_set_bg_color(&style_shadow, background);
+
 }
