@@ -377,12 +377,32 @@ void screen_timer_wake()
 
 void screen_timer_sleep(lv_timer_t *timer)
 {
+
+#ifdef AUTO_BRIGHTNESS
+    int cds = analogRead(CDS);
+    //int cds = analogReadMilliVolts(CDS);
+    Serial.printf("CDS value: %d\n", cds);
+
+    // On analog value go from 0 light to 1000 dark, we will take 500 as medium
+    // Brightness value go from 0 to 255
+    // We will use as max value the one set by the user in global_config.brightness
+    // 64 is the minimal value
+
+    if (cds> 500) cds = 500;
+    int b = 64 + (100 -(cds/5)) * (global_config.brightness - 64) / 100;
+    Serial.printf("Brighness value: %d\n", b);
+
+    screen_setBrightness(b);
+
+#else
+
     screen_setBrightness(0);
     isScreenInSleep = true;
 
     // Screen is off, no need to make the cpu run fast, the user won't notice ;)
     setCpuFrequencyMhz(CPU_FREQ_LOW);
     Serial.printf("CPU Speed: %d MHz\n", ESP.getCpuFreqMHz());
+#endif
 }
 
 void screen_timer_setup()
