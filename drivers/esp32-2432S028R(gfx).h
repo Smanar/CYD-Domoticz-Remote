@@ -8,5 +8,5 @@
 #define GFX_BL 21
 
 Arduino_DataBus *bus = new Arduino_ESP32SPI(TFT_DC, TFT_CS , TFT_SCLK , TFT_MOSI , TFT_MISO);
-Arduino_ILI9341 tft = Arduino_ILI9341(bus, GFX_NOT_DEFINED /* RST */, 0 /* rotation */, true );
+Arduino_ILI9342 tft = Arduino_ILI9342(bus, GFX_NOT_DEFINED /* RST */, 0 /* rotation */, false );
 

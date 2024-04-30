@@ -85,8 +85,8 @@ static void wake_timeout_dropdown(lv_event_t * e){
     const lv_obj_t * dropdown = lv_event_get_target(e);
     auto selected = lv_dropdown_get_selected(dropdown);
     global_config.screenTimeout = wake_timeout_options_values[selected];
-    set_screen_timer_period();
     WriteGlobalConfig();
+    set_screen_timer_period();
 }
 
 static void rotate_screen_switch(lv_event_t* e){
@@ -158,7 +158,7 @@ int y_offset = 0;
 const int y_element_size = 50;
 const int y_seperator_size = 1;
 const int y_seperator_x_padding = 50;
-const int panel_width = TFT_HEIGHT - 40;
+const int panel_width = TFT_WIDTH - 40;
 const int y_element_x_padding = 30;
 const static lv_point_t line_points[] = { {0, 0}, {panel_width - y_seperator_x_padding, 0} };
 

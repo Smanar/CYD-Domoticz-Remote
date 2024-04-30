@@ -32,8 +32,6 @@ static void ta_event_cb(lv_event_t * e) {
         {
             global_config.ipConfigured = true;
             WriteGlobalConfig();
-
-            ESP.restart();
         }
         else
         {
@@ -43,31 +41,30 @@ static void ta_event_cb(lv_event_t * e) {
 }
 
 static void reset_btn_event_handler(lv_event_t * e){
-    lv_event_code_t code = lv_event_get_code(e);
+    global_config.ipConfigured = false;
+    ESP.restart();
+}
 
-    if(code == LV_EVENT_CLICKED) {
-        global_config.ipConfigured = false;
-        WS_init_inner();
-    }
+void WS_Connecting_screen(void)
+{
+    lv_obj_clean(lv_scr_act());
+
+    label = lv_label_create(lv_scr_act());
+    lv_label_set_text_static(label, "Connecting to Domoticz");
+    lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
+
+    lv_obj_t * resetBtn = lv_btn_create(lv_scr_act());
+    lv_obj_add_event_cb(resetBtn, reset_btn_event_handler, LV_EVENT_CLICKED, NULL);
+    lv_obj_align(resetBtn, LV_ALIGN_CENTER, 0, 40);
+
+    lv_obj_t * btnLabel = lv_label_create(resetBtn);
+    lv_label_set_text_static(btnLabel, "Reset");
+    lv_obj_center(btnLabel);
+
 }
 
 void WS_init_inner(){
     lv_obj_clean(lv_scr_act());
-
-    if (global_config.ipConfigured) {
-        label = lv_label_create(lv_scr_act());
-        lv_label_set_text_static(label, "Connecting to Domoticz");
-        lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
-
-        lv_obj_t * resetBtn = lv_btn_create(lv_scr_act());
-        lv_obj_add_event_cb(resetBtn, reset_btn_event_handler, LV_EVENT_ALL, NULL);
-        lv_obj_align(resetBtn, LV_ALIGN_CENTER, 0, 40);
-
-        lv_obj_t * btnLabel = lv_label_create(resetBtn);
-        lv_label_set_text_static(btnLabel, "Reset");
-        lv_obj_center(btnLabel);
-        return;
-    }
 
     lv_obj_t * keyboard = lv_keyboard_create(lv_scr_act());
     label = lv_label_create(lv_scr_act());
@@ -80,13 +77,13 @@ void WS_init_inner(){
     lv_textarea_set_text(ipEntry, "");
     lv_obj_align(ipEntry, LV_ALIGN_TOP_LEFT, 10, 40);
     lv_obj_add_event_cb(ipEntry, ta_event_cb, LV_EVENT_ALL, keyboard);
-    lv_obj_set_size(ipEntry, TFT_HEIGHT - 20 - 100, 60);
+    lv_obj_set_size(ipEntry, TFT_WIDTH - 20 - 100, 60);
 
     portEntry = lv_textarea_create(lv_scr_act());
     lv_textarea_set_one_line(portEntry, true);
     lv_textarea_set_max_length(portEntry, 5);
     lv_textarea_set_text(portEntry, "8080");
-    lv_obj_align(portEntry, LV_ALIGN_TOP_LEFT, TFT_HEIGHT - 20 - 80, 40);
+    lv_obj_align(portEntry, LV_ALIGN_TOP_LEFT, TFT_WIDTH - 20 - 80, 40);
     lv_obj_add_event_cb(portEntry, ta_event_cb, LV_EVENT_ALL, keyboard);
     lv_obj_set_size(portEntry, 90, 60);
     
@@ -98,18 +95,28 @@ long last_data_update_ip = -10000;
 const long data_update_interval_ip = 10000;
 int retry_count = 0;
 
-void WS_init()
+void WS_init(void)
 {
 
-    WS_init_inner();
+    if (!global_config.ipConfigured)
+    {
+        WS_init_inner();
+        while (!global_config.ipConfigured)
+        {
+            lv_timer_handler();
+            lv_task_handler();
+        }
+    }
+
     WS_Run();
+    WS_Connecting_screen();
 
     while (!WS_Running())
     {
         lv_timer_handler();
         lv_task_handler();
-
-        if (!WS_Running && global_config.ipConfigured && (millis() - last_data_update_ip) > data_update_interval_ip)
+    
+        if (!WS_Running && (millis() - last_data_update_ip) > data_update_interval_ip)
         {
 
             Serial.println(F("Waiting"));

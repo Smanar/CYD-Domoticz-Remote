@@ -5,13 +5,15 @@
 
 void wifi_init_inner();
 
-static void reset_btn_event_handler(lv_event_t * e) {
-    lv_event_code_t code = lv_event_get_code(e);
+static void refresh_btn_event_handler(lv_event_t * e)
+{
+    wifi_init_inner();
+}
 
-    if(code == LV_EVENT_CLICKED) {
-        global_config.wifiConfigured = false;
-        wifi_init_inner();
-    }
+static void reset_btn_event_handler(lv_event_t * e)
+{
+    global_config.ipConfigured = false;
+    ESP.restart();
 }
 
 static void ta_event_cb(lv_event_t * e) {
@@ -26,9 +28,8 @@ static void ta_event_cb(lv_event_t * e) {
         {
             global_config.wifiConfigured = true;
             strcpy(global_config.wifiPassword, txt);
-            Serial.println(txt);
+            //Serial.println(txt); // Don't print pass on log
             WriteGlobalConfig();
-            wifi_init_inner();
         }
     }
     else if (code == LV_EVENT_CANCEL)
@@ -49,7 +50,7 @@ void wifi_pass_entry(const char* ssid){
     lv_textarea_set_text(passEntry, "");
     lv_obj_align(passEntry, LV_ALIGN_TOP_LEFT, 10, 40);
     lv_obj_add_event_cb(passEntry, ta_event_cb, LV_EVENT_ALL, NULL);
-    lv_obj_set_size(passEntry, TFT_HEIGHT - 20, 60);
+    lv_obj_set_size(passEntry, TFT_WIDTH - 20, 60);
 
     lv_obj_t * keyboard = lv_keyboard_create(lv_scr_act());
     lv_keyboard_set_textarea(keyboard, passEntry);
@@ -68,28 +69,26 @@ static void wifi_btn_event_handler(lv_event_t * e){
     }
 }
 
-
-void wifi_init_inner(){
-    WiFi.disconnect();
+void wifi_Connecting_screen(void)
+{
     lv_obj_clean(lv_scr_act());
 
-    if (global_config.wifiConfigured){
-        WiFi.begin(global_config.wifiSSID, global_config.wifiPassword);
-        
-        lv_obj_t * label = lv_label_create(lv_scr_act());
-        lv_label_set_text_static(label, "Connecting to WiFi");
-        lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_t * label = lv_label_create(lv_scr_act());
+    lv_label_set_text_static(label, "Connecting to WiFi");
+    lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
 
-        lv_obj_t * resetBtn = lv_btn_create(lv_scr_act());
-        lv_obj_add_event_cb(resetBtn, reset_btn_event_handler, LV_EVENT_ALL, NULL);
-        lv_obj_align(resetBtn, LV_ALIGN_CENTER, 0, 40);
+    lv_obj_t * resetBtn = lv_btn_create(lv_scr_act());
+    lv_obj_add_event_cb(resetBtn, reset_btn_event_handler, LV_EVENT_CLICKED, NULL);
+    lv_obj_align(resetBtn, LV_ALIGN_CENTER, 0, 40);
 
-        label = lv_label_create(resetBtn);
-        lv_label_set_text_static(label, "Reset");
-        lv_obj_center(label);
+    label = lv_label_create(resetBtn);
+    lv_label_set_text_static(label, "Reset");
+    lv_obj_center(label);
+}
 
-        return;
-    } 
+void wifi_init_inner(){
+
+    lv_obj_clean(lv_scr_act());
 
     lv_obj_t * label = lv_label_create(lv_scr_act());
     lv_label_set_text_static(label, "Scanning for networks...");
@@ -102,7 +101,7 @@ void wifi_init_inner(){
     lv_obj_clean(lv_scr_act());
 
     lv_obj_t * refreshBtn = lv_btn_create(lv_scr_act());
-    lv_obj_add_event_cb(refreshBtn, reset_btn_event_handler, LV_EVENT_ALL, NULL);
+    lv_obj_add_event_cb(refreshBtn, refresh_btn_event_handler, LV_EVENT_CLICKED, NULL);
     lv_obj_align(refreshBtn, LV_ALIGN_TOP_RIGHT, -5, 5 - 1);
 
     label = lv_label_create(refreshBtn);
@@ -115,7 +114,7 @@ void wifi_init_inner(){
 
     lv_obj_t * list = lv_list_create(lv_scr_act());
     lv_obj_align(list, LV_ALIGN_TOP_LEFT, 10, 40);
-    lv_obj_set_size(list, TFT_HEIGHT - 20, TFT_WIDTH - 40 - 5);
+    lv_obj_set_size(list, TFT_WIDTH - 20, TFT_HEIGHT - 40 - 5);
 
     int n = WiFi.scanNetworks();
 
@@ -152,11 +151,27 @@ const char* errs[] = {
 const int print_freq = 1000;
 int print_timer = 0;
 
-void wifi_init(){
-    WiFi.mode(WIFI_STA);
-    wifi_init_inner();
+void wifi_init()
+{
 
-    while (!global_config.wifiConfigured || WiFi.status() != WL_CONNECTED){
+    if (!global_config.wifiConfigured)
+    {
+        wifi_init_inner();
+        while (!global_config.wifiConfigured)
+        {
+            lv_timer_handler();
+            lv_task_handler();
+        }
+    }
+
+    WiFi.mode(WIFI_STA);
+    WiFi.disconnect();
+    wifi_Connecting_screen();
+    WiFi.begin(global_config.wifiSSID, global_config.wifiPassword);
+
+    while (WiFi.status() != WL_CONNECTED)
+    {
+
         if (millis() - print_timer > print_freq){
             print_timer = millis();
             Serial.printf("WiFi Status: %s\n", errs[WiFi.status()]);

@@ -32,18 +32,18 @@ class LGFX : public lgfx::LGFX_Device
         cfg.pin_cs           =    TFT_CS;
         cfg.pin_rst          =    TFT_RST;
         cfg.pin_busy         =    TFT_BUSY;
-        cfg.memory_width     =    TFT_HEIGHT;
-        cfg.memory_height    =    TFT_WIDTH;
-        cfg.panel_width      =    TFT_HEIGHT;
-        cfg.panel_height     =    TFT_WIDTH;
+        cfg.memory_width     =    TFT_WIDTH;
+        cfg.memory_height    =    TFT_HEIGHT;
+        cfg.panel_width      =    TFT_WIDTH;
+        cfg.panel_height     =    TFT_HEIGHT;
         cfg.offset_x         =     0;
         cfg.offset_y         =     0;
         cfg.offset_rotation  =     TFT_ROTATION;
         cfg.dummy_read_pixel =     8;
         cfg.dummy_read_bits  =     1;
         cfg.readable         = true;
-        cfg.invert           = !TFT_INVERSION_ON;
-        cfg.rgb_order        = !TFT_RGB_ORDER;
+        cfg.invert           = TFT_INVERSION_ON;
+        cfg.rgb_order        = TFT_RGB_ORDER;
         cfg.dlen_16bit       = false;
         cfg.bus_shared       = false;
 

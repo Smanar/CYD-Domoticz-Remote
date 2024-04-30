@@ -22,8 +22,8 @@
 // Lvgl will use this memory range to draw widgets to be refreshed: if a widget does not fit into the provided range it will be drawn and flushed in more than one go.
 // To maximize performances one would use the entire screen size (in bytes, so pixels divided by 8, so W*H/8)
 #ifndef DYNAMICVDFBUFFER
-static lv_color_t buf[TFT_WIDTH * TFT_HEIGHT / 10];
-const size_t VDBsize = TFT_WIDTH * TFT_HEIGHT / 10;
+static lv_color_t buf[TFT_HEIGHT * TFT_WIDTH / 10];
+const size_t VDBsize = TFT_HEIGHT * TFT_WIDTH / 10;
 #else
 static lv_color_t *buf;
 const size_t VDBsize = LV_VDB_SIZE / sizeof(lv_color_t);
@@ -56,6 +56,9 @@ static lv_disp_draw_buf_t draw_buf;
     #endif
     #ifdef ESP32_8048S043C
     #include "../drivers/esp32-8048S043C.h"
+    #endif
+    #ifdef ESP32_8048S070C
+    #include "../drivers/esp32-8048S070C.h"
     #endif
 
     LGFX tft;
@@ -298,8 +301,8 @@ void touchscreen_calibrate(bool force)
 
     while (touchscreen.touched())
         ;
-    tft.drawFastHLine(TFT_HEIGHT-20, TFT_WIDTH-10, 20, TFT_WHITE);
-    tft.drawFastVLine(TFT_HEIGHT-10, TFT_WIDTH-20, 20, TFT_WHITE);
+    tft.drawFastHLine(TFT_WIDTH-20, TFT_HEIGHT-10, 20, TFT_WHITE);
+    tft.drawFastVLine(TFT_WIDTH-10, TFT_HEIGHT-20, 20, TFT_WHITE);
 
     while (!touchscreen.touched())
         ;
@@ -307,11 +310,11 @@ void touchscreen_calibrate(bool force)
     p = touchscreen.getPoint();
     x2 = p.x;
     y2 = p.y;
-    tft.drawFastHLine(TFT_HEIGHT-20, TFT_WIDTH-10, 20, TFT_BLACK);
-    tft.drawFastVLine(TFT_HEIGHT-10, TFT_WIDTH-20, 20, TFT_BLACK);
+    tft.drawFastHLine(TFT_WIDTH-20, TFT_HEIGHT-10, 20, TFT_BLACK);
+    tft.drawFastVLine(TFT_WIDTH-10, TFT_HEIGHT-20, 20, TFT_BLACK);
 
-    int16_t xDist = TFT_HEIGHT - 40;
-    int16_t yDist = TFT_WIDTH - 40;
+    int16_t xDist = TFT_WIDTH - 40;
+    int16_t yDist = TFT_HEIGHT - 40;
 
     global_config.screenCalXMult = (float)xDist / (float)(x2 - x1);
     global_config.screenCalXOffset = 20.0 - ((float)x1 * global_config.screenCalXMult);
@@ -374,12 +377,32 @@ void screen_timer_wake()
 
 void screen_timer_sleep(lv_timer_t *timer)
 {
+
+#ifdef AUTO_BRIGHTNESS
+    int cds = analogRead(CDS);
+    //int cds = analogReadMilliVolts(CDS);
+    Serial.printf("CDS value: %d\n", cds);
+
+    // On analog value go from 0 light to 1000 dark, we will take 500 as medium
+    // Brightness value go from 0 to 255
+    // We will use as max value the one set by the user in global_config.brightness
+    // 64 is the minimal value
+
+    if (cds> 500) cds = 500;
+    int b = 64 + (100 -(cds/5)) * (global_config.brightness - 64) / 100;
+    Serial.printf("Brighness value: %d\n", b);
+
+    screen_setBrightness(b);
+
+#else
+
     screen_setBrightness(0);
     isScreenInSleep = true;
 
     // Screen is off, no need to make the cpu run fast, the user won't notice ;)
     setCpuFrequencyMhz(CPU_FREQ_LOW);
     Serial.printf("CPU Speed: %d MHz\n", ESP.getCpuFreqMHz());
+#endif
 }
 
 void screen_timer_setup()
@@ -400,12 +423,14 @@ void screen_timer_stop()
 
 void screen_timer_period(uint32_t period)
 {
-    lv_timer_set_period(screenSleepTimer, period);
+    if (period > 0) lv_timer_set_period(screenSleepTimer, period);
+    else lv_timer_pause(screenSleepTimer);
 }
 
 void set_screen_timer_period()
 {
     screen_timer_period(global_config.screenTimeout * 1000 * 60);
+    screen_timer_start();
 }
 
 
@@ -482,7 +507,11 @@ void set_color_scheme(){
 }
 
 void set_invert_display(){
+#if TFT_INVERSION_ON == 1
     tft.invertDisplay(!global_config.invertColors);
+#else
+    tft.invertDisplay(global_config.invertColors);
+#endif
 }
 
 void screen_setup()
@@ -514,7 +543,7 @@ void screen_setup()
 
     // Rotation option
     #ifdef TFT_ESPI
-        tft.setRotation(global_config.rotateScreen ? 3 : 1);
+        tft.setRotation(global_config.rotateScreen ? 0 : 2);
     #endif
     #ifdef LOVYANGFX
         #ifdef esp2432S028R
@@ -559,8 +588,8 @@ void screen_setup()
     /*Initialize the display*/
     static lv_disp_drv_t disp_drv;
     lv_disp_drv_init(&disp_drv);
-    disp_drv.hor_res = TFT_HEIGHT;
-    disp_drv.ver_res = TFT_WIDTH;
+    disp_drv.hor_res = TFT_WIDTH;
+    disp_drv.ver_res = TFT_HEIGHT;
     disp_drv.flush_cb = screen_lv_flush;
     disp_drv.draw_buf = &draw_buf;
     lv_disp_drv_register(&disp_drv);

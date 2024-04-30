@@ -13,16 +13,6 @@
 
 void Websocket_loop(void);
 
-static void event_handler(lv_event_t * e){
-    lv_event_code_t code = lv_event_get_code(e);
-
-    if(code == LV_EVENT_CLICKED) {
-        global_config.version = 0;
-        WriteGlobalConfig();
-        ESP.restart();
-    }
-}
-
 static void scr_event_cb(lv_event_t * e)
 {
     int p = GetActivePanel();
@@ -50,8 +40,8 @@ void setup() {
     Serial.begin(115200);
     delay(500);    // add a delay to be sure the serial is ready, while(!Serial) has, to my knowledge. no effect on a nodeMcu
     Serial.println(F("Starting application"));
-    LoadGlobalConfig();
-    screen_setup();
+    LoadGlobalConfig(); // Loading setting
+    screen_setup(); // Set display
     Serial.println(F("Screen init done"));
 
     //Personnal Settings to don't have to set them at every reset, need to be removed
@@ -69,6 +59,7 @@ void setup() {
         WriteGlobalConfig();
     #endif
 
+//Disable LED
 #ifdef BOARD_HAS_RGB_LED
 
 pinMode(RGB_LED_R, OUTPUT);
@@ -78,8 +69,18 @@ pinMode(RGB_LED_B, OUTPUT);
 digitalWrite(RGB_LED_R, true);
 digitalWrite(RGB_LED_G, true);
 digitalWrite(RGB_LED_B, true);
-
+analogReadMilliVolts(CDS);
 #endif
+
+//Enable light sensor
+#if defined (BOARD_HAS_CDS) && defined (AUTO_BRIGHTNESS)
+pinMode(CDS, INPUT);
+analogSetAttenuation(ADC_0db); // 0dB(1.0x) 0~800mV
+//analogSetPinAttenuation(CDS, ADC_0db); // 0dB(1.0) 0~800mV
+#endif
+
+    //Some settings log
+    Serial.printf("Brightness value: %d\n", global_config.brightness);
     
     wifi_init(); // Wifi initialisation
     WS_init(); // Websocket initialisation
@@ -91,7 +92,7 @@ digitalWrite(RGB_LED_B, true);
     //Set defaut Style
     nav_style_setup();
     Init_Info_Style();
-    
+
     main_ui_setup();
 
     //Set base display

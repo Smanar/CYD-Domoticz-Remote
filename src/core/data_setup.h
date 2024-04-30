@@ -2,20 +2,21 @@
 #define DATA_SETUP_H
 
 enum {
+    TYPE_UNUSED,
     TYPE_UNKNOWN,
     TYPE_PLUG,
     TYPE_COLOR,
     TYPE_LIGHT,
     TYPE_DIMMER,
-    TYPE_SWITCH,
+    TYPE_SWITCH,            // All device with on/off need to be before the TYPE_SWITCH
     TYPE_SPEAKER,
     TYPE_TEMPERATURE,
+    TYPE_HUMIDITY,
     TYPE_WARNING,
     TYPE_SELECTOR,
     TYPE_SWITCH_SENSOR,
     TYPE_PERCENT_SENSOR,
     TYPE_VALUE_SENSOR,
-    TYPE_HUMIDITY,
     TYPE_CONSUMPTION,
     TYPE_POWER,
     TYPE_BLINDS,
@@ -34,9 +35,8 @@ typedef struct _Device {
     char* levelname = nullptr;
     unsigned short level = 0;
     unsigned short idx = 0;
-    unsigned short type = TYPE_UNKNOWN;
+    unsigned short type = TYPE_UNUSED;
     unsigned short lenData = 0;
-    bool used = false;
 
     //lv_obj_t * label; // used for device update
 

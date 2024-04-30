@@ -48,10 +48,9 @@ void Init_data(void)
     {
         if (i < SIZEOF(global_config.ListDevices))
         {
-
+            myDevices[i].type = TYPE_UNUSED;
             if (HttpInitDevice(&myDevices[i], global_config.ListDevices[i]))
             {
-                myDevices[i].used = true;
                 Serial.printf("Initialise Domoticz device id: %d , Name : %s\n", global_config.ListDevices[i], myDevices[i].name);
                 delay(50);
             }
@@ -61,12 +60,11 @@ void Init_data(void)
 #if BONUSPAGE > 0
     for (int i = 0; i < (TOTAL_ICONX*TOTAL_ICONY*BONUSPAGE); i = i + 1)
     {
-
         if (i < SIZEOF(TabP2))
         {
+            myDevicesP2[i].type = TYPE_UNUSED;
             if (HttpInitDevice(&myDevicesP2[i], TabP2[i]))
             {
-                myDevicesP2[i].used = true;
                 Serial.printf("Initialise Domoticz device id: %d , Name : %s\n", TabP2[i], myDevicesP2[i].name);
                 delay(50);
             }
@@ -80,7 +78,6 @@ void FillDeviceData(Device *d, int idx)
 {
     if (HttpInitDevice(d, idx))
     {
-        d->used = true;
         Serial.printf("Initialise Domoticz device id: %d , Name : %s\n", idx, d->name);
     }
 }
@@ -127,7 +124,7 @@ void Update_data(JsonObject RJson2)
     }
     else if ((myDevices[ID].type == TYPE_TEXT) || (myDevices[ID].type == TYPE_WARNING))
     {
-        //Keep it unchnaged
+        //Keep it unchanged
         data = (char *)JSondata;
     }
     else
@@ -197,6 +194,7 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
             url = url + "counter";
             break;
         case TYPE_PERCENT_SENSOR:
+        case TYPE_VALUE_SENSOR:
             url = url + "Percentage";
             break;
         case TYPE_METEO:
@@ -267,6 +265,7 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
                     v = i["u"];
                     break;
                 case TYPE_PERCENT_SENSOR:
+                case TYPE_VALUE_SENSOR:
                     v = i["v"];
                     break;
                 case TYPE_METEO:
@@ -275,10 +274,7 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
             }
 
             // Because of decimal values
-            if (type == TYPE_TEMPERATURE) v = v *10;
-
-            if (v > *max) *max = v;
-            if (v < *min) *min = v;
+            if (type == TYPE_TEMPERATURE || type == TYPE_METEO) v = v *10;
 
             //swift the table
             for (j = 0; j < diff; j++)
@@ -292,8 +288,14 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
 
         }
 
+        // Scale calcul
+        for (k = 0; k < 23; k++)
+        {
+            if (tab[k] > *max) *max = tab[k];
+            if (tab[k] < *min) *min = tab[k];
+        }
         v = (*max - *min) / 10;
-        *min = *min - v;
+        if (*min != 0) *min = *min - v;
         *max = *max + v;
 
         return tab;
@@ -447,6 +449,7 @@ bool HttpInitDevice(Device *d, int id)
             else if (strcmp(subtype,"Percentage") == 0) d->type = TYPE_PERCENT_SENSOR;
             else if (strcmp(subtype,"Text") == 0) d->type = TYPE_TEXT;
             else if (strcmp(subtype,"kWh") == 0) d->type = TYPE_CONSUMPTION;
+            else if (strcmp(subtype,"Custom Sensor") == 0) d->type = TYPE_VALUE_SENSOR;
         }
         else if (strcmp(type, "Lux") == 0)
         {
@@ -478,7 +481,7 @@ bool HttpInitDevice(Device *d, int id)
         }
         else if ((d->type == TYPE_TEXT) || (d->type == TYPE_WARNING))
         {
-            //Keep it unchnaged
+            //Keep it unchanged
             data = (char *)JSondata;
         }
         else
@@ -495,7 +498,6 @@ bool HttpInitDevice(Device *d, int id)
             d->lenData = strlen(data);
         }
         strncpy(d->data, data, d->lenData + 1);
-
     }
 
     return true;

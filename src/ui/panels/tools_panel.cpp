@@ -19,10 +19,7 @@ static void tools_btn_event_handler(lv_event_t * e)
     //const lv_obj_t *label = lv_obj_get_child(ta, 0);
     int b = (int)lv_event_get_user_data(e);
 
-    if (b == 1)
-    {
-        navigation_screen(SETTING_PANEL);
-    }
+    if (b == 1) navigation_screen(SETTING_PANEL);
     if (b == 2) ESP.restart();
 
 }
@@ -70,40 +67,23 @@ void tools_panel_init(lv_obj_t* panel)
     // The "4MB" in NodeMCU refers to the size of flash, the size of RAM on ESP32 is fixed at 512KB
     // roughly 200KB of which is used by IRAM cache/code sections, leaving around 320KB for program memory, half of which is available for dynamic allocation.
     // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/mem_alloc.html#:%7E:text=Due%20to%20a%20technical%20limitation,allocated%20at%20runtime%20as%20heap.
+    // esp_get_free_heap_size() ???
+
+    lv_mem_monitor_t mon;
+    lv_mem_monitor(&mon);
+    uint32_t used_size = mon.total_size - mon.free_size;
+
+    char Text[151];
+    lv_snprintf(Text, 150, "+ HEAP Memory Usable (Kb) %d, Max %d, Total %d\n", ESP.getMaxAllocHeap()/1024, ESP.getFreeHeap()/1024, ESP.getHeapSize()/1024);
+    lv_snprintf(Text + strlen(Text),150, "+ PSRAM Memory Free (Kb) %d, Total %d\n", ESP.getFreePsram()/1024, ESP.getPsramSize()/1024);
+    lv_snprintf(Text + strlen(Text), 150, "+ LV Heap %d kB used (%d %%) %d%% frag.\n", used_size / 1024, mon.used_pct, mon.frag_pct);
+    //lv_snprintf(Text + strlen(Text), 150, "Spiram size (Kb) %d , himem free %d\n", esp_spiram_get_size()/1000, esp_himem_get_free_size()/1000); // Not used, CRASH
+    lv_snprintf(Text + strlen(Text), 150, "+ Application Version : %d", 1);
 
     label = lv_label_create(cont2);
     lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP);
-    lv_label_set_text_fmt(label, "Heap Memory Usable (Kb) %d , Max %d, Total %d\n", ESP.getMaxAllocHeap()/1024, ESP.getFreeHeap()/1024, ESP.getHeapSize()/1024);
-    lv_obj_set_size(label, LV_PCT(100), 40);
+    lv_label_set_text(label, Text);
+    lv_obj_set_size(label, LV_PCT(100), LV_PCT(100));
     lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_LEFT, 0);
-    //lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
-
-    lv_obj_t *label2 = lv_label_create(cont2);
-    lv_label_set_long_mode(label2, LV_LABEL_LONG_WRAP);
-    lv_label_set_text_fmt(label2, "RAM Memory Free (Kb) %d , Total %d\n", ESP.getFreePsram()/1024, ESP.getPsramSize()/1024);
-    lv_obj_set_size(label2, LV_PCT(100), 40);
-    lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_LEFT, 0);
-    lv_obj_align_to(label2, label, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
-
-/*
-    // Not used, carsh the esp
-    lv_obj_t *label3 = lv_label_create(cont2);
-    lv_label_set_long_mode(label3, LV_LABEL_LONG_WRAP);
-    lv_label_set_text_fmt(label3, "Spiram size (Kb) %d , himem free %d\n", esp_spiram_get_size()/1000, esp_himem_get_free_size()/1000);
-    lv_obj_set_size(label3, LV_PCT(100), 40);
-    lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_LEFT, 0);
-    lv_obj_align_to(label3, label2, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
-*/
-    lv_mem_monitor_t mon;
-    lv_mem_monitor(&mon);
-    uint32_t used_size = mon.total_size - mon.free_size;;
-    uint32_t used_kb = used_size / 1024;
-
-    lv_obj_t *label3 = lv_label_create(cont2);
-    lv_label_set_long_mode(label3, LV_LABEL_LONG_WRAP);
-    lv_label_set_text_fmt(label3,"LV Heap %d kB used (%d %%) %d%% frag.", used_kb, mon.used_pct, mon.frag_pct);
-    lv_obj_set_size(label3, LV_PCT(100), 40);
-    lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_LEFT, 0);
-    lv_obj_align_to(label3, label2, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
 
 }

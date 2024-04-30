@@ -37,7 +37,7 @@ static void colorwheel_event_cb(lv_event_t * e)
         lv_color_t c = lv_colorwheel_get_rgb(cw);
 
         char buff[256] = {};
-        snprintf(buff, 256, "/json.htm?type=command&param=setcolbrightnessvalue&idx=%d&color={\"m\":3,\"t\":0,\"r\":%d,\"g\":%d,\"b\":%d,\"cw\":0,\"ww\":0}&brightness=%d",
+        lv_snprintf(buff, 256, "/json.htm?type=command&param=setcolbrightnessvalue&idx=%d&color={\"m\":3,\"t\":0,\"r\":%d,\"g\":%d,\"b\":%d,\"cw\":0,\"ww\":0}&brightness=%d",
                         SelectedDevice->idx, c.ch.red, c.ch.green, c.ch.blue, SelectedDevice->level);
         HTTPGETRequest(buff);
     }
@@ -176,6 +176,7 @@ lv_color_t Getcolor(int type)
         case TYPE_PERCENT_SENSOR:
         case TYPE_VALUE_SENSOR:
         case TYPE_AIR_QUALITY:
+        case TYPE_UNKNOWN:
             return LV_COLOR_MAKE(0x00, 0x7F, 0xFF);
         case TYPE_METEO:
         case TYPE_TEMPERATURE:
@@ -250,6 +251,7 @@ const lv_img_dsc_t *Geticon(int type)
         case TYPE_LUX:
         case TYPE_VALUE_SENSOR:
         case TYPE_AIR_QUALITY:
+        case TYPE_UNKNOWN:
             return &sensor35x35;
         case TYPE_METEO:
             return &meteo35x35;
@@ -329,11 +331,12 @@ void device_panel_init(lv_obj_t* panel)
     lv_obj_set_style_img_recolor(img, color, 0);
     //Label
     label = lv_label_create(GridTop);
+    lv_obj_set_style_text_font(label, &font1, 0);
     lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP); 
     lv_label_set_text(label, SelectedDevice->name);
     //lv_obj_align(label, LV_ALIGN_RIGHT_MID, 0, 0);
     lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_set_size(label, TFT_WIDTH - 50, 30);
+    lv_obj_set_size(label, TFT_HEIGHT - 50, 30);
     lv_obj_align_to(label, img,  LV_ALIGN_OUT_RIGHT_MID, 0, 0);
 
     //Options
@@ -566,7 +569,6 @@ void device_panel_init(lv_obj_t* panel)
         lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
         lv_obj_set_pos(obj, 0, LV_PCT(66));
         lv_obj_add_event_cb(obj, TH_btn_event_handler, LV_EVENT_CLICKED, (char *)3);
-
     }
 
     // Other sensors
@@ -607,7 +609,11 @@ void device_panel_init(lv_obj_t* panel)
             lv_chart_series_t * ser1 = lv_chart_add_series(chart, lv_palette_main(LV_PALETTE_GREEN), LV_CHART_AXIS_PRIMARY_Y);
 
             // Make a scale
-            lv_chart_set_axis_tick(chart, LV_CHART_AXIS_PRIMARY_Y, 3, 2, 3, 1, true, 25);
+#if DEVICE_SIZE == 1
+            lv_chart_set_axis_tick(chart, LV_CHART_AXIS_PRIMARY_Y, 3, 2, 4, 1, true, 25);
+#else
+            lv_chart_set_axis_tick(chart, LV_CHART_AXIS_PRIMARY_Y, 3, 2, 4, 1, true, 35);
+#endif
             lv_obj_set_style_text_font(chart, &font2, 0);
 
             Serial.printf("Making chart with Range %d > %d\n",min , max);
@@ -620,7 +626,7 @@ void device_panel_init(lv_obj_t* panel)
             }
 
             //For float value
-            if (SelectedDevice->type == TYPE_TEMPERATURE)
+            if (SelectedDevice->type == TYPE_TEMPERATURE || SelectedDevice->type == TYPE_METEO)
             {
                 lv_obj_add_event_cb(chart, hist_chart_event_cb, LV_EVENT_DRAW_PART_BEGIN, (void *)10);
             }
