@@ -73,6 +73,9 @@ static lv_disp_draw_buf_t draw_buf;
     #ifdef esp2432S028R
     #include "../drivers/esp32-2432S028R(gfx).h"
     #endif
+    #ifdef ESP32_ZX7D00CE01S
+    #include "../drivers/esp32-ZX7D00CE01S.h"
+    #endif
 
 #endif
 
@@ -383,14 +386,11 @@ void screen_timer_sleep(lv_timer_t *timer)
     //int cds = analogReadMilliVolts(CDS);
     Serial.printf("CDS value: %d\n", cds);
 
-    // On analog value go from 0 light to 1000 dark, we will take 500 as medium
-    // Brightness value go from 0 to 255
-    // We will use as max value the one set by the user in global_config.brightness
-    // 64 is the minimal value
-
-    if (cds> 500) cds = 500;
-    int b = 64 + (100 -(cds/5)) * (global_config.brightness - 64) / 100;
-    Serial.printf("Brighness value: %d\n", b);
+    //value from sensor is 0(light)-4096(dark) so invert value to 0(dark)-4096(light) and divide with 16,06 to get 0-255
+    int b = (4096 -(cds))/16.06; 
+    if (b>= global_config.brightness) b = global_config.brightness; //if value b is higher than config settings use config settings
+    if (b< 10) b = 10; //if value b is lower than 10 set 10 as lowest brightness
+    Serial.printf("Brightness value: %d\n", b);
 
     screen_setBrightness(b);
 
