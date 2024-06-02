@@ -5,6 +5,11 @@
 #define TFT_BLACK       0x0000
 #define TFT_WHITE       0xFFFF
 
+#define GFX_BL 45
+//const int freq = 1000;
+//const int ledChannel = 7;
+//const int resolution = 8;
+
 Arduino_ESP32RGBPanel * bus = new Arduino_ESP32RGBPanel(
 39 /* DE */, 38 /* VSYNC */, 5 /* HSYNC */, 9 /* PCLK */,
 10 /* R0 */, 11 /* R1 */, 12 /* R2 */, 13 /* R3 */, 14 /* R4 */,
