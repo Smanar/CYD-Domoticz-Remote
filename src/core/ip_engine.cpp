@@ -150,7 +150,6 @@ static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
             {
                 if (i > 0) lv_snprintf(TmpBuffer,200, "%s,", TmpBuffer);
                 lv_snprintf(TmpBuffer,200, "%s%d", TmpBuffer, global_config.ListDevices[i]);
-                Serial.print(global_config.ListDevices[i]);
             }
             lv_snprintf(TmpBuffer,200, "%s%s", TmpBuffer, "\"}");
             Serial.printf("Special Setting to WS: %s\n", TmpBuffer);

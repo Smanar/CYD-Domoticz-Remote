@@ -86,10 +86,11 @@ analogSetAttenuation(ADC_0db); // 0dB(1.0x) 0~800mV
     //Some settings log
     Serial.printf("Brightness value: %d\n", global_config.brightness);
     
+    InitIPEngine(); // IP stuff
     wifi_init(); // Wifi initialisation
     WS_init(); // Websocket initialisation
     Init_data(); // Data initialisation
-    InitIPEngine(); // IP stuff
+
 
     Serial.println(F("Application ready"));
 
