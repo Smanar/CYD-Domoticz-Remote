@@ -11,6 +11,7 @@
 #include "ui/navigation.h"
 #include "ui/panels/panel.h"
 
+unsigned long now;
 void Websocket_loop(void);
 
 static void scr_event_cb(lv_event_t * e)
@@ -37,6 +38,9 @@ static void scr_event_cb(lv_event_t * e)
 }
 
 void setup() {
+
+    now = millis();
+
     Serial.begin(115200);
     delay(500);    // add a delay to be sure the serial is ready, while(!Serial) has, to my knowledge. no effect on a nodeMcu
     Serial.println(F("Starting application"));
@@ -111,4 +115,9 @@ void loop(){
 
     lv_timer_handler();
     lv_task_handler();
+}
+
+unsigned long runningTime(void)
+{
+    return (millis() - now) / 1000;
 }

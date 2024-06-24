@@ -6,6 +6,7 @@
 
 static WebSocketsClient WSclient;
 static bool connect_ok = false;
+unsigned long total_data_lenght;
 
 extern char TmpBuffer[];
 
@@ -19,6 +20,8 @@ void InitIPEngine(void)
     filter["result"][0]["Data"] = true;
     filter["result"][0]["idx"] = true;
     filter["result"][0]["Name"] = true;
+
+    total_data_lenght = 0;
 }
 
 bool verify_ip(){
@@ -135,11 +138,32 @@ static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
 
 			// send message to server when Connected
 			WSclient.sendTXT("Connected");
+
+            // Send special configuration
+            // On recent Domoticz version it's possible to send a special request to receive Websocket notification
+            // For only somes devices
+            // WSclient.sendTXT("{\"event\":\"request\",\"query\":\"type=command&param=getdevices&rid=1,2,3,4,5\"}");
+            //
+#if (BONUSPAGE == 0) && defined(LIGHTWS)
+            lv_snprintf(TmpBuffer,200,"{\"event\":\"request\",\"query\":\"type=command&param=getdevices&rid=");
+            for (int i = 0; i < sizeof(global_config.ListDevices) / sizeof(*global_config.ListDevices); i = i + 1)
+            {
+                if (i > 0) lv_snprintf(TmpBuffer,200, "%s,", TmpBuffer);
+                lv_snprintf(TmpBuffer,200, "%s%d", TmpBuffer, global_config.ListDevices[i]);
+                Serial.print(global_config.ListDevices[i]);
+            }
+            lv_snprintf(TmpBuffer,200, "%s%s", TmpBuffer, "\"}");
+            Serial.printf("Special Setting to WS: %s\n", TmpBuffer);
+            WSclient.sendTXT(TmpBuffer);
+#endif
+
 			break;
 		case WStype_TEXT:
 			//Serial.printf("[WSc] get text: %s\n", payload);
             if (length > 0)
             {
+
+                total_data_lenght += length;
 
                 JsonDocument doc;
 
@@ -226,9 +250,15 @@ void WS_Run(void)
 
     // try ever 5000 again if connection has failed
     WSclient.setReconnectInterval(5000);
+
 }
 
 void Websocket_loop(void)
 {
     WSclient.loop();
+}
+
+unsigned long total_WS_lenght(void)
+{
+    return total_data_lenght/1024;
 }
