@@ -46,12 +46,15 @@ The project is still WIP so some settings are still hard coded.
 - Mains settings are in the file platformio.ini
 ``` 
 	#-DFORCE_CONFIG # Enable or disable the forced network configuration.
-	-DFORCECALIBRATE=true # Reset the calibration at every restart, used to reset it after a config change.
+	-DFORCECALIBRATE=false # Reset the calibration at every restart, used to reset it after a config change.
 	#-DOLD_DOMOTICZ # If you are using older Domoticz version < 2023.2
 	-DBONUSPAGE=0 # Special page to add, similar to Homepage but not updated, from 1 to 3
 	#-DFASTCLIC # Enable 1 clic action for some widget
 	#-DNO_INFO_PAGE # Disable the Info panel
 	-DNO_GROUP_PAGE # Disable the Group/scene panel
+	#-DCUSTOM_FONT # If you use your own font with special chars
+	#-DAUTO_BRIGHTNESS # Beta
+	#-DLIGHTWS # Only possible for version > 16088 , used to decrease WS requests
 ``` 
 
 ## Tested devices, working nativley
