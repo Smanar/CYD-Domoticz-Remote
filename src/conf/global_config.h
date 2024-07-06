@@ -3,7 +3,10 @@
 
 #include "lvgl.h"
 
+// USED for memorised settings
 #define CONFIG_VERSION 3
+// USED for OTA
+#define APPLICATION_VERSION 1
 
 typedef struct _GLOBAL_CONFIG {
     unsigned char version;

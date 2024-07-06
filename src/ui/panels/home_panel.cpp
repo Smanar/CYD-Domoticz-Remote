@@ -1,5 +1,4 @@
 #include <lvgl.h>
-#include <HTTPClient.h>
 
 #include "panel.h"
 #include "../main_ui.h"

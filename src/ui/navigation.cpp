@@ -1,5 +1,3 @@
-#include <HTTPClient.h>
-
 #include "lvgl.h"
 #include "navigation.h"
 #include "panels/panel.h"

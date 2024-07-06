@@ -1,4 +1,3 @@
-#include <HTTPClient.h>
 #include <ArduinoJson.h>
 
 #include "lvgl.h"

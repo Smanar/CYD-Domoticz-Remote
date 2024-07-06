@@ -64,7 +64,7 @@ bool HTTPGETRequestWithReturn(const char * url2, JsonDocument *doc, bool NeedFil
 
         if (NeedFilter)
         {
-            err = deserializeJson(*doc, client.getString(), DeserializationOption::Filter(filter));
+            err = deserializeJson(*doc, client.getStream(), DeserializationOption::Filter(filter));
         }
         else
         {
