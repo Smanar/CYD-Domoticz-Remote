@@ -24,8 +24,9 @@ static void tools_btn_event_handler(lv_event_t * e)
 
     if (b == 1) navigation_screen(SETTING_PANEL);
     if (b == 2) ESP.restart();
+#ifdef PULLOTA
     if (b == 3) OTAUpdate();
-
+#endif
 }
 
 void tools_panel_init(lv_obj_t* panel)
@@ -59,6 +60,7 @@ void tools_panel_init(lv_obj_t* panel)
     lv_label_set_text_static(label, "Reboot");
     lv_obj_center(label);
     lv_obj_add_event_cb(obj, tools_btn_event_handler, LV_EVENT_CLICKED, (void *)2);
+#ifdef PULLOTA
     // OTA button
     obj= lv_btn_create(cont1);
     lv_obj_set_size(obj, LV_PCT(30), 40);
@@ -67,6 +69,7 @@ void tools_panel_init(lv_obj_t* panel)
     lv_label_set_text_static(label, "OTA Updt");
     lv_obj_center(label);
     lv_obj_add_event_cb(obj, tools_btn_event_handler, LV_EVENT_CLICKED, (void *)3);
+#endif
 
     //Second part
     lv_obj_t * cont2 = lv_obj_create(panel);

@@ -1,10 +1,11 @@
 #include "lvgl.h"
 #include "ota.h"
-#include <HTTPClient.h>
-#include <Update.h>
 
+#ifdef PULLOTA
 // USE PULL OTA
 
+#include <HTTPClient.h>
+#include <Update.h>
 
 const char url[] = "http://192.168.1.81:8080/firmware.bin";
 extern lv_obj_t * label_tool;
@@ -109,3 +110,33 @@ Serial.printf("OTA ok3");
     lv_label_set_text(label_tool, "OTA Update failed, no file");
 
 }
+#endif
+
+#ifdef PUSHOTA
+// USE PUSH OTA
+// Use URL http://192.168.1.29/update
+
+#include <WebServer.h>
+#include <ESP2SOTA.h>
+WebServer server(80);
+
+void OTA_init(void)
+{
+    /* SETUP YOR WEB OWN ENTRY POINTS */
+    server.on("/", HTTP_GET, []() {
+        server.sendHeader("Connection", "close");
+        server.send(200, "text/plain", "Use /update for OTA!");
+    });
+
+    /* INITIALIZE ESP2SOTA LIBRARY */
+    ESP2SOTA.begin(&server);
+    server.begin();
+}
+
+void OTA_loop(void)
+{
+  /* HANDLE UPDATE REQUESTS */
+  server.handleClient();
+}
+
+#endif

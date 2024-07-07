@@ -2,6 +2,7 @@
 
 #include "conf/global_config.h"
 #include "core/screen_driver.h"
+#include "core/ota.h"
 #include "ui/wifi_setup.h"
 #include "ui/http_setup.h"
 #include "lvgl.h"
@@ -91,6 +92,10 @@ analogSetAttenuation(ADC_0db); // 0dB(1.0x) 0~800mV
     WS_init(); // Websocket initialisation
     Init_data(); // Data initialisation
 
+#ifdef PUSHOTA
+    //Webserver for OTA
+    OTA_init();
+#endif
 
     Serial.println(F("Application ready"));
 
@@ -113,6 +118,10 @@ void loop(){
 
     //wifi_ok(); // Watchdog
     Websocket_loop(); // Needed for websocket event.
+#ifdef PUSHOTA
+    //Webserver for OTA
+    OTA_loop();
+#endif
 
     lv_timer_handler();
     lv_task_handler();
