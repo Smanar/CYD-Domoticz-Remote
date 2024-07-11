@@ -1,3 +1,4 @@
+
 void navigation_screen(unsigned char active_panel);
 void ReturnPreviouspage(void);
 void nav_style_setup();
