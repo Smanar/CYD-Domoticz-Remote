@@ -49,18 +49,27 @@ void setup() {
     screen_setup(); // Set display
     Serial.println(F("Screen init done"));
 
-    //Personnal Settings to don't have to set them at every reset, need to be removed
+    // Personnal Settings to don't have to set them at every reset.
+    // They are saved after have been set, so the flag FORCE_CONFIG can be disabled after
     #if FORCE_CONFIG
-        strcpy(global_config.wifiPassword, "xxxxxxxxxxxxxxxxxxx");
-        strcpy(global_config.wifiSSID, "xxxxxxxxxxxxxxx");
-        strcpy(global_config.ServerHost, "192.168.1.1");
-        global_config.ServerPort = 8080;
-        global_config.wifiConfigured = true;
-        global_config.ipConfigured = true;
 
-        const static unsigned short t[] = {37, 75, 16, 36, 28, 35, 57, 89, 45};
-        for (int i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++)
-            global_config.ListDevices[i] = t[i];
+        #if __has_include("personnal_settings.h")
+            #include "personnal_settings.h"
+        #else
+
+            strcpy(global_config.wifiPassword, "xxxxxxxxxxxxxxxxxxx");
+            strcpy(global_config.wifiSSID, "xxxxxxxxxxxxxxx");
+            strcpy(global_config.ServerHost, "192.168.1.1");
+            global_config.ServerPort = 8080;
+            global_config.wifiConfigured = true;
+            global_config.ipConfigured = true;
+
+            const static unsigned short t[] = {37, 75, 16, 36, 28, 35, 57, 89, 45};
+            for (int i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++)
+                global_config.ListDevices[i] = t[i];
+
+        #endif
+
         WriteGlobalConfig();
     #endif
 
