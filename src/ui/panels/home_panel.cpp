@@ -5,6 +5,7 @@
 #include "../../core/data_setup.h"
 #include "../../conf/global_config.h"
 #include "../../core/ip_engine.h"
+#include "../navigation.h"
 
 
 
@@ -353,4 +354,9 @@ void group_panel_init(lv_obj_t* panel)
         if (y >= TOTAL_ICONY) break;
     }
 
+}
+
+void Update_scene_data(void)
+{
+    RefreshScenePage();
 }

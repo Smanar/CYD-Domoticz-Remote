@@ -12,6 +12,8 @@
 Device myDevices[TOTAL_ICONX*TOTAL_ICONY];
 char TmpBuffer[255]; // To prevent multiple re-alloc
 static int tab[24]; // Tab for graph
+String _ListDevice; // Use string here but allocated only at start 
+
 #if BONUSPAGE > 0
 Device myDevicesP2[TOTAL_ICONX*TOTAL_ICONY*BONUSPAGE];
 const static unsigned short TabP2[] = {72, 80, 34, // Page 1, 3* 3 icons
@@ -44,10 +46,15 @@ char * Cleandata(const char *origin, const char *bonus = nullptr)
 
 void Init_data(void)
 {
+    _ListDevice.clear();
+
     for (int i = 0; i < (TOTAL_ICONX*TOTAL_ICONY); i = i + 1)
     {
         if (i < SIZEOF(global_config.ListDevices))
         {
+            if (i > 0) _ListDevice = _ListDevice + ",";
+            _ListDevice = _ListDevice + String(global_config.ListDevices[i]);
+
             myDevices[i].type = TYPE_UNUSED;
             if (HttpInitDevice(&myDevices[i], global_config.ListDevices[i]))
             {
@@ -56,6 +63,10 @@ void Init_data(void)
             }
         }
     }
+
+#if (BONUSPAGE == 0) && defined(LIGHTWS)
+    subscribedeviceWS(0, GetListdevice());
+#endif
 
 #if BONUSPAGE > 0
     for (int i = 0; i < (TOTAL_ICONX*TOTAL_ICONY*BONUSPAGE); i = i + 1)
@@ -94,7 +105,12 @@ int Get_ID_Device(int JSonidx)
     return -1;
 }
 
-void Update_data(JsonObject RJson2)
+const char *GetListdevice(void)
+{
+    return _ListDevice.c_str();
+}
+
+void Update_device_data(JsonObject RJson2)
 {
     //char buffer[4096];
     //serializeJsonPretty(RJson2, buffer);

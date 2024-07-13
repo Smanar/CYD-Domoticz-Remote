@@ -46,5 +46,6 @@ void Init_data();
 void FillDeviceData(Device *d, int idx);
 bool HttpInitDevice(Device *d, int id);
 int * GetGraphValue(int type, int idx, int *, int *);
+const char *GetListdevice(void);
 
 #endif

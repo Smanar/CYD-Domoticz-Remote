@@ -10,3 +10,4 @@ void InitIPEngine(void);
 unsigned long total_WS_lenght(void);
 
 bool HTTPGETRequestWithReturn(const char * url2, JsonDocument *doc, bool filter=false);
+void subscribedeviceWS(short r, const char *c);

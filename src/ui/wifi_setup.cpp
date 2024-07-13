@@ -190,3 +190,9 @@ void wifi_ok(){
         ESP.restart();
     }
 }
+
+void wifi_stop(void)
+{
+    WiFi.disconnect();
+    //wdt_reset();
+}

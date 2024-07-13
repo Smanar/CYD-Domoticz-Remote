@@ -5,6 +5,7 @@ void nav_style_setup();
 int GetActivePanel(void);
 void SetActivePanel(int);
 void RefreshHomePage(void);
+void RefreshScenePage(void);
 
 #define DATA_REMOTE_STATE 1
 #define DATA_REMOTE_DATA 2
