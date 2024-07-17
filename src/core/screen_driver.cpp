@@ -29,6 +29,15 @@ static lv_color_t *buf;
 const size_t VDBsize = LV_VDB_SIZE / sizeof(lv_color_t);
 #endif
 
+// TFT_ROTATION values:
+// 0 - 0 deg (= default when not set)
+// 1 - 90 deg anti-clockwise (from 0 deg)
+// 2 - 180 deg anti-clockwise
+// 3 - 270 deg anti-clockwise
+// 4 - mirror content, and rotate 180 deg anti-clockwise
+// 5 - mirror content, and rotate 270 deg anti-clockwise
+// 6 - mirror content, and rotate 0 deg anti-clockwise
+// 7 - mirror content, and rotate 90 deg anti-clockwise
 
 
 uint32_t LV_EVENT_GET_COMP_CHILD;

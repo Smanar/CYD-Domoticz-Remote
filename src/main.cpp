@@ -60,18 +60,19 @@ void setup() {
             strcpy(global_config.wifiSSID, WIFISSID);
             strcpy(global_config.ServerHost, SERVERHOST);
             global_config.ServerPort = SERVERPORT;
+            const static unsigned short t[] = DEVICELIST;
 
         #else
             strcpy(global_config.wifiPassword, "xxxxxxxxxxxxxxxxxxx");
             strcpy(global_config.wifiSSID, "xxxxxxxxxxxxxxx");
             strcpy(global_config.ServerHost, "192.168.1.1");
             global_config.ServerPort = 8080;
+            const static unsigned short t[] = {37, 75, 16, 36, 28, 35, 57, 89, 45};
         #endif
 
         global_config.wifiConfigured = true;
         global_config.ipConfigured = true;
 
-        const static unsigned short t[] = {37, 75, 16, 36, 28, 35, 57, 89, 45};
         for (int i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++)
             global_config.ListDevices[i] = t[i];
 

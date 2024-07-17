@@ -37,6 +37,7 @@ void RefreshHomePage(void)
     }
 }
 
+#ifndef NO_GROUP_PAGE
 void RefreshScenePage(void)
 {
     if (actived_panel == GROUP_PANEL)
@@ -44,6 +45,7 @@ void RefreshScenePage(void)
         navigation_screen(GROUP_PANEL);
     }
 }
+#endif
 
 static int swipe = 0;
 

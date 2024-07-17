@@ -217,6 +217,10 @@ LV_IMG_DECLARE(meteo35x35)
 LV_IMG_DECLARE(percent35x35)
 
 // To convert image https://lvgl.io/tools/imageconverter
+// - Version : Lvlg v8
+// - format : CF_ALPHA_1_BIT
+// - Output : C array 
+//
 const lv_img_dsc_t *Geticon(int type)
 {
     switch (type)

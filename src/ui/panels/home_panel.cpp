@@ -358,5 +358,7 @@ void group_panel_init(lv_obj_t* panel)
 
 void Update_scene_data(void)
 {
+#ifndef NO_GROUP_PAGE
     RefreshScenePage();
+#endif
 }

@@ -145,7 +145,7 @@ static void edit_device_list_switch(lv_event_t * e)
 
         for (int i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++)
         {
-            global_config.ListDevices[i] = GetIntTok(lv_textarea_get_text(ta), i,';');
+            global_config.ListDevices[i] = GetIntTok(lv_textarea_get_text(ta), i,',');
         }
         WriteGlobalConfig();
         Init_data();

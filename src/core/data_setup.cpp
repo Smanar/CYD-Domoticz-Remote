@@ -506,7 +506,7 @@ bool HttpInitDevice(Device *d, int id)
         }
 
         //Use dynamic array if needed, but only 1 time if needed to prevent fragmentation
-        if (strlen(data) >= d->lenData)
+        if (strlen(data) > d->lenData)
         {
             if (d->data) free(d->data);
             d->data = (char*)malloc(strlen(data) + 1);
