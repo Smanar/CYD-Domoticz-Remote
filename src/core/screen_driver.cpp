@@ -60,6 +60,9 @@ static lv_disp_draw_buf_t draw_buf;
     #ifdef esp2432S028R
     #include "../drivers/esp32-2432S028R.h"
     #endif
+    #ifdef esp2432S028R_V3
+    #include "../drivers/esp32-2432S028R_V3.h"
+    #endif
     #ifdef ESP32_2432S024C
     #include "../drivers/esp32-2432S024C.h"
     #endif
@@ -557,6 +560,9 @@ void screen_setup()
     #endif
     #ifdef LOVYANGFX
         #ifdef esp2432S028R
+        tft.setRotation(global_config.rotateScreen ? 2 : 0);
+        #endif
+        #ifdef esp2432S028R_V3
         tft.setRotation(global_config.rotateScreen ? 2 : 0);
         #endif
     #endif

@@ -1,0 +1,72 @@
+{
+  "build": {
+    "arduino": {
+      "ldscript": "esp32_out.ld"
+    },
+    "core": "esp32",
+    "extra_flags": [
+      "-DARDUINO_ESP32_DEV",
+      "-DST7789_DRIVER=1",
+      "-DTFT_RGB_ORDER=1",
+      "-DTFT_INVERSION_ON=0",
+      "-DTFT_HEIGHT=240",
+      "-DTFT_WIDTH=320",
+      "-DTFT_BL=21",
+      "-DTFT_BACKLIGHT_ON=HIGH",
+      "-DTFT_MISO=12",
+      "-DTFT_MOSI=13",
+      "-DTFT_SCLK=14",
+      "-DTFT_CS=15",
+      "-DTFT_DC=2",
+      "-DTFT_RST=-1",
+      "-DTFT_BUSY=-1",
+      "-DTFT_ROTATION=4",
+      "-DLOAD_GCLD=1",
+      "-DLOAD_FONT2=1",
+      "-DLOAD_GFXFF=1",
+      "-DSPI_FREQUENCY=55000000",
+      "-DSPI_READ_FREQUENCY=20000000",
+      "-DSPI_TOUCH_FREQUENCY=2500000",
+      "-DLCD_WIDTH=320",
+      "-DLCD_HEIGHT=240",
+      "-DBOARD_HAS_TOUCH",
+      "-DBOARD_HAS_TF",
+      "-DBOARD_HAS_RGB_LED",
+      "-DRGB_LED_R=4",
+      "-DRGB_LED_G=16",
+      "-DRGB_LED_B=17",
+      "-DBOARD_HAS_CDS",
+      "-DCDS=34",
+      "-DBOARD_HAS_SPEAK",
+      "-DSPEAK=26"
+    ],
+    "f_cpu": "240000000L",
+    "f_flash": "40000000L",
+    "flash_mode": "dio",
+    "mcu": "esp32",
+    "variant": "esp32"
+  },
+  "connectivity": [
+    "wifi",
+    "bluetooth",
+    "ethernet",
+    "can"
+  ],
+  "debug": {
+    "openocd_board": "esp-wroom-32.cfg"
+  },
+  "frameworks": [
+    "arduino",
+    "espidf"
+  ],
+  "name": "esp32-2432S028R",
+  "upload": {
+    "flash_size": "4MB",
+    "maximum_ram_size": 327680,
+    "maximum_size": 4194304,
+    "require_upload_port": true,
+    "speed": 460800
+  },
+  "url": "https://www.aliexpress.com/item/1005004502250619.html",
+  "vendor": "Sunton"
+}

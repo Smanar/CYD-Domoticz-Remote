@@ -121,7 +121,7 @@ static void draw_part_event_cb(lv_event_t * e)
 }
 
 #if DEVICE_SIZE == 1
-    #define HEADERHEIGHT 20
+    #define HEADERHEIGHT 25
     #define TABLEPAD 4
 #else
     #define HEADERHEIGHT 40
