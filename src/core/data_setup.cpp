@@ -118,7 +118,8 @@ void Update_device_data(JsonObject RJson2)
 
     int JSonidx = 0;
 
-    if (RJson2.containsKey("idx")) JSonidx = atoi(RJson2["idx"]);
+    //if (RJson2.containsKey("idx")) JSonidx = atoi(RJson2["idx"]);
+    if (RJson2["idx"].is<const char*>()) JSonidx = atoi(RJson2["idx"]);
     if (JSonidx == 0) return; // No Idx
 
     int ID = Get_ID_Device(JSonidx);
@@ -127,14 +128,17 @@ void Update_device_data(JsonObject RJson2)
     const char* JSondata = NULL;
     int JSonLevel = 0;
 
-    if (RJson2.containsKey("Data")) JSondata = RJson2["Data"];
-    if (RJson2.containsKey("Level")) JSonLevel = RJson2["Level"];
+    //if (RJson2.containsKey("Data")) JSondata = RJson2["Data"];
+    //if (RJson2.containsKey("Level")) JSonLevel = RJson2["Level"];
+    if (RJson2["Data"].is<const char*>()) JSondata = RJson2["Data"];
+    if (RJson2["Level"].is<const char*>()) JSonLevel = RJson2["Level"];
 
     Serial.printf("Update HP device Id: %d, Domo Idx: %d\n", ID, JSonidx);
 
     //Special device
     char * data;
-    if (RJson2.containsKey("Rain"))
+    //if (RJson2.containsKey("Rain"))
+    if (RJson2["Rain"].is<const char*>())
     {
         data = Cleandata(RJson2["Rain"]);
     }
@@ -491,7 +495,8 @@ bool HttpInitDevice(Device *d, int id)
 
         //Special device
         char * data;
-        if (i.containsKey("Rain"))
+        //if (i.containsKey("Rain"))
+        if (i["Rain"].is<const char*>())
         {
            data = Cleandata(i["Rain"]);
         }

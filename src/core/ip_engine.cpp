@@ -178,9 +178,11 @@ static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
                 if (!err)
                 {
                     // ok it's Json
-                    if (doc.containsKey("event") && (doc["event"] == "response"))
+                    //if (doc.containsKey("event") && (doc["event"] == "response"))
+                    if (doc["event"].is<const char*>() && (doc["event"] == "response"))
                     {
-                        if (doc.containsKey("data"))
+                        //if (doc.containsKey("data"))
+                        if (doc["data"].is<const char*>())
                         {
                             //On the request data is a string so need to be deserialized too
                             JsonDocument doc2;

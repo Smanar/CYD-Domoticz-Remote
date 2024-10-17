@@ -338,7 +338,8 @@ void group_panel_init(lv_obj_t* panel)
         cy = TOTAL_OFFSET_Y / 2 + (Size_h + TOTAL_OFFSET_Y) * y;
 
         name = i["Name"];
-        if (i.containsKey("idx")) idx = atoi(i["idx"]);
+        //if (i.containsKey("idx")) idx = atoi(i["idx"]);
+        if (i["idx"].is<const char*>()) idx = atoi(i["idx"]);
 
         device_color = lv_color_make(0xFF, 0x2F, 0x2F);
         if (strcmp(i["Type"], "Group") == 0) device_color = lv_color_make(0x2F, 0x2F, 0xFF);
