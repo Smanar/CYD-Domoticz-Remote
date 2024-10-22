@@ -192,6 +192,8 @@ void wifi_init()
         #endif
     #endif
 
+    Serial.print(F("Wifi connecting to SSID: "));
+    Serial.println(global_config.wifiSSID);
     WiFi.begin(global_config.wifiSSID, global_config.wifiPassword);
 
     while (WiFi.status() != WL_CONNECTED)
