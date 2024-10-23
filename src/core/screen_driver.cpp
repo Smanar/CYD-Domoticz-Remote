@@ -126,7 +126,7 @@ class _TC
     {
         touchscreen_spi.begin(XPT2046_CLK, XPT2046_MISO, XPT2046_MOSI, XPT2046_CS);
         touchscreen2.begin(touchscreen_spi);
-        touchscreen2.setRotation(global_config.rotateScreen ? 3 : 1); 
+        touchscreen2.setRotation(global_config.rotateScreen ? TOUCH_ROT1 : TOUCH_ROT2); 
     }
     bool _TC::touched(void) { return touchscreen2.touched(); }
     bool _TC::tirqTouched(void) { return touchscreen2.tirqTouched(); }
@@ -559,18 +559,10 @@ void screen_setup()
 
     // Rotation option
     #ifdef TFT_ESPI
-        tft.setRotation(global_config.rotateScreen ? 0 : 2);
+        tft.setRotation(global_config.rotateScreen ? TFT_ROTATION_1 : TFT_ROTATION_2);
     #endif
-    #ifdef LOVYANGFX
-        #ifdef esp2432S028R
-        tft.setRotation(global_config.rotateScreen ? 2 : 0);
-        #endif
-        #ifdef esp2432S024R
-        tft.setRotation(global_config.rotateScreen ? 2 : 0);
-        #endif
-        #ifdef esp2432S028R_V3
-        tft.setRotation(global_config.rotateScreen ? 2 : 0);
-        #endif
+    #if defined(LOVYANGFX) && defined(TFT_ROTATION_1) && defined(TFT_ROTATION_2)
+        tft.setRotation(global_config.rotateScreen ? TFT_ROTATION_2 : TFT_ROTATION_1);
     #endif
 
     // Color Invertion option
