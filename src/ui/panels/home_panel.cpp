@@ -85,6 +85,22 @@ static void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int 
     //lv_obj_set_style_pad_all(Button_icon, 0, 0);                                           // Remove padding
     lv_obj_add_event_cb(Button_icon, btn_event_cb, LV_EVENT_CLICKED, (void *)d);             // Assign a callback to the button
 
+    //special part to display small text direclty on widget
+    if (d->type == TYPE_TEXT && strlen(d->data) < 6)
+    {
+        lv_obj_t * label2 = lv_label_create(Button_icon);               /*Add a label to the button*/
+        //lv_label_set_long_mode(label2, LV_LABEL_LONG_WRAP);             /*Break the long lines*/
+        lv_obj_set_style_text_font(label2, &font1, 0);
+        lv_obj_set_style_text_align(label2, LV_TEXT_ALIGN_CENTER, 0);
+        lv_obj_set_style_text_color(label2, color, 0);
+
+        lv_label_set_text(label2, d->data);                                /*Set the labels text*/
+
+        lv_obj_set_width(label2, Size_w);
+        lv_obj_align_to(label2, Button_icon,  LV_ALIGN_CENTER, 0, 0); 
+        return;
+    }
+
     lv_obj_t *img = lv_img_create(Button_icon);
     //lv_img_set_src(img, LV_SYMBOL_OK "Accept");
     lv_img_set_src(img, icon);
@@ -124,6 +140,7 @@ static void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int 
         }
     }
 #endif
+
     /*Create description*/
     lv_obj_t * label2 = lv_label_create(Button_icon);               /*Add a label to the button*/
     lv_label_set_long_mode(label2, LV_LABEL_LONG_WRAP);             /*Break the long lines*/
