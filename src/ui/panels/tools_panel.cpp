@@ -1,17 +1,20 @@
 #include <HardwareSerial.h>
-#include <HTTPClient.h>
 #include <ArduinoJson.h>
 //#include "esp32/himem.h"
 
 #include "lvgl.h"
 #include "panel.h"
+
 #include "../../core/data_setup.h"
 #include "../../conf/global_config.h"
 #include "../../core/ip_engine.h"
+#include "../../core/ota.h"
 #include "../src/ui/navigation.h"
 
 static lv_style_t style_container;
 extern lv_style_t style_shadow;
+
+lv_obj_t * label_tool;
 
 static void tools_btn_event_handler(lv_event_t * e)
 {
@@ -21,7 +24,9 @@ static void tools_btn_event_handler(lv_event_t * e)
 
     if (b == 1) navigation_screen(SETTING_PANEL);
     if (b == 2) ESP.restart();
-
+#ifdef PULLOTA
+    if (b == 3) OTAUpdate();
+#endif
 }
 
 void tools_panel_init(lv_obj_t* panel)
@@ -39,6 +44,7 @@ void tools_panel_init(lv_obj_t* panel)
     lv_obj_add_style(cont1, &style_shadow, LV_PART_MAIN);
     lv_obj_clear_flag( cont1, LV_OBJ_FLAG_SCROLLABLE );
 
+    // Setting button
     obj= lv_btn_create(cont1);
     lv_obj_set_size(obj, LV_PCT(30), 40);
     lv_obj_align(obj, LV_ALIGN_RIGHT_MID, 0, 0);
@@ -46,6 +52,7 @@ void tools_panel_init(lv_obj_t* panel)
     lv_label_set_text_static(label, "Settings");
     lv_obj_center(label);
     lv_obj_add_event_cb(obj, tools_btn_event_handler, LV_EVENT_CLICKED, (void *)1);
+    // Reboot button
     obj= lv_btn_create(cont1);
     lv_obj_set_size(obj, LV_PCT(30), 40);
     lv_obj_align(obj, LV_ALIGN_LEFT_MID, 0, 0);
@@ -53,7 +60,16 @@ void tools_panel_init(lv_obj_t* panel)
     lv_label_set_text_static(label, "Reboot");
     lv_obj_center(label);
     lv_obj_add_event_cb(obj, tools_btn_event_handler, LV_EVENT_CLICKED, (void *)2);
-
+#ifdef PULLOTA
+    // OTA button
+    obj= lv_btn_create(cont1);
+    lv_obj_set_size(obj, LV_PCT(30), 40);
+    lv_obj_align(obj, LV_ALIGN_CENTER, 0, 0);
+    label = lv_label_create(obj);
+    lv_label_set_text_static(label, "OTA Updt");
+    lv_obj_center(label);
+    lv_obj_add_event_cb(obj, tools_btn_event_handler, LV_EVENT_CLICKED, (void *)3);
+#endif
 
     //Second part
     lv_obj_t * cont2 = lv_obj_create(panel);
@@ -73,17 +89,21 @@ void tools_panel_init(lv_obj_t* panel)
     lv_mem_monitor(&mon);
     uint32_t used_size = mon.total_size - mon.free_size;
 
-    char Text[151];
-    lv_snprintf(Text, 150, "+ HEAP Memory Usable (Kb) %d, Max %d, Total %d\n", ESP.getMaxAllocHeap()/1024, ESP.getFreeHeap()/1024, ESP.getHeapSize()/1024);
-    lv_snprintf(Text + strlen(Text),150, "+ PSRAM Memory Free (Kb) %d, Total %d\n", ESP.getFreePsram()/1024, ESP.getPsramSize()/1024);
-    lv_snprintf(Text + strlen(Text), 150, "+ LV Heap %d kB used (%d %%) %d%% frag.\n", used_size / 1024, mon.used_pct, mon.frag_pct);
-    //lv_snprintf(Text + strlen(Text), 150, "Spiram size (Kb) %d , himem free %d\n", esp_spiram_get_size()/1000, esp_himem_get_free_size()/1000); // Not used, CRASH
-    lv_snprintf(Text + strlen(Text), 150, "+ Application Version : %d", 1);
+    char Text[181];
+    lv_snprintf(Text, 180, "+ HEAP Memory Usable (Kb) %d, Max %d, Total %d\n", ESP.getMaxAllocHeap()/1024, ESP.getFreeHeap()/1024, ESP.getHeapSize()/1024);
+    //lv_snprintf(Text + strlen(Text),180, "+ PSRAM Memory Free (Kb) %d, Total %d\n", ESP.getFreePsram()/1024, ESP.getPsramSize()/1024); // Not used, CRASH
+    lv_snprintf(Text + strlen(Text), 180, "+ LV Heap %d kB used (%d %%) %d%% frag.\n", used_size / 1024, mon.used_pct, mon.frag_pct);
+    //lv_snprintf(Text + strlen(Text), 180, "Spiram size (Kb) %d , himem free %d\n", esp_spiram_get_size()/1000, esp_himem_get_free_size()/1000); // Not used, CRASH
+    lv_snprintf(Text + strlen(Text), 180, "+ Application Version : %d\n", APPLICATION_VERSION);
+    lv_snprintf(Text + strlen(Text), 180, "+ Running time : %d:%d:%d:%d\n", runningTime()/(3600*24), (runningTime()/3600)%24 , (runningTime()/60)%60, runningTime()%60);
+    lv_snprintf(Text + strlen(Text), 180, "+ Total data by WS : %d ko", total_WS_lenght());
 
-    label = lv_label_create(cont2);
-    lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP);
-    lv_label_set_text(label, Text);
-    lv_obj_set_size(label, LV_PCT(100), LV_PCT(100));
-    lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_LEFT, 0);
+    label_tool = lv_label_create(cont2);
+    lv_obj_set_style_text_font(label_tool, &font3, 0);
+    lv_label_set_long_mode(label_tool, LV_LABEL_LONG_WRAP);
+    lv_label_set_text(label_tool, Text);
+    lv_obj_set_size(label_tool, LV_PCT(100), LV_PCT(100));
+    lv_obj_set_style_text_align(label_tool, LV_TEXT_ALIGN_LEFT, 0);
 
 }
+

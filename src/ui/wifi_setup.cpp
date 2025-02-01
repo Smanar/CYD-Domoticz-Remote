@@ -167,6 +167,33 @@ void wifi_init()
     WiFi.mode(WIFI_STA);
     WiFi.disconnect();
     wifi_Connecting_screen();
+
+
+    // Special config ?
+    #if __has_include("../personnal_settings.h")
+        #include "../personnal_settings.h"
+
+        #ifdef USE_FIXEDIP
+            IPAddress staticIP(ST_IP);
+            IPAddress gateway(ST_GATEWAY);
+            IPAddress subnet(ST_NETMASK);
+            WiFi.hostname(WIFI_HOSTNAME);
+            #if !defined(ST_DNS1)
+                WiFi.config(staticIP, gateway, subnet);
+            #else
+                IPAddress dns1(ST_DNS1);
+                #if !defined(ST_DNS2)
+                    WiFi.config(staticIP, gateway, subnet, dns1);
+                #else
+                    IPAddress dns2(ST_DNS2);
+                    WiFi.config(staticIP, gateway, subnet, dns1, dns2);
+                #endif
+            #endif
+        #endif
+    #endif
+
+    Serial.print(F("Wifi connecting to SSID: "));
+    Serial.println(global_config.wifiSSID);
     WiFi.begin(global_config.wifiSSID, global_config.wifiPassword);
 
     while (WiFi.status() != WL_CONNECTED)
@@ -189,4 +216,10 @@ void wifi_ok(){
         Serial.println(F("Wifi disconnection, restart"));
         ESP.restart();
     }
+}
+
+void wifi_stop(void)
+{
+    WiFi.disconnect();
+    //wdt_reset();
 }

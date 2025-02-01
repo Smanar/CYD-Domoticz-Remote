@@ -1,5 +1,4 @@
 #include <HardwareSerial.h>
-#include <HTTPClient.h>
 #include <ArduinoJson.h>
 
 #include "lvgl.h"
@@ -121,6 +120,14 @@ static void draw_part_event_cb(lv_event_t * e)
     }
 }
 
+#if DEVICE_SIZE == 1
+    #define HEADERHEIGHT 25
+    #define TABLEPAD 4
+#else
+    #define HEADERHEIGHT 40
+    #define TABLEPAD 10
+#endif
+
 void info_panel_init(lv_obj_t* panel)
 {
 
@@ -137,25 +144,25 @@ void info_panel_init(lv_obj_t* panel)
     lv_obj_t * label;
 
     obj= lv_btn_create(cont);
-    lv_obj_set_size(obj, LV_PCT(20), 20);
+    lv_obj_set_size(obj, LV_PCT(20), HEADERHEIGHT);
     label = lv_label_create(obj);
     lv_label_set_text_static(label, "light");
     lv_obj_center(label);
     lv_obj_add_event_cb(obj, TV_btn_event_handler, LV_EVENT_CLICKED, NULL);
     obj= lv_btn_create(cont);
-    lv_obj_set_size(obj, LV_PCT(20), 20);
+    lv_obj_set_size(obj, LV_PCT(20), HEADERHEIGHT);
     label = lv_label_create(obj);
     lv_label_set_text_static(label, "temp");
     lv_obj_center(label);
     lv_obj_add_event_cb(obj, TV_btn_event_handler, LV_EVENT_CLICKED, NULL);
     obj= lv_btn_create(cont);
-    lv_obj_set_size(obj, LV_PCT(20), 20);
+    lv_obj_set_size(obj, LV_PCT(20), HEADERHEIGHT);
     label = lv_label_create(obj);
     lv_label_set_text_static(label, "utility");
     lv_obj_center(label);
     lv_obj_add_event_cb(obj, TV_btn_event_handler, LV_EVENT_CLICKED, NULL);
     obj= lv_btn_create(cont);
-    lv_obj_set_size(obj, LV_PCT(20), 20);
+    lv_obj_set_size(obj, LV_PCT(20), HEADERHEIGHT);
     label = lv_label_create(obj);
     lv_label_set_text_static(label, "baro");
     lv_obj_center(label);
@@ -164,7 +171,7 @@ void info_panel_init(lv_obj_t* panel)
     table = lv_table_create(cont);
 
     lv_obj_set_style_text_font(table, &font3, 0);
-    lv_obj_set_style_pad_all(table, 1, LV_PART_ITEMS);
+    lv_obj_set_style_pad_all(table, TABLEPAD, LV_PART_ITEMS);
     lv_obj_set_style_border_width(table, 1, LV_PART_ITEMS);
     lv_obj_update_layout(cont);   /*Be sure the sizes are recalculated*/
     lv_coord_t w = lv_obj_get_content_width(cont)-3;

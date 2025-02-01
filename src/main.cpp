@@ -2,6 +2,7 @@
 
 #include "conf/global_config.h"
 #include "core/screen_driver.h"
+#include "core/ota.h"
 #include "ui/wifi_setup.h"
 #include "ui/http_setup.h"
 #include "lvgl.h"
@@ -11,6 +12,7 @@
 #include "ui/navigation.h"
 #include "ui/panels/panel.h"
 
+unsigned long now;
 void Websocket_loop(void);
 
 static void scr_event_cb(lv_event_t * e)
@@ -37,6 +39,9 @@ static void scr_event_cb(lv_event_t * e)
 }
 
 void setup() {
+
+    now = millis();
+
     Serial.begin(115200);
     delay(500);    // add a delay to be sure the serial is ready, while(!Serial) has, to my knowledge. no effect on a nodeMcu
     Serial.println(F("Starting application"));
@@ -44,18 +49,33 @@ void setup() {
     screen_setup(); // Set display
     Serial.println(F("Screen init done"));
 
-    //Personnal Settings to don't have to set them at every reset, need to be removed
+    // Personnal Settings to don't have to set them at every reset.
+    // They are saved after have been set, so the flag FORCE_CONFIG can be disabled after
     #if FORCE_CONFIG
-        strcpy(global_config.wifiPassword, "xxxxxxxxxxxxxxxxxxx");
-        strcpy(global_config.wifiSSID, "xxxxxxxxxxxxxxx");
-        strcpy(global_config.ServerHost, "192.168.1.1");
-        global_config.ServerPort = 8080;
+
+        #if __has_include("personnal_settings.h")
+            #include "personnal_settings.h"
+
+            strcpy(global_config.wifiPassword, WIFIPASSWORD);
+            strcpy(global_config.wifiSSID, WIFISSID);
+            strcpy(global_config.ServerHost, SERVERHOST);
+            global_config.ServerPort = SERVERPORT;
+            const static unsigned short t[] = DEVICELIST;
+
+        #else
+            strcpy(global_config.wifiPassword, "xxxxxxxxxxxxxxxxxxx");
+            strcpy(global_config.wifiSSID, "xxxxxxxxxxxxxxx");
+            strcpy(global_config.ServerHost, "192.168.1.1");
+            global_config.ServerPort = 8080;
+            const static unsigned short t[] = {37, 75, 16, 36, 28, 35, 57, 89, 90};
+        #endif
+
         global_config.wifiConfigured = true;
         global_config.ipConfigured = true;
 
-        const static unsigned short t[] = {37, 75, 16, 36, 28, 35, 57, 89, 45};
         for (int i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++)
             global_config.ListDevices[i] = t[i];
+
         WriteGlobalConfig();
     #endif
 
@@ -82,10 +102,15 @@ analogSetAttenuation(ADC_0db); // 0dB(1.0x) 0~800mV
     //Some settings log
     Serial.printf("Brightness value: %d\n", global_config.brightness);
     
+    InitIPEngine(); // IP stuff
     wifi_init(); // Wifi initialisation
     WS_init(); // Websocket initialisation
     Init_data(); // Data initialisation
-    InitIPEngine(); // IP stuff
+
+#ifdef PUSHOTA
+    //Webserver for OTA
+    OTA_init();
+#endif
 
     Serial.println(F("Application ready"));
 
@@ -108,7 +133,16 @@ void loop(){
 
     //wifi_ok(); // Watchdog
     Websocket_loop(); // Needed for websocket event.
+#ifdef PUSHOTA
+    //Webserver for OTA
+    OTA_loop();
+#endif
 
     lv_timer_handler();
     lv_task_handler();
+}
+
+unsigned long runningTime(void)
+{
+    return (millis() - now) / 1000;
 }

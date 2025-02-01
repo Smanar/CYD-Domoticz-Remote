@@ -6,10 +6,12 @@
 
 static WebSocketsClient WSclient;
 static bool connect_ok = false;
+unsigned long total_data_lenght;
 
 extern char TmpBuffer[];
 
-void Update_data(JsonObject RJson2);
+void Update_device_data(JsonObject RJson2);
+void Update_scene_data(void);
 
 //Filter json
 JsonDocument filter;
@@ -19,6 +21,8 @@ void InitIPEngine(void)
     filter["result"][0]["Data"] = true;
     filter["result"][0]["idx"] = true;
     filter["result"][0]["Name"] = true;
+
+    total_data_lenght = 0;
 }
 
 bool verify_ip(){
@@ -61,7 +65,7 @@ bool HTTPGETRequestWithReturn(const char * url2, JsonDocument *doc, bool NeedFil
 
         if (NeedFilter)
         {
-            err = deserializeJson(*doc, client.getString(), DeserializationOption::Filter(filter));
+            err = deserializeJson(*doc, client.getStream(), DeserializationOption::Filter(filter));
         }
         else
         {
@@ -122,6 +126,29 @@ static void hexdump(const void *mem, uint32_t len, uint8_t cols = 16) {
 }
 #endif
 
+// Send special configuration
+// On recent Domoticz version it's possible to send a special request to receive Websocket notification
+// For only somes devices
+// WSclient.sendTXT("{\"event\":\"request\",\"query\":\"type=command&param=getdevices&rid=1,2,3,4,5\"}");
+// Use getscenes for scene tab
+//
+void subscribedeviceWS(short r, const char *c)
+{
+    if (r == 0)
+    {
+        lv_snprintf(TmpBuffer,200,"{\"event\":\"request\",\"query\":\"type=command&param=getdevices&rid=");
+        lv_snprintf(TmpBuffer,200, "%s%s", TmpBuffer, c);
+    }
+    else
+    {
+        lv_snprintf(TmpBuffer,200,"{\"event\":\"request\",\"query\":\"type=command&param=");
+        lv_snprintf(TmpBuffer,200, "%s%s", TmpBuffer, c);
+    }
+    lv_snprintf(TmpBuffer,200, "%s%s", TmpBuffer, "\"}");
+    Serial.printf("Special Setting to WS: %s\n", TmpBuffer);
+    WSclient.sendTXT(TmpBuffer);
+}
+
 static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
 {
 	switch(type)
@@ -135,11 +162,14 @@ static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
 
 			// send message to server when Connected
 			WSclient.sendTXT("Connected");
+
 			break;
 		case WStype_TEXT:
 			//Serial.printf("[WSc] get text: %s\n", payload);
             if (length > 0)
             {
+
+                total_data_lenght += length;
 
                 JsonDocument doc;
 
@@ -148,10 +178,11 @@ static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
                 if (!err)
                 {
                     // ok it's Json
-                    if (doc.containsKey("event"))
+                    //if (doc.containsKey("event") && (doc["event"] == "response"))
+                    if (doc["event"].is<const char*>() && (doc["event"] == "response"))
                     {
-                        //if (strcmp(doc["event"], "response") == 0)
-                        if ((doc["event"] == "response") && (doc.containsKey("data")))
+                        //if (doc.containsKey("data"))
+                        if (doc["data"].is<const char*>())
                         {
                             //On the request data is a string so need to be deserialized too
                             JsonDocument doc2;
@@ -170,8 +201,24 @@ static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
                             if (result)
                             {
                                 for (JsonObject a : result) {
-                                    Update_data(a);
+
+                                    // Scene or group WS
+                                    if (doc["request"] == "scene_request")
+                                    {
+                                        Serial.printf("[WSc] Scene/group WS\n");
+                                        if (a["Type"] == "Group")
+                                        {
+                                            Serial.printf("[WSc] Group WS\n");
+                                            Update_scene_data();
+                                        }
+                                    }
+                                    // Device WS
+                                    else
+                                    {
+                                        Update_device_data(a);
+                                    }
                                 }
+                            
                             }
 
                         }
@@ -226,9 +273,15 @@ void WS_Run(void)
 
     // try ever 5000 again if connection has failed
     WSclient.setReconnectInterval(5000);
+
 }
 
 void Websocket_loop(void)
 {
     WSclient.loop();
+}
+
+unsigned long total_WS_lenght(void)
+{
+    return total_data_lenght/1024;
 }

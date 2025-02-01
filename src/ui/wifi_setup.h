@@ -1,2 +1,3 @@
-void wifi_init();
-void wifi_ok();
+void wifi_init(void);
+void wifi_ok(void);
+void wifi_stop(void);

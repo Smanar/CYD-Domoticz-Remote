@@ -1,11 +1,11 @@
 #include <lvgl.h>
-#include <HTTPClient.h>
 
 #include "panel.h"
 #include "../main_ui.h"
 #include "../../core/data_setup.h"
 #include "../../conf/global_config.h"
 #include "../../core/ip_engine.h"
+#include "../navigation.h"
 
 
 
@@ -85,6 +85,22 @@ static void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int 
     //lv_obj_set_style_pad_all(Button_icon, 0, 0);                                           // Remove padding
     lv_obj_add_event_cb(Button_icon, btn_event_cb, LV_EVENT_CLICKED, (void *)d);             // Assign a callback to the button
 
+    //special part to display small text direclty on widget
+    if (d->type == TYPE_TEXT && strlen(d->data) < 6)
+    {
+        lv_obj_t * label2 = lv_label_create(Button_icon);               /*Add a label to the button*/
+        //lv_label_set_long_mode(label2, LV_LABEL_LONG_WRAP);             /*Break the long lines*/
+        lv_obj_set_style_text_font(label2, &font1, 0);
+        lv_obj_set_style_text_align(label2, LV_TEXT_ALIGN_CENTER, 0);
+        lv_obj_set_style_text_color(label2, color, 0);
+
+        lv_label_set_text(label2, d->data);                                /*Set the labels text*/
+
+        lv_obj_set_width(label2, Size_w);
+        lv_obj_align_to(label2, Button_icon,  LV_ALIGN_CENTER, 0, 0); 
+        return;
+    }
+
     lv_obj_t *img = lv_img_create(Button_icon);
     //lv_img_set_src(img, LV_SYMBOL_OK "Accept");
     lv_img_set_src(img, icon);
@@ -103,6 +119,27 @@ static void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int 
         //lv_obj_set_style_border_width(label, 5, 0); // To make it visible
         lv_label_set_text(label, " On");
     }
+#if 0
+    // Display a open/clode state for covering
+    if (d->type == TYPE_BLINDS)
+    {
+        lv_obj_t * label = lv_label_create(Button_icon);
+        lv_obj_set_style_text_color(label, color, 0);
+        lv_obj_align_to(label, img,  LV_ALIGN_OUT_RIGHT_BOTTOM, 0, 0);
+        if (strcmp(d->data, "Closed") == 0)
+        {
+            lv_label_set_text(label, " Closed");
+        }
+        else if (strcmp(d->data, "Open") == 0)
+        {
+            lv_label_set_text(label, " Open");
+        }
+        else
+        {
+            lv_label_set_text_fmt(label, " %d %%",d->level );
+        }
+    }
+#endif
 
     /*Create description*/
     lv_obj_t * label2 = lv_label_create(Button_icon);               /*Add a label to the button*/
@@ -318,7 +355,8 @@ void group_panel_init(lv_obj_t* panel)
         cy = TOTAL_OFFSET_Y / 2 + (Size_h + TOTAL_OFFSET_Y) * y;
 
         name = i["Name"];
-        if (i.containsKey("idx")) idx = atoi(i["idx"]);
+        //if (i.containsKey("idx")) idx = atoi(i["idx"]);
+        if (i["idx"].is<const char*>()) idx = atoi(i["idx"]);
 
         device_color = lv_color_make(0xFF, 0x2F, 0x2F);
         if (strcmp(i["Type"], "Group") == 0) device_color = lv_color_make(0x2F, 0x2F, 0xFF);
@@ -334,4 +372,11 @@ void group_panel_init(lv_obj_t* panel)
         if (y >= TOTAL_ICONY) break;
     }
 
+}
+
+void Update_scene_data(void)
+{
+#ifndef NO_GROUP_PAGE
+    RefreshScenePage();
+#endif
 }

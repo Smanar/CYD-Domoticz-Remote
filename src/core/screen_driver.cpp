@@ -29,6 +29,15 @@ static lv_color_t *buf;
 const size_t VDBsize = LV_VDB_SIZE / sizeof(lv_color_t);
 #endif
 
+// TFT_ROTATION values:
+// 0 - 0 deg (= default when not set)
+// 1 - 90 deg anti-clockwise (from 0 deg)
+// 2 - 180 deg anti-clockwise
+// 3 - 270 deg anti-clockwise
+// 4 - mirror content, and rotate 180 deg anti-clockwise
+// 5 - mirror content, and rotate 270 deg anti-clockwise
+// 6 - mirror content, and rotate 0 deg anti-clockwise
+// 7 - mirror content, and rotate 90 deg anti-clockwise
 
 
 uint32_t LV_EVENT_GET_COMP_CHILD;
@@ -51,6 +60,12 @@ static lv_disp_draw_buf_t draw_buf;
     #ifdef esp2432S028R
     #include "../drivers/esp32-2432S028R.h"
     #endif
+    #ifdef esp2432S024R
+    #include "../drivers/esp32-2432S024R.h"
+    #endif
+    #ifdef esp2432S028R_V3
+    #include "../drivers/esp32-2432S028R_V3.h"
+    #endif
     #ifdef ESP32_2432S024C
     #include "../drivers/esp32-2432S024C.h"
     #endif
@@ -72,6 +87,9 @@ static lv_disp_draw_buf_t draw_buf;
     #endif
     #ifdef esp2432S028R
     #include "../drivers/esp32-2432S028R(gfx).h"
+    #endif
+    #ifdef ESP32_ZX7D00CE01S
+    #include "../drivers/esp32-ZX7D00CE01S.h"
     #endif
 
 #endif
@@ -108,7 +126,7 @@ class _TC
     {
         touchscreen_spi.begin(XPT2046_CLK, XPT2046_MISO, XPT2046_MOSI, XPT2046_CS);
         touchscreen2.begin(touchscreen_spi);
-        touchscreen2.setRotation(global_config.rotateScreen ? 3 : 1); 
+        touchscreen2.setRotation(global_config.rotateScreen ? TOUCH_ROT1 : TOUCH_ROT2); 
     }
     bool _TC::touched(void) { return touchscreen2.touched(); }
     bool _TC::tirqTouched(void) { return touchscreen2.tirqTouched(); }
@@ -383,14 +401,11 @@ void screen_timer_sleep(lv_timer_t *timer)
     //int cds = analogReadMilliVolts(CDS);
     Serial.printf("CDS value: %d\n", cds);
 
-    // On analog value go from 0 light to 1000 dark, we will take 500 as medium
-    // Brightness value go from 0 to 255
-    // We will use as max value the one set by the user in global_config.brightness
-    // 64 is the minimal value
-
-    if (cds> 500) cds = 500;
-    int b = 64 + (100 -(cds/5)) * (global_config.brightness - 64) / 100;
-    Serial.printf("Brighness value: %d\n", b);
+    //value from sensor is 0(light)-4096(dark) so invert value to 0(dark)-4096(light) and divide with 16,06 to get 0-255
+    int b = (4096 -(cds))/16.06; 
+    if (b>= global_config.brightness) b = global_config.brightness; //if value b is higher than config settings use config settings
+    if (b< 10) b = 10; //if value b is lower than 10 set 10 as lowest brightness
+    Serial.printf("Brightness value: %d\n", b);
 
     screen_setBrightness(b);
 
@@ -525,6 +540,7 @@ void screen_setup()
     //Normal mode
     pinMode(GFX_BL, OUTPUT);
     digitalWrite(GFX_BL, HIGH);
+
     //With brightness support
     //ledcSetup(0 /* LEDChannel */, 12000 /* freq */, 8 /* resolution */); // Can use lower for freq > 1000
     //ledcAttachPin(GFX_BL, 0 /* LEDChannel */);
@@ -543,12 +559,10 @@ void screen_setup()
 
     // Rotation option
     #ifdef TFT_ESPI
-        tft.setRotation(global_config.rotateScreen ? 0 : 2);
+        tft.setRotation(global_config.rotateScreen ? TFT_ROTATION_1 : TFT_ROTATION_2);
     #endif
-    #ifdef LOVYANGFX
-        #ifdef esp2432S028R
-        tft.setRotation(global_config.rotateScreen ? 2 : 0);
-        #endif
+    #if defined(LOVYANGFX) && defined(TFT_ROTATION_1) && defined(TFT_ROTATION_2)
+        tft.setRotation(global_config.rotateScreen ? TFT_ROTATION_2 : TFT_ROTATION_1);
     #endif
 
     // Color Invertion option

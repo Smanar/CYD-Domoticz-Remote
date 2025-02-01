@@ -145,7 +145,7 @@ static void edit_device_list_switch(lv_event_t * e)
 
         for (int i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++)
         {
-            global_config.ListDevices[i] = GetIntTok(lv_textarea_get_text(ta), i,';');
+            global_config.ListDevices[i] = GetIntTok(lv_textarea_get_text(ta), i,',');
         }
         WriteGlobalConfig();
         Init_data();
@@ -260,13 +260,7 @@ void settings_panel_init(lv_obj_t* panel)
 
     lv_obj_t * textarea = lv_textarea_create(panel);
     lv_obj_add_event_cb(textarea, edit_device_list_switch, LV_EVENT_ALL, panel);
-    String text;
-    for (int i = 0; i < sizeof(global_config.ListDevices) / sizeof(*global_config.ListDevices); i = i + 1)
-    {
-        if (i > 0) text = text + ";";
-        text = text + String(global_config.ListDevices[i]);
-    }
-    lv_textarea_add_text(textarea, text.c_str());
+    lv_textarea_add_text(textarea, GetListdevice());
     lv_textarea_set_one_line(textarea, true);
     lv_obj_set_width(textarea, lv_pct(60));
     create_settings_widget("Dft devices", textarea, panel);

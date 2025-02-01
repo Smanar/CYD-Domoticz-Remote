@@ -1,4 +1,3 @@
-#include <HTTPClient.h>
 #include <ArduinoJson.h>
 
 #include "lvgl.h"
@@ -218,6 +217,10 @@ LV_IMG_DECLARE(meteo35x35)
 LV_IMG_DECLARE(percent35x35)
 
 // To convert image https://lvgl.io/tools/imageconverter
+// - Version : Lvlg v8
+// - format : CF_ALPHA_1_BIT
+// - Output : C array 
+//
 const lv_img_dsc_t *Geticon(int type)
 {
     switch (type)
@@ -269,15 +272,18 @@ void device_panel_init(lv_obj_t* panel)
     const lv_img_dsc_t *icon = Geticon(SelectedDevice->type);
     lv_obj_t * label;
 
-    static lv_coord_t col_dsc[] = {LV_GRID_FR(34), LV_GRID_FR(33), LV_GRID_FR(33), LV_GRID_TEMPLATE_LAST};
-    static lv_coord_t row_dsc[] = {LV_GRID_FR(30), LV_GRID_FR(54), LV_GRID_FR(16), LV_GRID_TEMPLATE_LAST};
-
     /*Create a container with grid*/
     lv_obj_t * cont = lv_obj_create(panel);
-    lv_obj_set_grid_dsc_array(cont, col_dsc, row_dsc);
+
 #if DEVICE_SIZE == 1
-    lv_obj_set_size(cont, lv_pct(90), lv_pct(90));
+    static lv_coord_t col_dsc[] = {LV_GRID_FR(34), LV_GRID_FR(33), LV_GRID_FR(33), LV_GRID_TEMPLATE_LAST};
+    static lv_coord_t row_dsc[] = {LV_GRID_FR(25), LV_GRID_FR(59), LV_GRID_FR(16), LV_GRID_TEMPLATE_LAST};
+    lv_obj_set_grid_dsc_array(cont, col_dsc, row_dsc);
+    lv_obj_set_size(cont, lv_pct(95), lv_pct(95));
 #else
+    static lv_coord_t col_dsc[] = {LV_GRID_FR(34), LV_GRID_FR(33), LV_GRID_FR(33), LV_GRID_TEMPLATE_LAST};
+    static lv_coord_t row_dsc[] = {LV_GRID_FR(20), LV_GRID_FR(64), LV_GRID_FR(16), LV_GRID_TEMPLATE_LAST};
+    lv_obj_set_grid_dsc_array(cont, col_dsc, row_dsc);
     lv_obj_set_size(cont, lv_pct(80), lv_pct(80));
 #endif
     //lv_obj_set_size(cont, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
@@ -325,7 +331,7 @@ void device_panel_init(lv_obj_t* panel)
     // Icon
     lv_obj_t *img = lv_img_create(GridTop);
     lv_img_set_src(img, icon);
-    //lv_obj_align(img, LV_ALIGN_LEFT_MID , 0, 0);
+    lv_obj_align(img, LV_ALIGN_LEFT_MID , 0, 0);
     //lv_obj_set_size(img, Size_icon, Size_icon);
     lv_obj_set_style_img_recolor_opa(img, 50, 0);
     lv_obj_set_style_img_recolor(img, color, 0);
@@ -336,7 +342,7 @@ void device_panel_init(lv_obj_t* panel)
     lv_label_set_text(label, SelectedDevice->name);
     //lv_obj_align(label, LV_ALIGN_RIGHT_MID, 0, 0);
     lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_set_size(label, TFT_HEIGHT - 50, 30);
+    lv_obj_set_size(label, TFT_WIDTH - 50, 30);
     lv_obj_align_to(label, img,  LV_ALIGN_OUT_RIGHT_MID, 0, 0);
 
     //Options

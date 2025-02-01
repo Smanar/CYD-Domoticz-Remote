@@ -1,10 +1,9 @@
-#include <HTTPClient.h>
-
 #include "lvgl.h"
 #include "navigation.h"
 #include "panels/panel.h"
 #include "../core/data_setup.h"
-
+#include "../core/ip_engine.h"
+#include "../core/data_setup.h"
 
 static lv_obj_t * tv;
 static int actived_panel = 0;
@@ -38,6 +37,16 @@ void RefreshHomePage(void)
     }
 }
 
+#ifndef NO_GROUP_PAGE
+void RefreshScenePage(void)
+{
+    if (actived_panel == GROUP_PANEL)
+    {                           
+        navigation_screen(GROUP_PANEL);
+    }
+}
+#endif
+
 static int swipe = 0;
 
 
@@ -65,11 +74,17 @@ void navigation_screen(unsigned char active_panel)
             break;
         case HOMEPAGE_PANEL: // Homepage
             master_panel = active_panel;
+//#if (BONUSPAGE == 0) && defined(LIGHTWS)
+//            subscribedeviceWS(0, GetListdevice());
+//#endif
             home_panel_init(panel, myDevices);
             break;
 #ifndef NO_GROUP_PAGE
         case GROUP_PANEL: //Group/Scene panel
             master_panel = active_panel;
+//#if (BONUSPAGE == 0) && defined(LIGHTWS)
+//            subscribedeviceWS(1, "getscenes");
+//#endif
             group_panel_init(panel);
             break;
 #endif
