@@ -40,21 +40,30 @@ For ther moment, need to edit code itself to set defaut devices, the edit box is
 ## Settings   
 
 The project is still WIP so some settings are still hard coded.   
-- Somes settings depend of hardware, tell me your hardware, I will search values to edit.
-- To go faster can use somes hard coded settings here https://github.com/Smanar/CYD-Domoticz-Remote/blob/main/Domoticz_Remote/src/main.cpp#L31
-- By defaut, defaut devices displayed on Homepage will be 1,2,3,4,5,6,7,8,9 so you need to change them on the application setting panel.
-- Mains settings are in the file platformio.ini
+Somes settings depend of hardware, tell me your hardware, I will search values to edit.   
+
+There is 3 ways to configure the software settings (wifi, device id, and ect ...):   
+- Can use the option FORCE_CONFIG and use hardcoded setting here https://github.com/Smanar/CYD-Domoticz-Remote/blob/main/Domoticz_Remote/src/main.cpp#L31
+- You can start the device and configure setting using the GUI.
+- You can use a personnal_settings.h file placed on the project with your settings.
+
+By defaut, domoticz defaut devices displayed on Homepage will be 1,2,3,4,5,6,7,8,9 so you need to change them on the application setting panel.   
+
+For the hardware part (according to your device) mains settings are in the file platformio.ini, by defaut the project is configured for the esp32-2432S028R
+
 ``` 
 	#-DFORCE_CONFIG # Enable or disable the forced network configuration.
 	-DFORCECALIBRATE=false # Reset the calibration at every restart, used to reset it after a config change.
 	#-DOLD_DOMOTICZ # If you are using older Domoticz version < 2023.2
 	-DBONUSPAGE=0 # Special page to add, similar to Homepage but not updated, from 1 to 3
-	#-DFASTCLIC # Enable 1 clic action for some widget
+	-DFASTCLIC # Enable 1 clic action for some widget
 	#-DNO_INFO_PAGE # Disable the Info panel
-	-DNO_GROUP_PAGE # Disable the Group/scene panel
-	#-DCUSTOM_FONT # If you use your own font with special chars
-	#-DAUTO_BRIGHTNESS # Beta
-	#-DLIGHTWS # Only possible for version > 16088 , used to decrease WS requests
+	#-DNO_GROUP_PAGE # Disable the Group/scene panel
+	#-DCUSTOM_FONT
+	#-DAUTO_BRIGHTNESS
+	#-DLIGHTWS # Only possible for version > 16088, decrease WS requests.
+	#-DPUSHOTA # To enable PUSH OTA (Don't enable both OTA)
+	#-DPULLOTA # To enable PULL OTA (Don't enable both OTA)
 ``` 
 
 ## Tested devices, working nativley
