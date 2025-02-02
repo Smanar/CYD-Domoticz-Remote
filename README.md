@@ -66,6 +66,12 @@ For the hardware part (according to your device) mains settings are in the file 
 	#-DPULLOTA # To enable PULL OTA (Don't enable both OTA)
 ``` 
 
+## OTA
+There is 2 options for OTA, PUSHOTA and PULLOTA you can enable one of them or nothing (not both ofc).
+
+- PUSHOTA Enable the OTA in PUSH mode, it mean there is a webserver that run permanently, you can access it using /update as url.
+- PULLOTA can be used using the GUI, on the device itself, using the first tab, it will download itself the new firmware, but for the moment the url is hardcoded. https://github.com/Smanar/CYD-Domoticz-Remote/blob/main/src/core/ota.cpp#L15
+
 ## Tested devices, working nativley
 - esp32-2432S028R
 - esp32-2432S024C
