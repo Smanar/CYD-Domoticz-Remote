@@ -45,7 +45,8 @@ void ResetColorTheme(void)
     }
     else
     {
-        background = lv_palette_darken(LV_PALETTE_GREY, 4);
+        //background = lv_palette_darken(LV_PALETTE_GREY, 4);
+        background = lv_color_hex(0x000000);
         lv_style_set_shadow_color(&style_shadow,  lv_palette_darken(LV_PALETTE_GREY, 2));
     }
     lv_style_set_bg_color(&style_shadow, background);

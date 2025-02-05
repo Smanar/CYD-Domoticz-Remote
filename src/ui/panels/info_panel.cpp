@@ -1,5 +1,6 @@
 #include <HardwareSerial.h>
 #include <ArduinoJson.h>
+#include <locale>
 
 #include "lvgl.h"
 #include "panel.h"
@@ -16,7 +17,17 @@ static uint16_t MemIDX[MAXDEVICE];
 
 static void TV_btn_event_handler(lv_event_t * e) {
     const lv_obj_t * ta = lv_event_get_target(e);
-    const lv_obj_t *label = lv_obj_get_child(ta, 0);
+    char *text = lv_label_get_text(lv_obj_get_child(ta, 0));
+
+    //lowercase
+    char *text2 = (char*)malloc(strlen(text)+1);
+    strncpy(text2,text,strlen(text)+1);
+    char *pstr = text2;
+    while (*pstr)
+    {
+        *pstr=tolower(*pstr);
+        pstr++;
+    }
 
     //lv_table_clear_cell_ctrl(table,)
     //lv_obj_clean(table);
@@ -29,7 +40,7 @@ static void TV_btn_event_handler(lv_event_t * e) {
     lv_snprintf(buff, 256, "/json.htm?type=devices&filter=%s&used=true&order=Name",lv_label_get_text(label));
 #else
     //lv_snprintf(buff, 256, "/json.htm?type=command&param=getdevices&used=true&displayhidden=1"); // TO TEST, need to be removed
-    lv_snprintf(buff, 256, "/json.htm?type=command&param=getdevices&filter=%s&used=true&order=Name",lv_label_get_text(label));
+    lv_snprintf(buff, 256, "/json.htm?type=command&param=getdevices&filter=%s&used=true&order=Name",text2);
 #endif
 
     if (!HTTPGETRequestWithReturn(buff, &doc, true)) return;
@@ -144,27 +155,27 @@ void info_panel_init(lv_obj_t* panel)
     lv_obj_t * label;
 
     obj= lv_btn_create(cont);
-    lv_obj_set_size(obj, LV_PCT(20), HEADERHEIGHT);
+    lv_obj_set_size(obj, LV_PCT(22), HEADERHEIGHT);
     label = lv_label_create(obj);
-    lv_label_set_text_static(label, "light");
+    lv_label_set_text_static(label, "Light");
     lv_obj_center(label);
     lv_obj_add_event_cb(obj, TV_btn_event_handler, LV_EVENT_CLICKED, NULL);
     obj= lv_btn_create(cont);
-    lv_obj_set_size(obj, LV_PCT(20), HEADERHEIGHT);
+    lv_obj_set_size(obj, LV_PCT(22), HEADERHEIGHT);
     label = lv_label_create(obj);
-    lv_label_set_text_static(label, "temp");
+    lv_label_set_text_static(label, "Temp");
     lv_obj_center(label);
     lv_obj_add_event_cb(obj, TV_btn_event_handler, LV_EVENT_CLICKED, NULL);
     obj= lv_btn_create(cont);
-    lv_obj_set_size(obj, LV_PCT(20), HEADERHEIGHT);
+    lv_obj_set_size(obj, LV_PCT(23), HEADERHEIGHT);
     label = lv_label_create(obj);
-    lv_label_set_text_static(label, "utility");
+    lv_label_set_text_static(label, "Weather");
     lv_obj_center(label);
     lv_obj_add_event_cb(obj, TV_btn_event_handler, LV_EVENT_CLICKED, NULL);
     obj= lv_btn_create(cont);
-    lv_obj_set_size(obj, LV_PCT(20), HEADERHEIGHT);
+    lv_obj_set_size(obj, LV_PCT(22), HEADERHEIGHT);
     label = lv_label_create(obj);
-    lv_label_set_text_static(label, "baro");
+    lv_label_set_text_static(label, "Utility");
     lv_obj_center(label);
     lv_obj_add_event_cb(obj, TV_btn_event_handler, LV_EVENT_CLICKED, NULL);
 

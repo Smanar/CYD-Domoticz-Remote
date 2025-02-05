@@ -170,8 +170,8 @@ void wifi_init()
 
 
     // Special config ?
-    #if __has_include("../personnal_settings.h")
-        #include "../personnal_settings.h"
+    #if __has_include("../personal_settings.h")
+        #include "../personal_settings.h"
 
         #ifdef USE_FIXEDIP
             IPAddress staticIP(ST_IP);

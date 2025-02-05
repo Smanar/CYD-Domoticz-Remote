@@ -49,12 +49,12 @@ void setup() {
     screen_setup(); // Set display
     Serial.println(F("Screen init done"));
 
-    // Personnal Settings to don't have to set them at every reset.
+    // Personal Settings to don't have to set them at every reset.
     // They are saved after have been set, so the flag FORCE_CONFIG can be disabled after
     #if FORCE_CONFIG
 
-        #if __has_include("personnal_settings.h")
-            #include "personnal_settings.h"
+        #if __has_include("personal_settings.h")
+            #include "personal_settings.h"
 
             strcpy(global_config.wifiPassword, WIFIPASSWORD);
             strcpy(global_config.wifiSSID, WIFISSID);
