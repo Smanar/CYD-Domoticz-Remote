@@ -75,7 +75,9 @@ static lv_disp_draw_buf_t draw_buf;
     #ifdef ESP32_8048S070C
     #include "../drivers/esp32-8048S070C.h"
     #endif
-
+    #ifdef ESP32_8048S050C
+    #include "../drivers/esp32-8048S050C.h"
+    #endif
     LGFX tft;
     static LGFX_Sprite sprite(&tft);
 #endif
@@ -363,6 +365,11 @@ while (true)
 
 void screen_setBrightness(byte brightness)
 {
+
+#ifdef ESP32_8048S050C
+    brightness = 255 - brightness;
+#endif 
+
 #ifdef ARDUINO_GFX
     return; // Not supported by this lib
 #else

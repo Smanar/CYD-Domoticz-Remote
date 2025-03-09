@@ -1,6 +1,5 @@
 #include <HardwareSerial.h>
 #include <ArduinoJson.h>
-#include <locale>
 
 #include "lvgl.h"
 #include "panel.h"

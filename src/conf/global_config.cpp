@@ -42,7 +42,7 @@ void LoadGlobalConfig() {
     global_config.brightness = 255;
     global_config.screenTimeout = 0;
 
-    for (int i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++) { global_config.ListDevices[i] = i;}
+    for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++) { global_config.ListDevices[i] = i;}
 
     VerifyVersion();
     Preferences preferences;

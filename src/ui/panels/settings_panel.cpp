@@ -143,7 +143,7 @@ static void edit_device_list_switch(lv_event_t * e)
         lv_indev_reset(NULL, ta);   /*To forget the last clicked object to make it focusable again*/
         const char * str = lv_textarea_get_text(ta);
 
-        for (int i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++)
+        for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++)
         {
             global_config.ListDevices[i] = GetIntTok(lv_textarea_get_text(ta), i,',');
         }
