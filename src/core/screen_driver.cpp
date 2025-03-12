@@ -366,10 +366,6 @@ while (true)
 void screen_setBrightness(byte brightness)
 {
 
-#ifdef ESP32_8048S050C
-    brightness = 255 - brightness;
-#endif 
-
 #ifdef ARDUINO_GFX
     return; // Not supported by this lib
 #else
