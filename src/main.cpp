@@ -11,6 +11,7 @@
 #include "ui/main_ui.h"
 #include "ui/navigation.h"
 #include "ui/panels/panel.h"
+//#include "core/sound.h"
 
 unsigned long now;
 void Websocket_loop(void);
@@ -117,6 +118,8 @@ analogSetAttenuation(ADC_0db); // 0dB(1.0x) 0~800mV
     OTA_init();
 #endif
 
+    //make_sound(500,500);
+
     Serial.println(F("Application ready"));
 
     //Set defaut Style
@@ -143,8 +146,11 @@ void loop(){
     OTA_loop();
 #endif
 
+    //sound_loop();
+
     lv_timer_handler();
     lv_task_handler();
+
 }
 
 unsigned long runningTime(void)
