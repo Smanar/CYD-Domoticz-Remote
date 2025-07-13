@@ -11,6 +11,7 @@
 #include "ui/main_ui.h"
 #include "ui/navigation.h"
 #include "ui/panels/panel.h"
+//#include "core/sound.h"
 
 unsigned long now;
 void Websocket_loop(void);
@@ -49,12 +50,12 @@ void setup() {
     screen_setup(); // Set display
     Serial.println(F("Screen init done"));
 
-    // Personnal Settings to don't have to set them at every reset.
+    // Personal Settings to don't have to set them at every reset.
     // They are saved after have been set, so the flag FORCE_CONFIG can be disabled after
     #if FORCE_CONFIG
 
-        #if __has_include("personnal_settings.h")
-            #include "personnal_settings.h"
+        #if __has_include("personal_settings.h")
+            #include "personal_settings.h"
 
             strcpy(global_config.wifiPassword, WIFIPASSWORD);
             strcpy(global_config.wifiSSID, WIFISSID);
@@ -73,8 +74,13 @@ void setup() {
         global_config.wifiConfigured = true;
         global_config.ipConfigured = true;
 
-        for (int i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++)
-            global_config.ListDevices[i] = t[i];
+        short v;
+
+        for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++)
+        {
+            if (i < sizeof(t) / sizeof(t[0])) { v = t[i]; } else { v = 0; }
+            global_config.ListDevices[i] = v;
+        }
 
         WriteGlobalConfig();
     #endif
@@ -112,6 +118,8 @@ analogSetAttenuation(ADC_0db); // 0dB(1.0x) 0~800mV
     OTA_init();
 #endif
 
+    //make_sound(500,500);
+
     Serial.println(F("Application ready"));
 
     //Set defaut Style
@@ -138,8 +146,11 @@ void loop(){
     OTA_loop();
 #endif
 
+    //sound_loop();
+
     lv_timer_handler();
     lv_task_handler();
+
 }
 
 unsigned long runningTime(void)
