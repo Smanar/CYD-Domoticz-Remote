@@ -1,4 +1,4 @@
-WIP project to control your home-automation using Domoticz and a CYD (Cheap touchscreen).
+Small project to control your home-automation using Domoticz and a CYD (Cheap touchscreen).
 
 There is a video here https://www.youtube.com/watch?v=1Lc6MlZjePM
 
