@@ -108,11 +108,20 @@ static lv_disp_draw_buf_t draw_buf;
 #endif
 
 #ifdef TOUCH_XPT2046
-    #define XPT2046_IRQ 36
-    #define XPT2046_MOSI 32
-    #define XPT2046_MISO 39
-    #define XPT2046_CLK 25
-    #define XPT2046_CS 33
+    #ifdef espFNK0103F_3P5
+        #define XPT2046_IRQ 36
+        #define XPT2046_MOSI 23
+        #define XPT2046_MISO 19
+        #define XPT2046_CLK 18
+        #define XPT2046_CS 5
+    #else
+        #define XPT2046_IRQ 36
+        #define XPT2046_MOSI 32
+        #define XPT2046_MISO 39
+        #define XPT2046_CLK 25
+        #define XPT2046_CS 33
+    #endif
+
     #include <XPT2046_Touchscreen.h>
 
 class _TC

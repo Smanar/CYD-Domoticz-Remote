@@ -87,7 +87,6 @@ void setup() {
 
 //Disable LED
 #ifdef BOARD_HAS_RGB_LED
-
 pinMode(RGB_LED_R, OUTPUT);
 pinMode(RGB_LED_G, OUTPUT);
 pinMode(RGB_LED_B, OUTPUT);
@@ -95,8 +94,13 @@ pinMode(RGB_LED_B, OUTPUT);
 digitalWrite(RGB_LED_R, true);
 digitalWrite(RGB_LED_G, true);
 digitalWrite(RGB_LED_B, true);
+#endif
+
+#if defined (BOARD_HAS_CDS)
 analogReadMilliVolts(CDS);
 #endif
+
+
 
 //Enable light sensor
 #if defined (BOARD_HAS_CDS) && defined (AUTO_BRIGHTNESS)
