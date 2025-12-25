@@ -278,9 +278,11 @@ void home_panel_init(lv_obj_t* panel, Device d[], short page)
                 case TYPE_POWER:
                 case TYPE_SWITCH_SENSOR:
                 case TYPE_LUX:
+                case TYPE_WEIGHT:
                 case TYPE_METEO:
                 case TYPE_VALUE_SENSOR:
                 case TYPE_SETPOINT:
+                case TYPE_THERMOSTAT:
                 case TYPE_AIR_QUALITY:
                 {
                     Widget_sensor(panel, d[i].name, d[i].data, cx , cy , Size_w , Size_h, device_color, &d[i],icon);

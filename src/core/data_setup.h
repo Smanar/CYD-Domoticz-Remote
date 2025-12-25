@@ -21,8 +21,10 @@ enum {
     TYPE_POWER,
     TYPE_BLINDS,
     TYPE_LUX,
+    TYPE_WEIGHT,
     TYPE_METEO,
     TYPE_SETPOINT,
+    TYPE_THERMOSTAT,
     TYPE_TEXT,
     TYPE_AIR_QUALITY,
     TYPE_PUSH
@@ -47,5 +49,6 @@ void FillDeviceData(Device *d, int idx);
 bool HttpInitDevice(Device *d, int id);
 int * GetGraphValue(int type, int idx, int *, int *);
 const char *GetListdevice(void);
+void GetThermostatValue(int idx, int *min, int *max, float *step, float *setpoint);
 
 #endif

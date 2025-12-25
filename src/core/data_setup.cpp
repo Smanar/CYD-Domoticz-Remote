@@ -26,7 +26,7 @@ const static unsigned short TabP2[] = {72, 80, 34, // Page 1, 3* 3 icons
 
 void RefreshHomePage(void);
 
-char * Cleandata(const char *origin, const char *bonus = nullptr) 
+char * Cleandata(unsigned short t, const char *origin, const char *bonus = nullptr) 
 {
     if (!origin) return TmpBuffer;
 
@@ -37,6 +37,10 @@ char * Cleandata(const char *origin, const char *bonus = nullptr)
     {
         strncpy(TmpBuffer + strlen(origin), ";", 255 - strlen(origin));
         strncpy(TmpBuffer + strlen(origin) + 1, bonus, 254 - strlen(origin));
+    }
+    if ((t == TYPE_SETPOINT) || (t == TYPE_THERMOSTAT))
+    {
+        strncpy(TmpBuffer + strlen(origin) , "°C", 253 - strlen(origin));
     }
 
     for (int i = 0; i<strlen(TmpBuffer); i++) { if ((TmpBuffer[i] == ';') || (TmpBuffer[i] == ',')) TmpBuffer[i] = '\n';}
@@ -131,34 +135,35 @@ void Update_device_data(JsonObject RJson2)
     //if (RJson2.containsKey("Data")) JSondata = RJson2["Data"];
     //if (RJson2.containsKey("Level")) JSonLevel = RJson2["Level"];
     if (RJson2["Data"].is<const char*>()) JSondata = RJson2["Data"];
-    if (RJson2["Level"].is<const char*>()) JSonLevel = RJson2["Level"];
+    if (RJson2["Level"].is<int>()) JSonLevel = RJson2["Level"];
 
     Serial.printf("Update HP device Id: %d, Domo Idx: %d\n", ID, JSonidx);
 
+    bool NeedUpdate = false;
+
     //Special device
     char * data;
-    //if (RJson2.containsKey("Rain"))
+
     if (RJson2["Rain"].is<const char*>())
     {
-        data = Cleandata(RJson2["Rain"]);
+        data = Cleandata(myDevices[ID].type, RJson2["Rain"]);
     }
     else if ((myDevices[ID].type == TYPE_TEXT) || (myDevices[ID].type == TYPE_WARNING))
     {
         //Keep it unchanged
         data = (char *)JSondata;
     }
+    else if (myDevices[ID].type == TYPE_THERMOSTAT)
+    {
+        char *t = (char*)malloc(10);
+        lv_snprintf(t, 10, "%.1f", RJson2["Temp"].as<float>());
+        data = Cleandata(myDevices[ID].type, t);
+    }
     else
     {
-        data = Cleandata(JSondata);
+        data = Cleandata(myDevices[ID].type, JSondata);
     }
 
-    bool NeedUpdate = false;
-
-    if (myDevices[ID].level != JSonLevel)
-    {
-        myDevices[ID].level = JSonLevel;
-        NeedUpdate = true;
-    }
     if (strcmp(data, myDevices[ID].data) != 0)
     {
         //Use dynamic array, but only 1 time
@@ -170,6 +175,12 @@ void Update_device_data(JsonObject RJson2)
         }
 
         strncpy(myDevices[ID].data, data, myDevices[ID].lenData + 1);
+        NeedUpdate = true;
+    }
+
+    if (myDevices[ID].level != JSonLevel)
+    {
+        myDevices[ID].level = JSonLevel;
         NeedUpdate = true;
     }
 
@@ -211,6 +222,7 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
         case TYPE_POWER:
         case TYPE_LUX:
         case TYPE_AIR_QUALITY:
+        case TYPE_WEIGHT:
             url = url + "counter";
             break;
         case TYPE_PERCENT_SENSOR:
@@ -286,6 +298,7 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
                     break;
                 case TYPE_PERCENT_SENSOR:
                 case TYPE_VALUE_SENSOR:
+                case TYPE_WEIGHT:
                     v = i["v"];
                     break;
                 case TYPE_METEO:
@@ -457,6 +470,10 @@ bool HttpInitDevice(Device *d, int id)
         {
             d->type = TYPE_CONSUMPTION;
         }
+        else if (strcmp(type, "Weight") == 0)
+        {
+            d->type = TYPE_WEIGHT;
+        }
         else if (strcmp(type, "Air Quality") == 0)
         {
             d->type = TYPE_AIR_QUALITY;
@@ -479,7 +496,10 @@ bool HttpInitDevice(Device *d, int id)
         {
             d->type = TYPE_SETPOINT;
         }
-
+        else if (strcmp(type, "Thermostat 6") == 0)
+        {
+            d->type = TYPE_THERMOSTAT;
+        }
         if (image)
         {
             // Correction by image
@@ -495,19 +515,25 @@ bool HttpInitDevice(Device *d, int id)
 
         //Special device
         char * data;
-        //if (i.containsKey("Rain"))
+
         if (i["Rain"].is<const char*>())
         {
-           data = Cleandata(i["Rain"]);
+           data = Cleandata(d->type, i["Rain"]);
         }
         else if ((d->type == TYPE_TEXT) || (d->type == TYPE_WARNING))
         {
             //Keep it unchanged
             data = (char *)JSondata;
         }
+        else if (d->type == TYPE_THERMOSTAT)
+        {
+            char *t = (char*)malloc(10);
+            lv_snprintf(t, 10, "%.1f", i["Temp"].as<float>());
+            data = Cleandata(d->type, t);
+        }
         else
         {
-            data = Cleandata(JSondata);
+            data = Cleandata(d->type, JSondata);
         }
 
         //Use dynamic array if needed, but only 1 time if needed to prevent fragmentation
@@ -523,4 +549,43 @@ bool HttpInitDevice(Device *d, int id)
 
     return true;
 
+}
+
+void GetThermostatValue(int idx, int *min, int *max, float *step, float *setpoint)
+{
+
+    *min = 0;
+    *max = 50;
+    *step = 0.5f;
+    *setpoint= 20.0f;
+
+#ifdef OLD_DOMOTICZ
+    String url = "/json.htm?type=devices&rid=" + String(idx);
+#else
+    String url = "/json.htm?type=command&param=getdevices&rid=" + String(idx);
+#endif
+
+    JsonDocument doc;
+
+    if (HTTPGETRequestWithReturn((char *)url.c_str(), &doc))
+    {
+        JsonArray JS;
+        JS = doc["result"];
+
+        if (JS.isNull())
+        {
+            Serial.println(F("Json not available\n"));
+            return;
+        }
+
+        for (auto i : JS)
+        {
+            if (i["min"].is<double>()) *min = i["min"];
+            if (i["max"].is<double>()) *max = i["max"];
+            if (i["step"].is<double>()) *step = i["step"];
+            if (i["SetPoint"].is<double>()) *setpoint = i["SetPoint"];
+            if (i["SetPoint"].is<const char*>()) *setpoint = atof(i["SetPoint"]);
+
+        }
+    }
 }

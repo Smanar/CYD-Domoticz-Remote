@@ -68,7 +68,7 @@ void setup() {
             strcpy(global_config.wifiSSID, "xxxxxxxxxxxxxxx");
             strcpy(global_config.ServerHost, "192.168.1.1");
             global_config.ServerPort = 8080;
-            const static unsigned short t[] = {37, 75, 16, 36, 28, 35, 57, 89, 90};
+            const static unsigned short t[] = {122, 75, 16, 36, 28, 35, 57, 90, 145};
         #endif
 
         global_config.wifiConfigured = true;
