@@ -309,6 +309,8 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
             // Because of decimal values
             if (type == TYPE_TEMPERATURE || type == TYPE_METEO) v = v *10;
 
+            if (type == TYPE_WEIGHT) v = v *1000;
+
             //swift the table
             for (j = 0; j < diff; j++)
             {
