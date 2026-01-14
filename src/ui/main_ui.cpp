@@ -7,6 +7,7 @@
 
 lv_style_t style_shadow;
 lv_color_t background;
+lv_style_t style_pressed;
 
 void check_if_screen_needs_to_be_disabled(){
 
@@ -24,9 +25,9 @@ void main_ui_setup()
     on_state_change(NULL, NULL);
 
     //Style when pressed
-    //lv_style_init(&style_btn_red);
-    //lv_style_set_bg_color(&style_btn_red, lv_palette_main(LV_PALETTE_RED));
-    //lv_style_set_bg_grad_color(&style_btn_red, lv_palette_lighten(LV_PALETTE_RED, 3));
+    lv_style_init(&style_pressed);
+    lv_style_set_bg_color(&style_pressed, lv_palette_main(LV_PALETTE_RED));
+    lv_style_set_bg_grad_color(&style_pressed, lv_palette_lighten(LV_PALETTE_RED, 3));
 
     //Style for buttons
     lv_style_init(&style_shadow);

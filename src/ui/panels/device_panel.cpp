@@ -10,7 +10,7 @@
 
 
 static lv_obj_t * slider_label; // Label for slider
-static lv_obj_t * slider_TH; // Slider for thermostat
+static lv_obj_t * arc_TH; // Arc for thermostat
 
 //static Device SelectedDevice; // The selected one
 static Device SpecialDevice; // structure for an actual one that is not on HP
@@ -18,6 +18,8 @@ static Device *SelectedDevice; // The selected one
 
 extern lv_style_t style_shadow;
 extern lv_color_t background;
+
+float step; // Need to have a local value
 
 static void return_btn_event_handler(lv_event_t * e) {
     lv_event_code_t code = lv_event_get_code(e);
@@ -42,20 +44,37 @@ static void colorwheel_event_cb(lv_event_t * e)
     }
 }
 
-static void slider_event_cb(lv_event_t * e)
+static void slider_changed_event_cb(lv_event_t * e)
 {
     lv_obj_t * slider = lv_event_get_target(e);
     lv_event_code_t code = lv_event_get_code(e);
 
-    if (slider_label)
+    if ((slider_label) && (code == LV_EVENT_VALUE_CHANGED))
     {
         lv_label_set_text_fmt(slider_label, "%d%%",(int)lv_slider_get_value(slider));
     }
 
-    if (code == LV_EVENT_VALUE_CHANGED) {
-        char buff[256] = {};
-        lv_snprintf(buff, 256, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=Set%%20Level&level=%d", SelectedDevice->idx, (int)lv_slider_get_value(slider));
-        HTTPGETRequest(buff);
+}
+static void slider_released_event_cb(lv_event_t * e)
+{
+    lv_obj_t * slider = lv_event_get_target(e);
+    lv_event_code_t code = lv_event_get_code(e);
+
+    char buff[256] = {};
+    lv_snprintf(buff, 256, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=Set%%20Level&level=%d", SelectedDevice->idx, (int)lv_slider_get_value(slider));
+    HTTPGETRequest(buff);
+
+}
+
+static void arc_changed_event_cb(lv_event_t * e)
+{
+    lv_obj_t * arc = lv_event_get_target(e);
+    lv_event_code_t code = lv_event_get_code(e);
+
+    if (slider_label)
+    {
+        //lv_label_set_text_fmt(slider_label, "%d%",(int)lv_slider_get_value(slider));
+        lv_label_set_text_fmt(slider_label, "%.1f °C",step * (float)lv_arc_get_value(arc));
     }
 }
 
@@ -63,28 +82,28 @@ static void TH_btn_event_handler(lv_event_t * e)
 {
 
     int b = (int)lv_event_get_user_data(e);
-    int v = lv_slider_get_value(slider_TH);
+    int v = lv_arc_get_value(arc_TH);
 
     switch (b)
     {
         case 1:
-            v+=1;
-            lv_slider_set_value(slider_TH, v, LV_ANIM_ON);
+            v += 1;
+            lv_arc_set_value(arc_TH, v);
         break;
         case 2:
-            v-=1;
-            lv_slider_set_value(slider_TH, v, LV_ANIM_ON);
+            v -= 1;
+            lv_arc_set_value(arc_TH, v);
         break;
         case 3:
             char buff[256] = {};
-            lv_snprintf(buff, 256, "/json.htm?type=command&param=setsetpoint&idx=%d&setpoint=%.1f", SelectedDevice->idx, v/10.f);
+            lv_snprintf(buff, 256, "/json.htm?type=command&param=setsetpoint&idx=%d&setpoint=%.1f", SelectedDevice->idx, v * step);
             HTTPGETRequest(buff);
         break;
     }
 
     if (slider_label)
     {
-        lv_label_set_text_fmt(slider_label, "%.1f",(float)(v/10.f));
+        lv_label_set_text_fmt(slider_label, "%.1f °C",step * (float)lv_arc_get_value(arc_TH));
     }
 }
 
@@ -185,8 +204,10 @@ lv_color_t Getcolor(int type)
         case TYPE_TEXT:
             return LV_COLOR_MAKE(0x00, 0xFF, 0x00);
         case TYPE_SPEAKER:
-        case TYPE_SETPOINT:
             return LV_COLOR_MAKE(0xFF, 0xFF, 0x00);
+        case TYPE_SETPOINT:
+        case TYPE_THERMOSTAT:
+            return LV_COLOR_MAKE(0xFF, 0x80, 0x00);
         case TYPE_SWITCH:
         case TYPE_SELECTOR:
         case TYPE_DIMMER:
@@ -215,6 +236,9 @@ LV_IMG_DECLARE(blinds35x35)
 LV_IMG_DECLARE(unknown35x35)
 LV_IMG_DECLARE(meteo35x35)
 LV_IMG_DECLARE(percent35x35)
+LV_IMG_DECLARE(balance35x35)
+LV_IMG_DECLARE(thermostat35x35)
+LV_IMG_DECLARE(finger35x35)
 
 // To convert image https://lvgl.io/tools/imageconverter
 // - Version : Lvlg v8
@@ -226,8 +250,10 @@ const lv_img_dsc_t *Geticon(int type)
     switch (type)
     {
         case TYPE_TEMPERATURE:
-        case TYPE_SETPOINT:
             return &temperature35x35;
+        case TYPE_SETPOINT:
+        case TYPE_THERMOSTAT:
+            return &thermostat35x35;
         case TYPE_HUMIDITY:
             return &humidity35x35;
         case TYPE_CONSUMPTION:
@@ -240,6 +266,7 @@ const lv_img_dsc_t *Geticon(int type)
         case TYPE_SPEAKER:
             return &speaker35x35;
         case TYPE_SELECTOR:
+            return &finger35x35;
         case TYPE_DIMMER:
         case TYPE_SWITCH:
         case TYPE_COLOR:
@@ -248,6 +275,8 @@ const lv_img_dsc_t *Geticon(int type)
             return &lampe35x35; 
         case TYPE_BLINDS:
             return &blinds35x35;
+        case TYPE_WEIGHT:
+            return &balance35x35;
         case TYPE_PERCENT_SENSOR:
             return &percent35x35;
         case TYPE_SWITCH_SENSOR:
@@ -290,7 +319,7 @@ void device_panel_init(lv_obj_t* panel)
     lv_obj_center(cont);
 
     lv_obj_add_style(cont, &style_shadow, LV_PART_MAIN);
-    lv_obj_clear_flag( cont, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_clear_flag(cont, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_pad_row(cont, 0, LV_PART_MAIN);  //Remove space beetween grid part
     lv_obj_set_style_pad_column(cont, 0, LV_PART_MAIN); //Remove space beetween grid part
     lv_obj_set_style_pad_all(cont, 0, LV_PART_MAIN); //Remove parent padding
@@ -304,7 +333,7 @@ void device_panel_init(lv_obj_t* panel)
     lv_obj_set_style_border_width(GridTop, 4, 0);
     //lv_obj_set_style_border_color(cw, lv_color_hex(0xFFFFFF), LV_PART_KNOB | LV_STATE_DEFAULT);
     //lv_obj_set_style_border_opa(cw, 255, LV_PART_KNOB | LV_STATE_DEFAULT);
-    lv_obj_clear_flag( GridTop, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_clear_flag(GridTop, LV_OBJ_FLAG_SCROLLABLE);
 
     lv_obj_t * GridSmall = lv_obj_create(cont);
     lv_obj_set_size(GridSmall, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
@@ -317,12 +346,13 @@ void device_panel_init(lv_obj_t* panel)
     lv_obj_set_size(GridBig, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
     lv_obj_set_grid_cell(GridBig, LV_GRID_ALIGN_STRETCH, 0, 2, LV_GRID_ALIGN_STRETCH, 1, 2);
     lv_obj_set_style_bg_color(GridBig, background, 0);
+    //lv_obj_set_style_bg_color(GridBig, LV_COLOR_MAKE(0x00, 0x7F, 0xFF), 0);
     lv_obj_set_style_border_width(GridBig, 0, 0);
 
 
     lv_obj_t * GridExit = lv_obj_create(cont);
     lv_obj_set_size(GridExit, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-    lv_obj_clear_flag( GridExit, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_clear_flag(GridExit, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_grid_cell(GridExit, LV_GRID_ALIGN_STRETCH, 2, 1, LV_GRID_ALIGN_STRETCH, 2, 1);
     lv_obj_set_style_bg_color(GridExit, background, 0);
     lv_obj_set_style_border_width(GridExit, 0, 0);
@@ -342,7 +372,7 @@ void device_panel_init(lv_obj_t* panel)
     lv_label_set_text(label, SelectedDevice->name);
     //lv_obj_align(label, LV_ALIGN_RIGHT_MID, 0, 0);
     lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_set_size(label, TFT_WIDTH - 50, 30);
+    lv_obj_set_size(label, TFT_WIDTH - 35 - 40, 30);
     lv_obj_align_to(label, img,  LV_ALIGN_OUT_RIGHT_MID, 0, 0);
 
     //Options
@@ -352,6 +382,8 @@ void device_panel_init(lv_obj_t* panel)
      || (SelectedDevice->type == TYPE_PLUG) || (SelectedDevice->type == TYPE_COLOR) || (SelectedDevice->type == TYPE_LIGHT))
     {
         lv_obj_t * sw = lv_switch_create(GridSmall);
+        lv_obj_align(sw, LV_ALIGN_CENTER, 0, 0);
+
         if (strcmp(SelectedDevice->data, "On") == 0)
         {
             lv_obj_add_state(sw, LV_STATE_CHECKED);
@@ -384,8 +416,8 @@ void device_panel_init(lv_obj_t* panel)
     //Create blinds buttons
     if (SelectedDevice->type == TYPE_BLINDS)
     {
-        lv_obj_t * obj= lv_btn_create(GridSmall);
-        lv_obj_set_size(obj, LV_PCT(100), LV_PCT(30));
+        lv_obj_t * obj = lv_btn_create(GridSmall);
+        lv_obj_set_size(obj, LV_PCT(80), LV_PCT(30));
         label = lv_label_create(obj);
         lv_label_set_text_static(label, LV_SYMBOL_UP);
         lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
@@ -395,15 +427,17 @@ void device_panel_init(lv_obj_t* panel)
 #else
         lv_obj_add_event_cb(obj, btn_event_handler, LV_EVENT_CLICKED, (char *)"Open");
 #endif
-        obj= lv_btn_create(GridSmall);
-        lv_obj_set_size(obj, LV_PCT(100), LV_PCT(30));
+
+        obj = lv_btn_create(GridSmall);
+        lv_obj_set_size(obj, LV_PCT(80), LV_PCT(30));
         label = lv_label_create(obj);
         lv_label_set_text_static(label, LV_SYMBOL_STOP);
         lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
         lv_obj_set_pos(obj, 0, LV_PCT(33));
         lv_obj_add_event_cb(obj, btn_event_handler, LV_EVENT_CLICKED, (char *)"Stop");
-        obj= lv_btn_create(GridSmall);
-        lv_obj_set_size(obj, LV_PCT(100), LV_PCT(30));
+
+        obj = lv_btn_create(GridSmall);
+        lv_obj_set_size(obj, LV_PCT(80), LV_PCT(30));
         label = lv_label_create(obj);
         lv_label_set_text_static(label, LV_SYMBOL_DOWN);
         lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
@@ -413,6 +447,7 @@ void device_panel_init(lv_obj_t* panel)
 #else
         lv_obj_add_event_cb(obj, btn_event_handler, LV_EVENT_CLICKED, (char *)"Close");
 #endif
+
     }
 
     //Create a LED
@@ -439,11 +474,12 @@ void device_panel_init(lv_obj_t* panel)
         lv_obj_set_width(slider, lv_pct(80));
         lv_slider_set_range(slider, 0, 100);
         lv_obj_center(slider);
-        lv_obj_add_event_cb(slider, slider_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+        lv_obj_add_event_cb(slider, slider_changed_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+        lv_obj_add_event_cb(slider, slider_released_event_cb, LV_EVENT_RELEASED, NULL);
 
         /*Create a label below the slider*/
-        slider_label = lv_label_create(lv_scr_act());
-        lv_label_set_text_fmt(slider_label, "%d%",SelectedDevice->level);
+        slider_label = lv_label_create(GridBig);
+        lv_label_set_text_fmt(slider_label, "%d%%",SelectedDevice->level);
         lv_obj_align_to(slider_label, slider, LV_ALIGN_OUT_BOTTOM_MID, 0, 15);
     }
 
@@ -455,21 +491,24 @@ void device_panel_init(lv_obj_t* panel)
         lv_slider_set_value(slider, SelectedDevice->level, LV_ANIM_ON);
         lv_obj_set_size(slider, 10, lv_pct(80));
         lv_slider_set_range(slider, 0, 100);
-        lv_obj_add_event_cb(slider, slider_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+        lv_obj_add_event_cb(slider, slider_changed_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+        lv_obj_add_event_cb(slider, slider_released_event_cb, LV_EVENT_RELEASED, NULL);
         //lv_obj_align_to(slider, GridBig, LV_ALIGN_BOTTOM_LEFT, 0, 0);
         lv_obj_align(slider, LV_ALIGN_LEFT_MID, 0, 0);
         slider_label = NULL; // Do not use the value display, not enought place
 
         /*Create a color picker*/
         lv_obj_t * cw = lv_colorwheel_create(GridBig, true);
-        lv_obj_set_style_arc_width(cw, 20, LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_obj_set_style_border_color(cw, lv_color_hex(0xFFFFFF), LV_PART_KNOB | LV_STATE_DEFAULT);
-        lv_obj_set_style_border_opa(cw, 255, LV_PART_KNOB | LV_STATE_DEFAULT);
-        lv_obj_set_style_border_width(cw, 2, LV_PART_KNOB | LV_STATE_DEFAULT);
-        lv_obj_set_style_pad_all(cw, 0, LV_PART_KNOB | LV_STATE_DEFAULT);
-        lv_obj_align(cw, LV_ALIGN_RIGHT_MID, -10, 0);
+        // Need a perfect square
+        lv_coord_t content_w = lv_obj_get_content_width(GridBig) * 80 / 100;
+        lv_obj_set_size(cw, content_w, content_w);
+        lv_obj_set_style_arc_width(cw, 20, LV_PART_MAIN | LV_STATE_DEFAULT); // size of complete arc
+        lv_obj_set_style_border_color(cw, lv_color_hex(0xFF0000), LV_PART_KNOB | LV_STATE_DEFAULT); // knob color
+        //lv_obj_set_style_border_opa(cw, 255-200, LV_PART_KNOB | LV_STATE_DEFAULT);
+        lv_obj_set_style_border_width(cw, 4, LV_PART_KNOB | LV_STATE_DEFAULT); // Knob border
+        lv_obj_set_style_pad_all(cw, 6, LV_PART_KNOB | LV_STATE_DEFAULT); //Knob size
+        lv_obj_align(cw, LV_ALIGN_RIGHT_MID, 0, 0);
 
-        lv_obj_set_size(cw, lv_pct(60), lv_pct(80));
         //lv_colorwheel_set_color(cw, rgb);
         lv_obj_add_event_cb(cw, colorwheel_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
         //lv_obj_center(cw);
@@ -490,16 +529,16 @@ void device_panel_init(lv_obj_t* panel)
     // Info and Text device
     if ((SelectedDevice->type == TYPE_WARNING) ||(SelectedDevice->type == TYPE_TEXT))
     {
-        lv_obj_add_flag(cont, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);       //Force new line
-        lv_obj_add_flag(cont, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);       //Force new line
+        //lv_obj_add_flag(cont, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);       //Force new line, don't work
 
         //Display Text
         label = lv_label_create(GridBig);
-        lv_obj_set_style_text_font(label, &font1, 0);
-        lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP);
-        lv_obj_align(label,  LV_ALIGN_CENTER, 0, 0);
-        lv_obj_set_style_text_color(label, color, 0);
         lv_obj_set_size(label, lv_pct(100), lv_pct(80)); 
+        lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP);
+        lv_obj_set_style_text_font(label, &font1, 0);
+        lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
+        lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
+        lv_obj_set_style_text_color(label, color, 0);
         lv_label_set_text(label, SelectedDevice->data);
     }
 
@@ -536,41 +575,68 @@ void device_panel_init(lv_obj_t* panel)
     }
 
     //Thermostat setpoint
-    if (SelectedDevice->type == TYPE_SETPOINT)
+    if ((SelectedDevice->type == TYPE_SETPOINT) || (SelectedDevice->type == TYPE_THERMOSTAT))
     {
-        slider_TH = lv_slider_create(GridBig);
-        lv_obj_set_width(slider_TH, lv_pct(80));
-        lv_slider_set_range(slider_TH, 0, 400);
-        lv_slider_set_value(slider_TH, atof(SelectedDevice->data) *10, LV_ANIM_ON);
-        lv_obj_center(slider_TH);
+        //Need some settings.
+        int min;
+        int max;
+        float setpoint;
+
+        GetThermostatValue(SelectedDevice->idx, &min, &max, &step, &setpoint);
+
+        setpoint = setpoint / step;
+        min = min / step;
+        max = max / step;
+
+        /*Create an Arc*/
+        arc_TH = lv_arc_create(GridBig);
+
+        // Need a perfect square
+        lv_coord_t content_w = lv_obj_get_content_width(GridBig) * 70 / 100;
+        lv_obj_set_size(arc_TH, content_w, content_w);
+
+        lv_arc_set_rotation(arc_TH, 135);
+        lv_arc_set_bg_angles(arc_TH, 0, 270);
+        lv_arc_set_range(arc_TH, min, max); // min and max value
+        lv_arc_set_value(arc_TH, setpoint); // set value
+        lv_obj_center(arc_TH);
+        //lv_obj_align(arc_TH, LV_ALIGN_CENTER, lv_pct(6), 0);
+        //lv_obj_align_to(arc_TH, GridBig, LV_ALIGN_LEFT_MID, 0, 0);
+        lv_obj_add_event_cb(arc_TH, arc_changed_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
         
-        //lv_obj_set_style_bg_color(slider_TH, lv_color_hex(0x569af8), LV_PART_INDICATOR);
-        //lv_obj_set_style_bg_color(slider_TH, lv_color_hex(0xff0000), LV_PART_INDICATOR | LV_STATE_PRESSED);
-        lv_obj_remove_style(slider_TH, NULL, LV_PART_INDICATOR);
+        //lv_obj_set_style_bg_color(arc_TH, lv_color_hex(0x569af8), LV_PART_INDICATOR);
+        //lv_obj_set_style_bg_color(arc_TH, lv_color_hex(0xff0000), LV_PART_INDICATOR | LV_STATE_PRESSED);
+        //lv_obj_remove_style(arc_TH, NULL, LV_PART_INDICATOR);
 
         /*Create a label below the slider*/
         slider_label = lv_label_create(lv_scr_act());
-        lv_label_set_text_fmt(slider_label, "%.1f",atof(SelectedDevice->data)/1.f);
-        lv_obj_align_to(slider_label, slider_TH, LV_ALIGN_OUT_BOTTOM_MID, 0, 15);
+        lv_label_set_text_fmt(slider_label, "%.1f °C",setpoint * step);
+        lv_obj_align_to(slider_label, arc_TH, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
 
         // And somes buttons
-        lv_obj_t * obj= lv_btn_create(GridSmall);
-        lv_obj_set_size(obj, LV_PCT(100), LV_PCT(30));
+        lv_obj_t * obj = lv_btn_create(GridSmall);
+        lv_obj_set_size(obj, LV_PCT(80), LV_PCT(30));
         label = lv_label_create(obj);
+        //lv_obj_set_style_text_color(label, color, 0); // no action ???
+        lv_obj_set_style_text_font(label, &font1, 0);
         lv_label_set_text_static(label, "+");
         lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
         lv_obj_set_pos(obj, 0, 0);
         lv_obj_add_event_cb(obj, TH_btn_event_handler, LV_EVENT_CLICKED, (void *)1);
-        obj= lv_btn_create(GridSmall);
-        lv_obj_set_size(obj, LV_PCT(100), LV_PCT(30));
+
+        obj = lv_btn_create(GridSmall);
+        lv_obj_set_size(obj, LV_PCT(80), LV_PCT(30));
         label = lv_label_create(obj);
+        lv_obj_set_style_text_font(label, &font1, 0);
         lv_label_set_text_static(label, "-");
         lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
         lv_obj_set_pos(obj, 0, LV_PCT(33));
         lv_obj_add_event_cb(obj, TH_btn_event_handler, LV_EVENT_CLICKED, (void *)2);
-        obj= lv_btn_create(GridSmall);
-        lv_obj_set_size(obj, LV_PCT(100), LV_PCT(30));
+
+        obj = lv_btn_create(GridSmall);
+        lv_obj_set_size(obj, LV_PCT(80), LV_PCT(30));
         label = lv_label_create(obj);
+        lv_obj_set_style_text_font(label, &font1, 0);
         lv_label_set_text_static(label, "Set");
         lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
         lv_obj_set_pos(obj, 0, LV_PCT(66));
@@ -580,7 +646,8 @@ void device_panel_init(lv_obj_t* panel)
     // Other sensors
     if ((SelectedDevice->type == TYPE_TEMPERATURE) || (SelectedDevice->type == TYPE_VALUE_SENSOR)
     || (SelectedDevice->type == TYPE_HUMIDITY) || (SelectedDevice->type == TYPE_CONSUMPTION) || (SelectedDevice->type == TYPE_POWER)
-    || (SelectedDevice->type == TYPE_LUX) || (SelectedDevice->type == TYPE_PERCENT_SENSOR) || (SelectedDevice->type == TYPE_METEO))
+    || (SelectedDevice->type == TYPE_LUX) || (SelectedDevice->type == TYPE_PERCENT_SENSOR) || (SelectedDevice->type == TYPE_METEO)
+    || (SelectedDevice->type == TYPE_WEIGHT))
     {
 
         label = lv_label_create(GridSmall);

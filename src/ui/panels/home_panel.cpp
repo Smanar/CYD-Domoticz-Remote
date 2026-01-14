@@ -7,9 +7,8 @@
 #include "../../core/ip_engine.h"
 #include "../navigation.h"
 
-
-
 extern lv_style_t style_shadow;
+extern lv_style_t style_pressed;
 
 //Calculate values to use to display the homepage (even number)
 #define TOTAL_OFFSET_X 10
@@ -215,7 +214,8 @@ static void Widget_button_group(lv_obj_t* panel, char* desc, int x, int y, int w
     lv_obj_t * Button_icon = lv_obj_create(panel);
     lv_obj_set_size(Button_icon, w, h);
     lv_obj_set_pos(Button_icon, x, y);
-    lv_obj_add_style(Button_icon, &style_shadow, LV_PART_MAIN);
+    lv_obj_add_style(Button_icon, &style_shadow, LV_PART_MAIN); // Normal style
+    lv_obj_add_style(Button_icon, &style_pressed, LV_STATE_PRESSED); // Pressed style
     lv_obj_clear_flag( Button_icon, LV_OBJ_FLAG_SCROLLABLE );         // Remove scrollbar
     //lv_obj_add_flag( Button_icon, LV_OBJ_FLAG_CLICKABLE );
     //lv_obj_add_style(Button_icon, &style_pr, LV_STATE_PRESSED);     // Set a style when pressed
@@ -278,9 +278,11 @@ void home_panel_init(lv_obj_t* panel, Device d[], short page)
                 case TYPE_POWER:
                 case TYPE_SWITCH_SENSOR:
                 case TYPE_LUX:
+                case TYPE_WEIGHT:
                 case TYPE_METEO:
                 case TYPE_VALUE_SENSOR:
                 case TYPE_SETPOINT:
+                case TYPE_THERMOSTAT:
                 case TYPE_AIR_QUALITY:
                 {
                     Widget_sensor(panel, d[i].name, d[i].data, cx , cy , Size_w , Size_h, device_color, &d[i],icon);
