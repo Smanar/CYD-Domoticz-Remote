@@ -259,11 +259,12 @@ void WS_Run(void)
 {
     connect_ok = false;
 
-    Serial.println(F("Connecting to Webserver"));
-    //Serial.printf("Connecting to %s%s:%d\n",global_config.ServerHost, "/json", global_config.ServerPort);
+    Serial.println(F("Connecting to Server Websocket"));
+    Serial.printf("Connecting to %s%s:%d\n",global_config.ServerHost, "/json", global_config.ServerPort);
 
     // server address, port and URL
     WSclient.begin(global_config.ServerHost, global_config.ServerPort, "/json", "domoticz");
+    //WSclient.beginSSL(global_config.ServerHost, global_config.ServerPort, "/json", "", "domoticz");
 
     // event handler
     WSclient.onEvent(webSocketEvent);

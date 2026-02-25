@@ -14,8 +14,8 @@ extern lv_style_t style_pressed;
 #define TOTAL_OFFSET_X 10
 #define TOTAL_OFFSET_Y 10
 //Calculate widgets size
-int Size_w = int(TFT_WIDTH/TOTAL_ICONX) -  TOTAL_OFFSET_X;
-int Size_h = int(TFT_HEIGHT/TOTAL_ICONY) - TOTAL_OFFSET_Y;
+int Size_w = int(LCD_WIDTH/TOTAL_ICONX) -  TOTAL_OFFSET_X;
+int Size_h = int(LCD_HEIGHT/TOTAL_ICONY) - TOTAL_OFFSET_Y;
 //Icon size
 //int Size_icon = 35;
 

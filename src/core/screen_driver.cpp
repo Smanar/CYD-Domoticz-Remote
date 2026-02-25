@@ -333,8 +333,8 @@ void touchscreen_calibrate(bool force)
 
     while (touchscreen.touched())
         ;
-    tft.drawFastHLine(TFT_WIDTH-20, TFT_HEIGHT-10, 20, TFT_WHITE);
-    tft.drawFastVLine(TFT_WIDTH-10, TFT_HEIGHT-20, 20, TFT_WHITE);
+    tft.drawFastHLine(LCD_WIDTH-20, LCD_HEIGHT-10, 20, TFT_WHITE);
+    tft.drawFastVLine(LCD_WIDTH-10, LCD_HEIGHT-20, 20, TFT_WHITE);
 
     while (!touchscreen.touched())
         ;
@@ -342,11 +342,11 @@ void touchscreen_calibrate(bool force)
     p = touchscreen.getPoint();
     x2 = p.x;
     y2 = p.y;
-    tft.drawFastHLine(TFT_WIDTH-20, TFT_HEIGHT-10, 20, TFT_BLACK);
-    tft.drawFastVLine(TFT_WIDTH-10, TFT_HEIGHT-20, 20, TFT_BLACK);
+    tft.drawFastHLine(LCD_WIDTH-20, LCD_HEIGHT-10, 20, TFT_BLACK);
+    tft.drawFastVLine(LCD_WIDTH-10, LCD_HEIGHT-20, 20, TFT_BLACK);
 
-    int16_t xDist = TFT_WIDTH - 40;
-    int16_t yDist = TFT_HEIGHT - 40;
+    int16_t xDist = LCD_WIDTH - 40;
+    int16_t yDist = LCD_HEIGHT - 40;
 
     global_config.screenCalXMult = (float)xDist / (float)(x2 - x1);
     global_config.screenCalXOffset = 20.0 - ((float)x1 * global_config.screenCalXMult);
@@ -617,8 +617,8 @@ void screen_setup()
     /*Initialize the display*/
     static lv_disp_drv_t disp_drv;
     lv_disp_drv_init(&disp_drv);
-    disp_drv.hor_res = TFT_WIDTH;
-    disp_drv.ver_res = TFT_HEIGHT;
+    disp_drv.hor_res = LCD_WIDTH;
+    disp_drv.ver_res = LCD_HEIGHT;
     disp_drv.flush_cb = screen_lv_flush;
     disp_drv.draw_buf = &draw_buf;
     lv_disp_drv_register(&disp_drv);

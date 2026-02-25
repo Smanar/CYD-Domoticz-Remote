@@ -59,7 +59,7 @@ void navigation_screen(unsigned char active_panel)
     lv_obj_clean(lv_scr_act());
 
     lv_obj_t * panel = lv_obj_create(lv_scr_act());
-    lv_obj_set_size(panel, TFT_WIDTH, TFT_HEIGHT);
+    lv_obj_set_size(panel, LCD_WIDTH, LCD_HEIGHT);
     lv_obj_align(panel, LV_ALIGN_TOP_RIGHT, 0, 0);
     lv_obj_set_style_border_width(panel, 0, 0);
     lv_obj_set_style_bg_opa(panel, LV_OPA_TRANSP, 0);
