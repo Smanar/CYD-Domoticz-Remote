@@ -37,6 +37,14 @@ void RefreshHomePage(void)
     }
 }
 
+void RefreshDevicePanel(void)
+{
+    if (actived_panel == DEVICE_PANEL)
+    {                           
+        navigation_screen(DEVICE_PANEL);
+    }
+}
+
 #ifndef NO_GROUP_PAGE
 void RefreshScenePage(void)
 {

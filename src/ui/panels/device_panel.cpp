@@ -14,7 +14,7 @@ static lv_obj_t * arc_TH; // Arc for thermostat
 
 //static Device SelectedDevice; // The selected one
 static Device SpecialDevice; // structure for an actual one that is not on HP
-static Device *SelectedDevice; // The selected one
+static Device *SelectedDevice = nullptr; // The selected one
 
 extern lv_style_t style_shadow;
 extern lv_color_t background;
@@ -170,6 +170,19 @@ static void hist_chart_event_cb(lv_event_t * e)
         lv_snprintf(dsc->text, dsc->text_length, "%.1f", (float)dsc->value / coef);
     }
 }
+
+
+/**************************************************************************************/
+
+int GetSelectedDeviceIdx(void)
+{
+    if (SelectedDevice)
+    {
+        return SelectedDevice->idx;
+    }
+    return 0;
+}
+
 void Select_deviceMemorised(void *device)
 {
     //This one is already memorised so just pick it
@@ -293,6 +306,8 @@ const lv_img_dsc_t *Geticon(int type)
 
     return &unknown35x35;
 }
+
+/**************************************************************************************/
 
 void device_panel_init(lv_obj_t* panel)
 {

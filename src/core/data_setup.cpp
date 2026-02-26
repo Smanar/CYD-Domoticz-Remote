@@ -2,6 +2,7 @@
 #include "../src/conf/global_config.h"
 #include "../ui/http_setup.h"
 #include "../ui/panels/panel.h"
+#include "../ui/navigation.h"
 #include "ip_engine.h"
 #include "base64.hpp"
 #include "data_setup.h"
@@ -194,7 +195,15 @@ void Update_device_data(JsonObject RJson2)
         }
         else
         {
-            RefreshHomePage();
+            // The device is actully displayed ?
+            if ((GetActivePanel() == DEVICE_PANEL) && (GetSelectedDeviceIdx() == JSonidx))
+            {
+                RefreshDevicePanel();
+            }
+            else
+            {
+                RefreshHomePage();
+            }
         }
     }
 
@@ -433,7 +442,8 @@ bool HttpInitDevice(Device *d, int id)
                 {
                     d->type = TYPE_PUSH;
                 }
-                else if ((strcmp(switchtype,"Venetian Blinds EU") == 0) || (strcmp(switchtype,"Venetian Blinds US") == 0) || (strcmp(switchtype,"Blinds Percentage") == 0))
+                else if ((strcmp(switchtype,"Venetian Blinds EU") == 0) || (strcmp(switchtype,"Venetian Blinds US") == 0)
+                 || (strcmp(switchtype,"Blinds Percentage") == 0) || (strcmp(switchtype,"Blinds % + Stop") == 0))
                 {
                     d->type = TYPE_BLINDS;
                 }

@@ -114,7 +114,7 @@ void wifi_init_inner(){
 
     lv_obj_t * list = lv_list_create(lv_scr_act());
     lv_obj_align(list, LV_ALIGN_TOP_LEFT, 10, 40);
-    lv_obj_set_size(list, LCD_WIDTH - 20, TFT_HEIGHT - 40 - 5);
+    lv_obj_set_size(list, LCD_WIDTH - 20, LCD_HEIGHT - 40 - 5);
 
     int n = WiFi.scanNetworks();
 
