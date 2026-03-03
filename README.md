@@ -32,7 +32,7 @@ There is different way to install the code on th device, but I think this one is
 - Select your device. The project is configured by default for the 2432S028R, you can select other tested hardware in the platformio.ini file, on the [platformio] part, just comment the previous one and uncomment your hardware. You can add too unsupported device with some file modifications, or give me information about it, I can try to add it.   
 - ???
 - Just launch a compilation (Build) and upload (Upload) the code on the device using the USB cable. Don't forget to press the button (Boot) on the device to autorise the action. You just need to use icons on the application bottom, you don't need to use menus.
-- On domoticz, add the device ip to the "trusted network" (else it will be blocked).   
+- On domoticz, add the device ip to the "trusted network" (else it will be blocked). The project works fine on port 8080 but not sure on 443.   
 - On first launch, configure the Wifi, the domoticz IP and port, and on setting select the devices you want o display on the Homepage. If you haven't used a configuration fle or hardcoded the settings.   
 
 ## Settings   
