@@ -433,6 +433,10 @@ bool HttpInitDevice(Device *d, int id)
                 if (strcmp(switchtype,"Dimmer") == 0)
                 {
                     d->type = TYPE_DIMMER;
+
+                    // some device don't have 0/100 values
+                    if (i["MaxDimLevel"].is<double>()) d->maxlevel = i["MaxDimLevel"];
+
                 }
                 else if (strcmp(switchtype,"On/Off") == 0)
                 {
@@ -457,6 +461,16 @@ bool HttpInitDevice(Device *d, int id)
         else if (strncmp(type, "Lighting", 8) == 0)
         {
             d->type = TYPE_LIGHT;
+            
+            const char* switchtype = i["SwitchType"];
+            if (strcmp(switchtype,"Dimmer") == 0)
+            {
+                d->type = TYPE_DIMMER;
+
+                // some device don't have 0/100 values
+                if (i["MaxDimLevel"].is<double>()) d->maxlevel = i["MaxDimLevel"];
+
+            }
         }
         else if (strcmp(type, "Color Switch") == 0)
         {

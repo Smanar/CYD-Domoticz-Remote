@@ -39,6 +39,7 @@ typedef struct _Device {
     unsigned short idx = 0;
     unsigned short type = TYPE_UNUSED;
     unsigned short lenData = 0;
+    unsigned short maxlevel = 100;
 
     //lv_obj_t * label; // used for device update
 

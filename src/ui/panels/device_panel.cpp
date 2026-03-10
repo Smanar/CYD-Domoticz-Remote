@@ -60,8 +60,10 @@ static void slider_released_event_cb(lv_event_t * e)
     lv_obj_t * slider = lv_event_get_target(e);
     lv_event_code_t code = lv_event_get_code(e);
 
+    unsigned short lev = (int)lv_slider_get_value(slider) * SelectedDevice->maxlevel / 100;
+
     char buff[256] = {};
-    lv_snprintf(buff, 256, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=Set%%20Level&level=%d", SelectedDevice->idx, (int)lv_slider_get_value(slider));
+    lv_snprintf(buff, 256, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=Set%%20Level&level=%d", SelectedDevice->idx, lev);
     HTTPGETRequest(buff);
 
 }
@@ -396,13 +398,19 @@ void device_panel_init(lv_obj_t* panel)
     if ((SelectedDevice->type == TYPE_SWITCH) || (SelectedDevice->type == TYPE_DIMMER)
      || (SelectedDevice->type == TYPE_PLUG) || (SelectedDevice->type == TYPE_COLOR) || (SelectedDevice->type == TYPE_LIGHT))
     {
+        //lv_obj_add_flag(GridSmall, LV_OBJ_FLAG_HIDDEN);
+
         lv_obj_t * sw = lv_switch_create(GridSmall);
         lv_obj_align(sw, LV_ALIGN_CENTER, 0, 0);
+
+        //Disable flickering
+        //lv_obj_set_style_anim_time(sw, -1, LV_PART_MAIN); // Not working
 
         if (strcmp(SelectedDevice->data, "On") == 0)
         {
             lv_obj_add_state(sw, LV_STATE_CHECKED);
         }
+        //lv_obj_clear_flag(GridSmall, LV_OBJ_FLAG_HIDDEN);
         lv_obj_add_event_cb(sw, switch_event_handler, LV_EVENT_ALL, NULL);
 
     }
@@ -485,7 +493,7 @@ void device_panel_init(lv_obj_t* panel)
     {
 
         lv_obj_t * slider = lv_slider_create(GridBig);
-        lv_slider_set_value(slider, SelectedDevice->level, LV_ANIM_ON);
+        lv_slider_set_value(slider, SelectedDevice->level, LV_ANIM_OFF);
         lv_obj_set_width(slider, lv_pct(80));
         lv_slider_set_range(slider, 0, 100);
         lv_obj_center(slider);
@@ -503,7 +511,7 @@ void device_panel_init(lv_obj_t* panel)
     {
         /*Create a slider*/
         lv_obj_t * slider = lv_slider_create(GridBig);
-        lv_slider_set_value(slider, SelectedDevice->level, LV_ANIM_ON);
+        lv_slider_set_value(slider, SelectedDevice->level, LV_ANIM_OFF);
         lv_obj_set_size(slider, 10, lv_pct(80));
         lv_slider_set_range(slider, 0, 100);
         lv_obj_add_event_cb(slider, slider_changed_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
