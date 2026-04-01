@@ -81,6 +81,7 @@ There is 2 options for OTA, PUSHOTA and PULLOTA you can enable one of them or no
 - esp32-2432S024R
 - esp32-8048S050C
 - esp32-JC2432W328
+- esp32-S3TOUCHLCD7 (WaveShare ESP32S3 Touch LCD 7)
 
 ## Actuals issues   
 - Memory ^^, lot of feature are still in Beta test. For exemple Domoticz JSON are too big to be handled by the device, it cause problem for chart for exemple.
