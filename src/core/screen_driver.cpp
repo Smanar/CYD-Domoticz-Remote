@@ -96,6 +96,9 @@ static lv_disp_draw_buf_t draw_buf;
     #ifdef ESP32_ZX7D00CE01S
     #include "../drivers/esp32-ZX7D00CE01S.h"
     #endif
+    #ifdef ESP32_S3TOUCHLCD7
+    #include "../drivers/esp32-S3TOUCHLCD7.h"
+    #endif
 
 #endif
 
