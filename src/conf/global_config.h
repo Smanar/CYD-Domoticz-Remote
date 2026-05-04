@@ -6,7 +6,7 @@
 // USED for memorised settings
 #define CONFIG_VERSION 3
 // USED for OTA
-#define APPLICATION_VERSION "26.5.1-1"
+#define APPLICATION_VERSION "26.5.2-1"
 
 typedef struct _GLOBAL_CONFIG {
     unsigned char version;
@@ -48,6 +48,7 @@ typedef struct _COLOR_DEF {
 
 extern GLOBAL_CONFIG global_config;
 extern COLOR_DEF color_defs[];
+extern void writeJsonConfig();
 
 void WriteGlobalConfig();
 void VerifyVersion();

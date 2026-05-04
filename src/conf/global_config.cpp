@@ -14,11 +14,13 @@ COLOR_DEF color_defs[] = {
     {LV_PALETTE_PURPLE, LV_PALETTE_GREY},
 };
 
+
 void WriteGlobalConfig() {
     Preferences preferences;
     preferences.begin("global_config", false);
     preferences.putBytes("global_config", &global_config, sizeof(global_config));
     preferences.end();
+    writeJsonConfig();
 }
 
 void VerifyVersion(){
