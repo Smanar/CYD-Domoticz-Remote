@@ -6,7 +6,7 @@
 // USED for memorised settings
 #define CONFIG_VERSION 3
 // USED for OTA
-#define APPLICATION_VERSION 1
+#define APPLICATION_VERSION "26.5.1-1"
 
 typedef struct _GLOBAL_CONFIG {
     unsigned char version;

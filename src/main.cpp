@@ -11,6 +11,7 @@
 #include "ui/main_ui.h"
 #include "ui/navigation.h"
 #include "ui/panels/panel.h"
+#include "LittleFS.h"
 //#include "core/sound.h"
 
 unsigned long now;
@@ -49,6 +50,16 @@ void setup() {
     LoadGlobalConfig(); // Loading setting
     screen_setup(); // Set display
     Serial.println(F("Screen init done"));
+    bool lastStatus;
+    lastStatus = LittleFS.begin();
+    if (!lastStatus) {
+        Serial.println(F("Formattiong LittleFS!"));
+        lastStatus = LittleFS.begin(true);
+    }
+    size_t usedBytes = LittleFS.usedBytes();
+    size_t totalBytes = LittleFS.totalBytes();
+    size_t remainingBytes = totalBytes - usedBytes;
+    Serial.printf("LittleFS %s, %d kB free (%d%%)\n", lastStatus?"ok":"*BAD*", remainingBytes / 1024, (100 * remainingBytes) / totalBytes);
 
     // Personal Settings to don't have to set them at every reset.
     // They are saved after have been set, so the flag FORCE_CONFIG can be disabled after

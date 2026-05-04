@@ -10,6 +10,7 @@
 #include "../../core/ip_engine.h"
 #include "../../core/ota.h"
 #include "../src/ui/navigation.h"
+#include "LittleFS.h"
 
 static lv_style_t style_container;
 extern lv_style_t style_shadow;
@@ -89,14 +90,19 @@ void tools_panel_init(lv_obj_t* panel)
     lv_mem_monitor(&mon);
     uint32_t used_size = mon.total_size - mon.free_size;
 
-    char Text[181];
-    lv_snprintf(Text, 180, "+ HEAP Memory Usable (Kb) %d, Max %d, Total %d\n", ESP.getMaxAllocHeap()/1024, ESP.getFreeHeap()/1024, ESP.getHeapSize()/1024);
-    //lv_snprintf(Text + strlen(Text),180, "+ PSRAM Memory Free (Kb) %d, Total %d\n", ESP.getFreePsram()/1024, ESP.getPsramSize()/1024); // Not used, CRASH
-    lv_snprintf(Text + strlen(Text), 180, "+ LV Heap %d kB used (%d %%) %d%% frag.\n", used_size / 1024, mon.used_pct, mon.frag_pct);
-    //lv_snprintf(Text + strlen(Text), 180, "Spiram size (Kb) %d , himem free %d\n", esp_spiram_get_size()/1000, esp_himem_get_free_size()/1000); // Not used, CRASH
-    lv_snprintf(Text + strlen(Text), 180, "+ Application Version : %d\n", APPLICATION_VERSION);
-    lv_snprintf(Text + strlen(Text), 180, "+ Running time : %d:%d:%d:%d\n", runningTime()/(3600*24), (runningTime()/3600)%24 , (runningTime()/60)%60, runningTime()%60);
-    lv_snprintf(Text + strlen(Text), 180, "+ Total data by WS : %d ko", total_WS_lenght());
+    size_t usedBytes = LittleFS.usedBytes();
+    size_t totalBytes = LittleFS.totalBytes();
+    size_t remainingBytes = totalBytes - usedBytes;
+
+    char Text[255];
+    lv_snprintf(Text, sizeof(Text), "+ HEAP Memory Usable (Kb) %d, Max %d, Total %d\n", ESP.getMaxAllocHeap()/1024, ESP.getFreeHeap()/1024, ESP.getHeapSize()/1024);
+    //lv_snprintf(Text + strlen(Text),sizeof(Text), "+ PSRAM Memory Free (Kb) %d, Total %d\n", ESP.getFreePsram()/1024, ESP.getPsramSize()/1024); // Not used, CRASH
+    lv_snprintf(Text + strlen(Text), sizeof(Text), "+ LV Heap %d kB used (%d %%) %d%% frag.\n", used_size / 1024, mon.used_pct, mon.frag_pct);
+    //lv_snprintf(Text + strlen(Text), sizeof(Text), "Spiram size (Kb) %d , himem free %d\n", esp_spiram_get_size()/1000, esp_himem_get_free_size()/1000); // Not used, CRASH
+    lv_snprintf(Text + strlen(Text), sizeof(Text), "+ Application Version : %s\n", APPLICATION_VERSION);
+    lv_snprintf(Text + strlen(Text), sizeof(Text), "+ Running time : %d-%02d:%02d:%02d\n", runningTime()/(3600*24), (runningTime()/3600)%24 , (runningTime()/60)%60, runningTime()%60);
+    lv_snprintf(Text + strlen(Text), sizeof(Text), "+ Total data by WS : %d ko\n", total_WS_lenght());
+    lv_snprintf(Text + strlen(Text), sizeof(Text), "+ LittleFS %s, %d kB free (%d%%)\n", totalBytes?"ok":"*BAD*", remainingBytes / 1024, (100 * remainingBytes) / totalBytes);
 
     label_tool = lv_label_create(cont2);
     lv_obj_set_style_text_font(label_tool, &medium_font, 0);
