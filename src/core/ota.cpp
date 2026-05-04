@@ -1,6 +1,8 @@
 #include "lvgl.h"
 #include "ota.h"
 #include "ui/wifi_setup.h"
+#include "LittleFS.h"
+#include "../conf/json_config.h"
 
 //https://randomnerdtutorials.com/esp32-web-server-arduino-ide/
 //https://docs.arduino.cc/tutorials/uno-wifi-rev2/uno-wifi-r2-hosting-a-webserver/
@@ -122,44 +124,87 @@ void OTAUpdate()
 // Code from https://github.com/pangodream/ESP2SOTA
 
 #include <WebServer.h>
-//#include "stdlib_noniso.h"
 #include "Update.h"
 
+#define TMP_FILE "/tmpFile.tmp"
+
 WebServer server(80);
+File tmpFile;
+bool downloadError;
 
 const char* indexHtml =
-    "<body style='font-family: Verdana,sans-serif; font-size: 14px;'>"
-    "<div style='width:400px;padding:20px;border-radius:10px;border:solid 2px #e0e0e0;margin:auto;margin-top:20px;'>"
-    "<div style='width:100%;text-align:center;font-size:18px;font-weight:bold;margin-bottom:12px;'>ESP 2S OTA</div>"
-       "<form method='POST' action='#' enctype='multipart/form-data' id='upload-form' style='width:100%;margin-bottom:8px;'>"
-         "<input type='file' name='update'>"
-         "<input type='submit' value='Update' style='float:right;'>"
-       "</form>"
-    "<div style='width:100%;background-color:#e0e0e0;border-radius:8px;'>"
-    "<div id='prg' style='width:0%;background-color:#2196F3;padding:2px;border-radius:8px;color:white;text-align:center;'>0%</div>"
-    "</div>"
-    "</div>"
-    "</body>"
-    "<script>"
-    "var prg = document.getElementById('prg');"
-    "var form = document.getElementById('upload-form');"
-    "form.addEventListener('submit', e=>{"
-         "e.preventDefault();"
-         "var data = new FormData(form);"
-         "var req = new XMLHttpRequest();"
-         "req.open('POST', '/update');"  
-         "req.upload.addEventListener('progress', p=>{"
-              "let w = Math.round((p.loaded / p.total)*100) + '%';"
-              "if(p.lengthComputable){"
-                   "prg.innerHTML = w;"
-                   "prg.style.width = w;"
-              "}"
-              "if(w == '100%') prg.style.backgroundColor = '#04AA6D';" 
-         "});"
-         "req.send(data);"
-     "});"
-    "</script>";
-
+"<body style='font-family: Verdana,sans-serif; font-size: 14px;'>"
+	"<div style='width:400px;padding:20px;border-radius:10px;border:solid 2px #e0e0e0;margin:auto;margin-top:20px;'>"
+		"<div style='width:100%;text-align:center;font-size:18px;font-weight:bold;margin-bottom:12px;'>Write firmware</div>"
+		"<form method='POST' action='#' enctype='multipart/form-data' id='firmwareForm' style='width:100%;margin-bottom:8px;'>"
+			"<input type='file' name='firmware'>"
+			"<input type='submit' value='Update' style='float:right;'>"
+		"</form>"
+		"<div style='width:100%;background-color:#e0e0e0;border-radius:8px;'>"
+			"<div id='firmwareProgress' style='width:0%;background-color:#2196F3;padding:2px;border-radius:8px;color:white;text-align:center;'>0%</div>"
+		"</div>"
+	"</div>"
+	"<div style='width:400px;padding:20px;border-radius:10px;border:solid 2px #e0e0e0;margin:auto;margin-top:20px;'>"
+		"<div style='width:100%;text-align:center;font-size:18px;font-weight:bold;margin-bottom:12px;'>Write configuration</div>"
+		"<form method='POST' action='#' enctype='multipart/form-data' id='configForm' style='width:100%;margin-bottom:8px;'>"
+			"<input type='file' name='config'>"
+			"<input type='submit' value='Send' style='float:right;'>"
+		"</form>"
+		"<div style='width:100%;background-color:#e0e0e0;border-radius:8px;'>"
+			"<div id='configProgress' style='width:0%;background-color:#2196F3;padding:2px;border-radius:8px;color:white;text-align:center;'>0%</div>"
+		"</div>"
+	"</div>"
+	"<div style='width:400px;padding:20px;border-radius:10px;border:solid 2px #e0e0e0;margin:auto;margin-top:20px;'>"
+		"<div style='width:100%;text-align:center;font-size:18px;font-weight:bold;margin-bottom:12px;'>Read configuration</div>"
+		"<div style='text-align:center;'>"
+			"<input type='button' value='Read' onclick='readConfig();'/>"
+		"</div>"
+	"</div>"
+"</body>"
+"<script>"
+    "function readConfig() {"
+        "const link = document.createElement('a');"
+        "link.href = '/readConfig';"
+        "link.download = 'settings.json'"
+        "document.body.appendChild(link);"
+        "link.click();"
+        "document.body.removeChild(link);"
+    "};"
+    "var firmwareProgress = document.getElementById('firmwareProgress');"
+	"var firmwareForm = document.getElementById('firmwareForm');"
+	"firmwareForm.addEventListener('submit', e=>{"
+		"e.preventDefault();"
+		"var data = new FormData(firmwareForm);"
+		"var req = new XMLHttpRequest();"
+		"req.open('POST', '/writeFirmware');"
+		"req.upload.addEventListener('progress', p=>{"
+			"let w = Math.round((p.loaded / p.total)*100) + '%';"
+			"if(p.lengthComputable){"
+				"firmwareProgress.innerHTML = w;"
+				"firmwareProgress.style.width = w;"
+			"}"
+			"if(w == '100%') firmwareProgress.style.backgroundColor = '#04AA6D';"
+		"});"
+		"req.send(data);"
+	"});"
+	"var configProgress = document.getElementById('configProgress');"
+	"var configForm = document.getElementById('configForm');"
+	"configForm.addEventListener('submit', e=>{"
+		"e.preventDefault();"
+		"var data = new FormData(configForm);"
+		"var req = new XMLHttpRequest();"
+		"req.open('POST', '/writeConfig');"
+		"req.upload.addEventListener('progress', p=>{"
+			"let w = Math.round((p.loaded / p.total)*100) + '%';"
+			"if(p.lengthComputable){"
+				"configProgress.innerHTML = w;"
+				"configProgress.style.width = w;"
+			"}"
+			"if(w == '100%') configProgress.style.backgroundColor = '#04AA6D';"
+		"});"
+		"req.send(data);"
+	"});"
+"</script>";
 
 void OTA_init(void)
 {
@@ -175,48 +220,95 @@ void OTA_init(void)
     server.send(200, "text/html", indexHtml);
   });
 
-  /*handling uploading firmware file */
-  server.on("/update", HTTP_POST, [&]() {
+  /* Handling uploading firmware file */
+  server.on("/writeFirmware", HTTP_POST, [&]() {
     server.sendHeader("Connection", "close");
     server.send(200, "text/plain", (Update.hasError()) ? "FAIL" : "OK");
+    delay(1000);
     ESP.restart();
   }, [&]()
   {
     HTTPUpload& upload = server.upload();
-    if (upload.status == UPLOAD_FILE_START)
-    {
-      Serial.printf("Update: %s\n", upload.filename.c_str());
-      if (!Update.begin(UPDATE_SIZE_UNKNOWN))
-      {
-        //start with max available size
-        Update.printError(Serial);
-      }
-    }
-    else if (upload.status == UPLOAD_FILE_WRITE)
-    {
-      /* flashing firmware to ESP*/
-      if (Update.write(upload.buf, upload.currentSize) != upload.currentSize)
-      {
-        Update.printError(Serial);
-      }
-    }
-    else if (upload.status == UPLOAD_FILE_END)
-    {
-        wifi_stop(); // To test.
-        delay(1000); // To test.
-
-        if (Update.end(true)) //true to set the size to the current progress
-        {
-            Serial.printf("Update Success: %u\nRebooting...\n", upload.totalSize);
+    if (upload.status == UPLOAD_FILE_START){
+        Serial.printf("Update firmware: %s\n", upload.filename.c_str());
+        if (!Update.begin(UPDATE_SIZE_UNKNOWN)) {
+            //start with max available size
+            Update.printError(Serial);
         }
-        else
-        {
+    } else if (upload.status == UPLOAD_FILE_WRITE) {
+        /* flashing firmware to ESP*/
+        if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
+        Update.printError(Serial);
+        }
+    } else if (upload.status == UPLOAD_FILE_END) {
+        if (Update.end(true)) { //true to set the size to the current progress
+            Serial.printf("Firmware ok, size %u\nRebooting...\n", upload.totalSize);
+        } else {
             Update.printError(Serial);
         }
     }
   });
 
-    server.begin();
+  /* Handling uploading configuration file */
+  server.on("/writeConfig", HTTP_POST, [&]() {
+    server.sendHeader("Connection", "close");
+    server.send(200, "text/plain", downloadError ? "FAIL" : "OK");
+    if (!downloadError) {
+        delay(1000);
+        ESP.restart();
+    }
+    }, [&]()
+  {
+    HTTPUpload& upload = server.upload();
+    if (upload.status == UPLOAD_FILE_START) {                       // We're starting file upload
+        Serial.printf("Download: %s\n", upload.filename.c_str());
+        downloadError = false;                                      // Clear error flag
+        tmpFile = LittleFS.open(TMP_FILE, "w");                     // Open a temporary file to avoid destroying target if error in process
+        if (!tmpfile) downloadError = true;                         // Error openiung temp file
+    } else if (upload.status == UPLOAD_FILE_WRITE) {                // We're loading a buffer
+        if (!downloadError) {
+            if (tmpFile.write(upload.buf, upload.currentSize) != upload.currentSize) {
+                Serial.printf("Error writting %s\n", TMP_FILE);
+                downloadError = true;
+            }
+        }
+    } else if (upload.status == UPLOAD_FILE_END) {                  // We're at end of file
+        if (!downloadError) {                                       // No error seen
+            tmpFile.flush();
+            tmpFile.close();
+            LittleFS.remove(SETTINGS_FILE);                         // Delete existing settings file
+            LittleFS.rename(TMP_FILE, SETTINGS_FILE);               // Replace it by temporary file
+            Serial.print("Upload ok\nRebooting...\n");
+        } else {                                                    // We got an error
+            if (tmpFile) {                                          // Do we open a file?
+                tmpFile.close();                                    // Close it
+                LittleFS.remove(TMP_FILE);                          // Delete it
+            }
+        }
+    }
+  });
+
+  /* Handling uploading configuration file */
+  server.on("/readConfig", HTTP_GET, [&]() {
+    File file = LittleFS.open(SETTINGS_FILE, "r");                // Open the file
+    if (file) {                                                 // File opened?
+        server.streamFile(file, "APPLICATION/JSON");            // Send it to the client
+        file.close();
+        server.sendHeader("Connection", "close");
+        server.send(200, "text/plain", "OK");
+    } else {                                                    // Error opening file
+        server.sendHeader("Connection", "close");
+        server.send(404, "text/plain", "File not found");
+    }
+  });
+
+  /* Handling ESP restart */
+  server.on("/restart", HTTP_GET, [&]() {
+        Serial.println("/restart received");
+        delay(1000);
+        ESP.restart();
+    });
+  server.begin();
 }
 
 void OTA_loop(void)
