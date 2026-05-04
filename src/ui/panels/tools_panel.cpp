@@ -11,6 +11,7 @@
 #include "../../core/ota.h"
 #include "../src/ui/navigation.h"
 #include "LittleFS.h"
+#include "WiFi.h"
 
 static lv_style_t style_container;
 extern lv_style_t style_shadow;
@@ -93,6 +94,7 @@ void tools_panel_init(lv_obj_t* panel)
     size_t usedBytes = LittleFS.usedBytes();
     size_t totalBytes = LittleFS.totalBytes();
     size_t remainingBytes = totalBytes - usedBytes;
+    IPAddress localIp = WiFi.localIP();
 
     char Text[255];
     lv_snprintf(Text, sizeof(Text), "+ HEAP Memory Usable (Kb) %d, Max %d, Total %d\n", ESP.getMaxAllocHeap()/1024, ESP.getFreeHeap()/1024, ESP.getHeapSize()/1024);
@@ -103,6 +105,7 @@ void tools_panel_init(lv_obj_t* panel)
     lv_snprintf(Text + strlen(Text), sizeof(Text), "+ Running time : %d-%02d:%02d:%02d\n", runningTime()/(3600*24), (runningTime()/3600)%24 , (runningTime()/60)%60, runningTime()%60);
     lv_snprintf(Text + strlen(Text), sizeof(Text), "+ Total data by WS : %d ko\n", total_WS_lenght());
     lv_snprintf(Text + strlen(Text), sizeof(Text), "+ LittleFS %s, %d kB free (%d%%)\n", totalBytes?"ok":"*BAD*", remainingBytes / 1024, (100 * remainingBytes) / totalBytes);
+    lv_snprintf(Text + strlen(Text), sizeof(Text), "+ IP %d.%d.%d.%d\n", localIp[0], localIp[1], localIp[2], localIp[3]);
 
     label_tool = lv_label_create(cont2);
     lv_obj_set_style_text_font(label_tool, &medium_font, 0);
