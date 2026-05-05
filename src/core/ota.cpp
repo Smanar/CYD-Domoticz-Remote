@@ -15,7 +15,7 @@
 const char url[] = "http://192.168.1.81:8080/firmware.bin";
 extern lv_obj_t * label_tool;
 
-static int last_callback_time = 0;
+static unsigned long last_callback_time = 0;
 void do_update_callback(int offset, int totallength, lv_obj_t * bar)
 {
 
@@ -83,7 +83,7 @@ void OTAUpdate()
                 Serial.printf("OTA %d %\n", offset * 100 / totalLength );
 
                 //Display loading bar
-                int now = millis();
+                unsigned long now = millis();
                 if (now - last_callback_time > 1000)
                 {
                     last_callback_time = now;
@@ -128,7 +128,7 @@ void OTAUpdate()
 
 WebServer server(80);
 File tmpFile;
-bool downloadError;
+bool downloadError = false;
 
 const char* indexHtml =
 "<!DOCTYPE html>\n"
@@ -269,11 +269,13 @@ void OTA_init(void)
         Serial.printf("Download: %s\n", upload.filename.c_str());
         downloadError = false;                                      // Clear error flag
         tmpFile = LittleFS.open(TMP_FILE, "w");                     // Open a temporary file to avoid destroying target if error in process
-        if (!tmpfile) downloadError = true;                         // Error openiung temp file
+        if (!tmpFile) downloadError = true;                         // Error openiung temp file
     } else if (upload.status == UPLOAD_FILE_WRITE) {                // We're loading a buffer
         if (!downloadError) {
             if (tmpFile.write(upload.buf, upload.currentSize) != upload.currentSize) {
                 Serial.printf("Error writting %s\n", TMP_FILE);
+                tmpFile.close();
+                LittleFS.remove(TMP_FILE);
                 downloadError = true;
             }
         }
@@ -283,10 +285,12 @@ void OTA_init(void)
             tmpFile.close();
             if (checkJsonConfig((char *) TMP_FILE)) {               // Is received file a correct one?
                 Serial.print("Upload ok\nRebooting...\n");
+                LittleFS.remove(SETTINGS_FILE);                     // Delete existing settings file
             } else {
                 downloadError = true;                               // File is bad
+                LittleFS.remove(TMP_FILE);                          // Delete it
             }
-            LittleFS.remove(SETTINGS_FILE);                         // Delete existing settings file
+
         } else {                                                    // We got an error
             if (tmpFile) {                                          // Do we open a file?
                 tmpFile.close();                                    // Close it

@@ -3,12 +3,15 @@
 #include "global_config.h"
 #include "json_config.h"
 
-JsonDocument settings;
+extern GLOBAL_CONFIG global_config;
 
 //
 //  Load settings from global config
 //
-void loadJson() {
+JsonDocument loadJson() {
+
+    JsonDocument settings;
+
     settings["version"] = global_config.version;
     settings["screenCalibrated"] = global_config.screenCalibrated;
     settings["wifiConfigured"] = global_config.wifiConfigured;
@@ -31,13 +34,15 @@ void loadJson() {
     settings["color_scheme"] = global_config.color_scheme;
     settings["brightness"] = global_config.brightness;
     settings["screenTimeout"] = global_config.screenTimeout;
+
+    return settings;
 }
 
 //
 //  Write current preferences to settings file
 //
 void writeJsonConfig() {
-    loadJson();                                                     // Load JSON data
+    JsonDocument settings = loadJson();                                  // Load JSON data
     File settingsFile = LittleFS.open(SETTINGS_FILE, "w");          // Open settings file
     if (!settingsFile) {                                            // Error opening?
         Serial.printf("Can't open %s for write\n", SETTINGS_FILE);
@@ -58,7 +63,7 @@ void writeJsonConfig() {
 //      If file is ok, preferences will be modified, saved, and a new settings.json will be written.
 //      Returns true if file is ok, false else
 //
-bool checkJsonConfig(char* jsonFile) {
+bool checkJsonConfig(const char* jsonFile) {
     if (readJsonConfig(jsonFile)) {
         WriteGlobalConfig();
         return true;
@@ -72,7 +77,10 @@ bool checkJsonConfig(char* jsonFile) {
 //      Returns true if file is ok, false else
 //
 
-bool readJsonConfig(char* jsonFile) {
+bool readJsonConfig(const char* jsonFile) {
+
+    JsonDocument settings;
+
     File settingsFile = LittleFS.open(jsonFile, "r");               // Open settings file
     if (!settingsFile) {                                            // Error opening?
         Serial.printf("Can't open %s for read\n", jsonFile);
@@ -102,11 +110,11 @@ bool readJsonConfig(char* jsonFile) {
     global_config.screenCalYOffset = settings["screenCalYOffset"].as<float>();
     global_config.screenCalYMult = settings["screenCalYMult"].as<float>();
     charPtr = settings["wifiSSID"].as<const char*>();
-    strncpy(global_config.wifiSSID, charPtr, sizeof(global_config.wifiSSID));
+    if (charPtr) strncpy(global_config.wifiSSID, charPtr, sizeof(global_config.wifiSSID));
     charPtr = settings["wifiPassword"].as<const char*>();
-    strncpy(global_config.wifiPassword, charPtr, sizeof(global_config.wifiPassword));
+    if (charPtr) strncpy(global_config.wifiPassword, charPtr, sizeof(global_config.wifiPassword));
     charPtr = settings["ServerHost"].as<const char*>();
-    strncpy(global_config.ServerHost, charPtr,sizeof(global_config.ServerHost));
+    if (charPtr) strncpy(global_config.ServerHost, charPtr,sizeof(global_config.ServerHost));
     Serial.printf("ServerHost:%s-%s-%s\n", charPtr, global_config.ServerHost, global_config.ServerHost);
     global_config.ServerPort = settings["ServerPort"].as<unsigned short>();
     for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++) {
@@ -125,7 +133,7 @@ bool readJsonConfig(char* jsonFile) {
 
 void dumpConfig() {
     String buffer;
-    loadJson();                                                     // Load JSON data
+    JsonDocument settings = loadJson();                                          // Load JSON data
     serializeJsonPretty(settings, buffer);
     Serial.println(buffer);
 }
