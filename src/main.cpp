@@ -1,6 +1,7 @@
 #include <Esp.h>
 
 #include "conf/global_config.h"
+#include "conf/json_config.h"
 #include "core/screen_driver.h"
 #include "core/ota.h"
 #include "ui/wifi_setup.h"
@@ -61,6 +62,25 @@ void setup() {
     size_t remainingBytes = totalBytes - usedBytes;
     Serial.printf("LittleFS %s, %d kB free (%d%%)\n", lastStatus?"ok":"*BAD*", remainingBytes / 1024, (100 * remainingBytes) / totalBytes);
 
+    // List content of LittleFS
+    #ifdef DUMP_FILE_SYSTEM
+        String path = "/";
+        File dir = LittleFS.open(path);
+        Serial.println("Files saved:");
+        File entry = dir.openNextFile();
+        short fileCount = 0;
+        while(entry){
+            String fileName = String(entry.name());
+            fileName = path + fileName;
+            Serial.printf("\t%s\n", fileName.c_str());
+            fileCount++;
+            entry = dir.openNextFile();
+        }
+        Serial.printf("\t%d file%s found\n", fileCount, fileCount != 1?"s":"");
+        dir.close();
+    #endif
+
+    
     // Personal Settings to don't have to set them at every reset.
     // They are saved after have been set, so the flag FORCE_CONFIG can be disabled after
     #if FORCE_CONFIG
@@ -134,6 +154,7 @@ analogSetAttenuation(ADC_0db); // 0dB(1.0x) 0~800mV
 #endif
 
     //make_sound(500,500);
+    dumpConfig();
 
     Serial.println(F("Application ready"));
 
