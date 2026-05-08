@@ -49,7 +49,13 @@
 #define LV_MEM_CUSTOM 0
 #if LV_MEM_CUSTOM == 0
     /*Size of the memory available for `lv_mem_alloc()` in bytes (>= 2kB)*/
-    #define LV_MEM_SIZE (48U * 1024U)          /*[bytes]*/
+    //#define LV_MEM_SIZE (32U * 1024U)          /*[bytes]*/
+#if PAGES < 3
+    #define LV_MEM_SIZE (32U * 1024U) 
+#elif
+    #define LV_MEM_SIZE (48U * 1024U) 
+#endif
+
 
     /*Set an address for the memory pool instead of allocating it as a normal array. Can be in external SRAM too.*/
     #define LV_MEM_ADR 0     /*0: unused*/
@@ -409,7 +415,6 @@
         #define LV_FONT_DEFAULT &Montserrat_Bold_18_custom
     #endif
 #else /* FONT_TO_USE == 1 */
-
     // For small device 10, 12, 14 bold
     #if DEVICE_SIZE == 1
         #define LV_FONT_CUSTOM_DECLARE LV_FONT_DECLARE(Montserrat_12) LV_FONT_DECLARE(Montserrat_Bold_14)

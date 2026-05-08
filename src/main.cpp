@@ -92,14 +92,14 @@ void setup() {
             strcpy(global_config.wifiSSID, WIFISSID);
             strcpy(global_config.ServerHost, SERVERHOST);
             global_config.ServerPort = SERVERPORT;
-            const static unsigned short t[] = DEVICELIST;
+            const static short t[] = DEVICELIST;
 
-        #else
             strcpy(global_config.wifiPassword, "xxxxxxxxxxxxxxxxxxx");
             strcpy(global_config.wifiSSID, "xxxxxxxxxxxxxxx");
             strcpy(global_config.ServerHost, "192.168.1.1");
             global_config.ServerPort = 8080;
-            const static unsigned short t[] = {122, 75, 16, 36, 28, 35, 63, 90, 145};
+            const static short t[] = {122, 75, 16, 36, 28, -2, 63, 90, 145};
+            const static short t2[] = {12, 75, 16, 36, 28, -2, 63, 0, 0};
         #endif
 
         global_config.wifiConfigured = true;
@@ -110,7 +110,14 @@ void setup() {
         for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++)
         {
             if (i < sizeof(t) / sizeof(t[0])) { v = t[i]; } else { v = 0; }
-            global_config.page[0].ListDevices[i] = v;
+            global_pages[0].ListDevices[i] = v;
+        }
+
+        // To test
+        for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++)
+        {
+            if (i < sizeof(t) / sizeof(t[0])) { v = t2[i]; } else { v = 0; }
+            global_pages[1].ListDevices[i] = v;
         }
 
         WriteGlobalConfig();

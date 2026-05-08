@@ -77,7 +77,7 @@ typedef struct _GLOBAL_CONFIG_V3 {
     char ServerHost[64];
     unsigned short ServerPort;
 
-    int ListDevices[TOTAL_ICONX*TOTAL_ICONY];
+    int ListDevices[TOTAL_ICONX*TOTAL_ICONY]; // No more used
 
     unsigned char color_scheme;
     unsigned char brightness;
@@ -94,7 +94,6 @@ typedef struct _COLOR_DEF {
 extern GLOBAL_CONFIG global_config;
 extern GLOBAL_PAGE global_pages[];
 
-extern int currentPage;
 extern COLOR_DEF color_defs[];
 extern void writeJsonConfig();
 

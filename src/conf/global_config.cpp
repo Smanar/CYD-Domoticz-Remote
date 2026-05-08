@@ -5,8 +5,6 @@
 GLOBAL_CONFIG global_config = {0};
 GLOBAL_PAGE global_pages[PAGES] = {0};
 
-int currentPage = 0;
-
 COLOR_DEF color_defs[] = {
     {LV_PALETTE_BLUE, LV_PALETTE_RED},
     {LV_PALETTE_GREEN, LV_PALETTE_PURPLE},
@@ -29,13 +27,17 @@ void WriteGlobalConfig() {
 
 void VerifyVersion(){
     Preferences preferences;
+
     if (!preferences.begin("global_config", true)) return;
-    size_t prefLength = preferences.getBytesLength("global_config");
-    char prefBuffer[prefLength];
-    preferences.getBytes("global_config", &prefBuffer, prefLength);
-    unsigned char version = prefBuffer[0];
+
+    // TODO : preference is open and close too many time for nothing, but all this code will be removed later.
+
+    unsigned char version = 0;
+    preferences.getBytes("global_config", &version, sizeof(version));
     preferences.end();
+
     Serial.printf("Config version: %d\n", version);
+
     // Convert V3 to V4 if needed
     if (version == 3) {
         Serial.println(F("Converting preferences from V3 to V4"));
@@ -55,7 +57,7 @@ void VerifyVersion(){
         global_config.screenCalXMult = configV3.screenCalXMult;
         global_config.screenCalYOffset = configV3.screenCalYOffset;
         global_config.screenCalYMult = configV3.screenCalYMult;
-        strncpy(global_config.wifiSSID, configV3.wifiSSID, sizeof(configV3.wifiSSID));
+        strncpy(global_config.wifiSSID, configV3.wifiSSID, sizeof(global_config.wifiSSID));
         strncpy(global_config.wifiPassword, configV3.wifiPassword, sizeof(global_config.wifiPassword));
         strncpy(global_config.ServerHost, configV3.ServerHost, sizeof(global_config.ServerHost));
         global_config.ServerPort = configV3.ServerPort;
@@ -75,6 +77,7 @@ void VerifyVersion(){
         global_config.screenTimeout = configV3.screenTimeout;
         WriteGlobalConfig();
     }
+
     if (global_config.version != CONFIG_VERSION) {
         Serial.println(F("Clearing Global Config"));
         if (!preferences.begin("global_config", false)) return;
@@ -85,22 +88,18 @@ void VerifyVersion(){
 
 void LoadGlobalConfig() {
     global_config.version = CONFIG_VERSION;
+
+    //Set defaut values
     global_config.brightness = 255;
     global_config.screenTimeout = 0;
 
-    for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++) {
-        global_pages[0].ListDevices[i] = i;
-    }
-
-    for (uint p=1; p<PAGES; p++){
-        strcpy(global_pages[p].name, "");
-        for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++) {
-            global_pages[p].ListDevices[i] = 0;
-        }
-    }
-
-    for (uint p=0; p < PAGES; p++) {                            // Set default names
-        snprintf(global_pages[p].name, sizeof(global_pages[p].name), "Page %d", p+1);
+    for (uint p=0; p<PAGES; p++)
+    {
+        if (p > 0) snprintf(global_pages[p].name, sizeof(global_pages[p].name), "Page %d", p+1); // No name for Homepage ?
+        //for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++) {
+        //    global_pages[p].ListDevices[i] = 0;
+        //}
+        //Already set with GLOBAL_PAGE global_pages[PAGES] = {0};
     }
 
     Preferences preferences;

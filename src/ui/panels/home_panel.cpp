@@ -19,6 +19,8 @@ int Size_h = int(LCD_HEIGHT/TOTAL_ICONY) - TOTAL_OFFSET_Y;
 //Icon size
 //int Size_icon = 35;
 
+int currentPage = 0;
+
 static void btn_event_cb_group(lv_event_t * e)
 {
     int idx = (int)lv_event_get_user_data(e);

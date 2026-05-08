@@ -13,7 +13,10 @@
 Device myDevices[TOTAL_ICONX*TOTAL_ICONY];
 char TmpBuffer[255]; // To prevent multiple re-alloc
 static int tab[24]; // Tab for graph
-String _ListDevice; // Use string here but allocated only at start 
+
+extern int currentPage;
+String _ListDevice;
+
 
 #if BONUSPAGE > 0
 Device myDevicesP2[TOTAL_ICONX*TOTAL_ICONY*BONUSPAGE];
@@ -66,7 +69,7 @@ void Init_data(void)
         if (global_pages[currentPage].ListDevices[i] && HttpInitDevice(&myDevices[i], global_pages[currentPage].ListDevices[i]))
         {
             Serial.printf("Initialize Domoticz device id: %d , Name : %s\n", global_pages[currentPage].ListDevices[i], myDevices[i].name);
-            //delay(50);
+            delay(50); // During tests, the device spam Domoticz to get data too fast, and Domoticz "skip" some answers, 50ms is not a big delay.
         }
     }
 
@@ -83,7 +86,7 @@ void Init_data(void)
             if (TabP2[i] && HttpInitDevice(&myDevicesP2[i], TabP2[i]))
             {
                 Serial.printf("Initialize Domoticz device id: %d , Name : %s\n", TabP2[i], myDevicesP2[i].name);
-                //delay(50);
+                delay(50); // During tests, the device spam Domoticz to get data too fast, and Domoticz "skip" some answers, 50ms is not a big delay.
             }
         }
     }
@@ -111,6 +114,7 @@ int Get_ID_Device(int JSonidx)
     return -1;
 }
 
+//TODO : need to remove the use of String _ListDevice, can be optimised
 const char *GetListdevice(int page, bool displayAll)
 {
     int idx;
@@ -180,12 +184,13 @@ void Update_device_data(JsonObject RJson2)
     if (myDevices[ID].data && strcmp(data, myDevices[ID].data) != 0)
     {
         //Use dynamic array, but only 1 time
-        if (strlen(data) >= myDevices[ID].lenData)
+        size_t dataLen = strlen(data);
+        if (dataLen >= myDevices[ID].lenData)
         {
             if (myDevices[ID].data) free(myDevices[ID].data);
-            myDevices[ID].data = (char*)malloc(strlen(data) + 1);
+            myDevices[ID].data = (char*)malloc(dataLen + 1);
             if (!myDevices[ID].data) return; // malloc failed
-            myDevices[ID].lenData = strlen(data);
+            myDevices[ID].lenData = dataLen;
         }
 
         strncpy(myDevices[ID].data, data, myDevices[ID].lenData + 1);
@@ -378,7 +383,7 @@ bool HttpInitDevice(Device *d, int idx)
     if (idx > 0) {                                                  // Positive id -> Domoticz idx
         JsonDocument doc;
         #ifdef OLD_DOMOTICZ
-            String url = "/json.htm?type=devices&rid=" + String(id);
+            String url = "/json.htm?type=devices&rid=" + String(idx);
         #else
             String url = "/json.htm?type=command&param=getdevices&rid=" + String(idx);
         #endif

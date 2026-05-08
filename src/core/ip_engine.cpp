@@ -214,7 +214,7 @@ static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
                                 Serial.printf("[WSc] Can't deserialize doc2: %s\n", err2.c_str());
                                 break;
                             }
-                            JsonObject RJson = doc2.as<JsonObject>();
+                            //JsonObject RJson = doc2.as<JsonObject>();
 
                             //char buffer[4096];
                             //serializeJsonPretty(doc2, buffer);
@@ -273,7 +273,6 @@ static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
 			break;
 	}
 }
-
 
 
 bool WS_Running(void)
