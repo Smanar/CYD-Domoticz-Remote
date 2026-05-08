@@ -28,12 +28,16 @@ JsonDocument loadJson() {
     settings["wifiPassword"] = global_config.wifiPassword;
     settings["ServerHost"] = global_config.ServerHost;
     settings["ServerPort"] = global_config.ServerPort;
-    for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++) {
-        settings["ListDevices"][i] = global_config.ListDevices[i];
-    }
     settings["color_scheme"] = global_config.color_scheme;
     settings["brightness"] = global_config.brightness;
     settings["screenTimeout"] = global_config.screenTimeout;
+    for (uint p=0; p<PAGES; p++) {
+        settings["pages"][p]["name"] = global_pages[p].name;
+        settings["pages"][p]["number"] = p+1;
+        for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++) {
+            settings["pages"][p]["idx"][i] = global_pages[p].ListDevices[i];
+        }
+    }
 
     return settings;
 }
@@ -97,7 +101,12 @@ bool readJsonConfig(const char* jsonFile) {
     const char* charPtr;                                            // Pointer for char data
 
     // Load all settings into corresponding variables
-    global_config.version = settings["version"].as<unsigned char>();
+    unsigned char jsonVersion = settings["version"].as<unsigned char>();
+    if (jsonVersion != CONFIG_VERSION) {
+        Serial.printf("Json file version %d, should be %d\n", jsonVersion, CONFIG_VERSION);
+        return false;
+    }
+    global_config.version = jsonVersion;
     global_config.screenCalibrated = settings["screenCalibrated"].as<bool>();
     global_config.wifiConfigured = settings["wifiConfigured"].as<bool>();
     global_config.ipConfigured = settings["ipConfigured"].as<bool>();
@@ -117,8 +126,12 @@ bool readJsonConfig(const char* jsonFile) {
     if (charPtr) strncpy(global_config.ServerHost, charPtr,sizeof(global_config.ServerHost));
     Serial.printf("ServerHost:%s-%s-%s\n", charPtr, global_config.ServerHost, global_config.ServerHost);
     global_config.ServerPort = settings["ServerPort"].as<unsigned short>();
-    for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++) {
-        global_config.ListDevices[i] = settings["ListDevices"][i].as<int>();
+    for (uint p=0; p<PAGES; p++) {
+        charPtr = settings["pages"][p]["name"].as<const char*>();
+        if (charPtr) strncpy(global_pages[p].name, charPtr, sizeof(global_pages[p].name));
+        for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++) {
+            global_pages[p].ListDevices[i] = settings["pages"][p]["idx"][i].as<int>();
+        }
     }
     global_config.color_scheme = settings["color_scheme"].as<unsigned char>();
     global_config.brightness = settings["brightness"].as<unsigned char>();

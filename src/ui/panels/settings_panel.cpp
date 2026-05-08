@@ -6,6 +6,14 @@
 #include "../../ui/navigation.h"
 
 void Init_data(void);
+int y_offset = 0;
+const int y_element_size = 50;
+const int y_seperator_size = 1;
+const int y_seperator_x_padding = 50;
+const int panel_width = LCD_WIDTH - 40;
+const int y_element_x_padding = 30;
+const static lv_point_t line_points[] = { {0, 0}, {panel_width - y_seperator_x_padding, 0} };
+static lv_obj_t * settings_panel;
 
 static int GetIntTok(const char * str, int t, const char c)
 {
@@ -111,7 +119,7 @@ static void edit_device_list_switch(lv_event_t * e)
 {
     lv_event_code_t code = lv_event_get_code(e);
     lv_obj_t * ta = lv_event_get_target(e);
-    lv_obj_t * display = (lv_obj_t *)lv_event_get_user_data(e);
+    int pagePtr =  (int) lv_event_get_user_data(e);
 
     if (code == LV_EVENT_FOCUSED)
     {
@@ -120,8 +128,8 @@ static void edit_device_list_switch(lv_event_t * e)
             lv_obj_set_style_max_height(kb, LV_HOR_RES * 2 / 3, 0);
         }
 
-        lv_obj_update_layout(display);   /*Be sure the sizes are recalculated*/
-        lv_obj_set_height(display, LV_VER_RES - lv_obj_get_height(kb));
+        lv_obj_update_layout(settings_panel);   /*Be sure the sizes are recalculated*/
+        lv_obj_set_height(settings_panel, LV_VER_RES - lv_obj_get_height(kb));
         lv_indev_wait_release(lv_indev_get_act());
         lv_obj_scroll_to_view_recursive(ta, LV_ANIM_OFF);
 
@@ -132,12 +140,12 @@ static void edit_device_list_switch(lv_event_t * e)
     }
     else if (code == LV_EVENT_DEFOCUSED)
     {
-        lv_obj_set_height(display, LV_VER_RES);
+        lv_obj_set_height(settings_panel, LV_VER_RES);
         lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
     }
     else if(code == LV_EVENT_READY || code == LV_EVENT_CANCEL) {
         //lv_obj_move_background(kb); // Hide the keyboard
-        lv_obj_set_height(display, LV_VER_RES);
+        lv_obj_set_height(settings_panel, LV_VER_RES);
         lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
         lv_obj_clear_state(ta, LV_STATE_FOCUSED);
         lv_indev_reset(NULL, ta);   /*To forget the last clicked object to make it focusable again*/
@@ -145,23 +153,57 @@ static void edit_device_list_switch(lv_event_t * e)
 
         for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++)
         {
-            global_config.ListDevices[i] = GetIntTok(lv_textarea_get_text(ta), i,',');
+            global_pages[pagePtr].ListDevices[i] = GetIntTok(lv_textarea_get_text(ta), i,',');
         }
         WriteGlobalConfig();
         Init_data();
-        navigation_screen(HOMEPAGE_PANEL);
+        ////navigation_screen(HOMEPAGE_PANEL);
  
     }
- }
+}
 
-int y_offset = 0;
-const int y_element_size = 50;
-const int y_seperator_size = 1;
-const int y_seperator_x_padding = 50;
-const int panel_width = LCD_WIDTH - 40;
-const int y_element_x_padding = 30;
-const static lv_point_t line_points[] = { {0, 0}, {panel_width - y_seperator_x_padding, 0} };
+static void edit_page_name(lv_event_t * e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    lv_obj_t * ta = lv_event_get_target(e);
+    int pagePtr =  (int) lv_event_get_user_data(e);
 
+    if (code == LV_EVENT_FOCUSED)
+    {
+        if (kb == NULL) {
+            kb = lv_keyboard_create(lv_scr_act());
+            lv_obj_set_style_max_height(kb, LV_HOR_RES * 2 / 3, 0);
+        }
+
+        lv_obj_update_layout(settings_panel);   /*Be sure the sizes are recalculated*/
+        lv_obj_set_height(settings_panel, LV_VER_RES - lv_obj_get_height(kb));
+        lv_indev_wait_release(lv_indev_get_act());
+        lv_obj_scroll_to_view_recursive(ta, LV_ANIM_OFF);
+
+        lv_obj_clear_flag(kb, LV_OBJ_FLAG_HIDDEN);
+        //lv_obj_move_foreground(kb); // Show the keyboard
+
+        lv_keyboard_set_textarea(kb, ta);
+    }
+    else if (code == LV_EVENT_DEFOCUSED)
+    {
+        lv_obj_set_height(settings_panel, LV_VER_RES);
+        lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
+    }
+    else if(code == LV_EVENT_READY || code == LV_EVENT_CANCEL) {
+        //lv_obj_move_background(kb); // Hide the keyboard
+        lv_obj_set_height(settings_panel, LV_VER_RES);
+        lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_clear_state(ta, LV_STATE_FOCUSED);
+        lv_indev_reset(NULL, ta);   /*To forget the last clicked object to make it focusable again*/
+
+        strncpy(global_pages[pagePtr].name, lv_textarea_get_text(ta), sizeof(global_pages[pagePtr].name));
+
+        WriteGlobalConfig();
+        Init_data();
+        ////navigation_screen(HOMEPAGE_PANEL);
+     }
+}
 void create_settings_widget(const char* label_text, lv_obj_t* object, lv_obj_t* root_panel){
     lv_obj_t * panel = lv_obj_create(root_panel);
     lv_obj_set_style_border_width(panel, 0, 0);
@@ -189,6 +231,7 @@ void settings_panel_init(lv_obj_t* panel)
 {
     y_offset = 0;
     kb = nullptr;
+    settings_panel = panel;
 
     lv_obj_add_flag(panel, LV_OBJ_FLAG_SCROLLABLE);
 
@@ -258,12 +301,24 @@ void settings_panel_init(lv_obj_t* panel)
         lv_obj_add_state(toggle, LV_STATE_CHECKED);
     create_settings_widget("Not used yet", toggle, panel);
 
-    lv_obj_t * textarea = lv_textarea_create(panel);
-    lv_obj_add_event_cb(textarea, edit_device_list_switch, LV_EVENT_ALL, panel);
-    lv_textarea_add_text(textarea, GetListdevice());
-    lv_textarea_set_one_line(textarea, true);
-    lv_obj_set_width(textarea, lv_pct(60));
-    create_settings_widget("Dft devices", textarea, panel);
+    char buffer[80];
+    for (int p=0; p<PAGES; p++) {
+        lv_obj_t * textarea = lv_textarea_create(panel);
+        lv_obj_add_event_cb(textarea, edit_page_name, LV_EVENT_ALL, (void*) p);
+        lv_textarea_add_text(textarea, global_pages[p].name);
+        lv_textarea_set_one_line(textarea, true);
+        lv_obj_set_width(textarea, lv_pct(75));
+        snprintf(buffer, sizeof(buffer), "Page %d name", p+1);
+        create_settings_widget(buffer, textarea, panel);
+
+        textarea = lv_textarea_create(panel);
+        lv_obj_add_event_cb(textarea, edit_device_list_switch, LV_EVENT_ALL, (void*) p);
+        lv_textarea_add_text(textarea, GetListdevice(p, true));
+        lv_textarea_set_one_line(textarea, true);
+        lv_obj_set_width(textarea, lv_pct(75));
+        snprintf(buffer, sizeof(buffer), "Page %d devices", p+1);
+        create_settings_widget(buffer, textarea, panel);
+    }
 
     btn = lv_btn_create(panel);
     lv_obj_add_event_cb(btn, exit_click, LV_EVENT_CLICKED, NULL);

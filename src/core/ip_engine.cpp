@@ -147,24 +147,27 @@ static void hexdump(const void *mem, uint32_t len, uint8_t cols = 16) {
 //
 void subscribedeviceWS(short r, const char *c)
 {
-    char localBuffer[512];
+    if (*c) {
+        char localBuffer[512];
 
-    if (r == 0)
-    {
-        lv_snprintf(localBuffer, sizeof(localBuffer),"{\"event\":\"request\",\"query\":\"type=command&param=getdevices&rid=%s\"}", c);
-    }
-    else
-    {
-        lv_snprintf(localBuffer, sizeof(localBuffer), "{\"event\":\"request\",\"query\":\"type=command&param=%s\"}", c);
-    }
+        if (r == 0)
+        {
+            lv_snprintf(localBuffer, sizeof(localBuffer),"{\"event\":\"request\",\"query\":\"type=command&param=getdevices&rid=%s\"}", c);
+        }
+        else
+        {
+            lv_snprintf(localBuffer, sizeof(localBuffer), "{\"event\":\"request\",\"query\":\"type=command&param=%s\"}", c);
+        }
 
-    if (strlen(localBuffer) >= sizeof(localBuffer) - 1)
-    {
-        Serial.println(F("[WS] subscribedeviceWS: buffer too small !"));
-    }
+        if (strlen(localBuffer) >= sizeof(localBuffer) - 1)
+        {
+            Serial.println(F("[WS] subscribedeviceWS: buffer too small !"));
+        }
 
-    Serial.printf("Special Setting to WS: %s\n", localBuffer);
-    WSclient.sendTXT(localBuffer);
+        Serial.printf("Special Setting to WS: %s\n", localBuffer);
+        WSclient.sendTXT(localBuffer);
+
+    }
 }
 
 static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
@@ -211,7 +214,7 @@ static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
                                 Serial.printf("[WSc] Can't deserialize doc2: %s\n", err2.c_str());
                                 break;
                             }
-                            //JsonObject RJson = doc2.as<JsonObject>();
+                            JsonObject RJson = doc2.as<JsonObject>();
 
                             //char buffer[4096];
                             //serializeJsonPretty(doc2, buffer);

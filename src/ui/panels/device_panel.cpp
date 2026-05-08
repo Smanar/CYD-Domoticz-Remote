@@ -254,6 +254,7 @@ LV_IMG_DECLARE(percent35x35)
 LV_IMG_DECLARE(balance35x35)
 LV_IMG_DECLARE(thermostat35x35)
 LV_IMG_DECLARE(finger35x35)
+LV_IMG_DECLARE(arrow35x35)
 
 // To convert image https://lvgl.io/tools/imageconverter
 // - Version : Lvlg v8
@@ -302,6 +303,8 @@ const lv_img_dsc_t *Geticon(int type)
             return &sensor35x35;
         case TYPE_METEO:
             return &meteo35x35;
+        case TYPE_PAGE:
+            return &arrow35x35;
         default:
         break;
     }
