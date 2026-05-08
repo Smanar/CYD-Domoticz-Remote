@@ -64,6 +64,15 @@ static void btn_event_cb(lv_event_t * e)
             HTTPGETRequest(buff);
             return;
         }
+        if (d2->type == TYPE_PAGE) {                                // Clicked on a page button?
+            unsigned int pagePtr = -d2->idx - 1;                    // Get back to page index (0 - PAGES -1)
+            if (pagePtr < PAGES) {                                  // Withion range?
+                currentPage = pagePtr;                              // Set current page
+                Init_data();                                        // Reload data
+                RefreshHomePage();                                  // Reload page as widget changed
+                return;
+            }
+        }
 #endif
         //Serial.printf("Clic sur boutton: %d", * btn_no);
         Select_deviceMemorised(d);
@@ -300,6 +309,7 @@ void home_panel_init(lv_obj_t* panel, Device d[], short page)
                 case TYPE_PUSH:
                 case TYPE_WARNING: // This one is a sensor, but too much text to be displayed on homepage
                 case TYPE_TEXT: // This one is a sensor, but too much text to be displayed on homepage
+                case TYPE_PAGE:
                 {
                     Widget_button(panel, d[i].name, cx, cy, Size_w , Size_h, device_color, &d[i], icon); 
                 }

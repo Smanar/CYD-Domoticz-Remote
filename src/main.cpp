@@ -110,7 +110,7 @@ void setup() {
         for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++)
         {
             if (i < sizeof(t) / sizeof(t[0])) { v = t[i]; } else { v = 0; }
-            global_config.ListDevices[i] = v;
+            global_config.page[0].ListDevices[i] = v;
         }
 
         WriteGlobalConfig();

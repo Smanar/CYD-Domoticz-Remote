@@ -27,7 +27,8 @@ enum {
     TYPE_THERMOSTAT,
     TYPE_TEXT,
     TYPE_AIR_QUALITY,
-    TYPE_PUSH
+    TYPE_PUSH,
+    TYPE_PAGE
 };
 
 typedef struct _Device {
@@ -36,7 +37,7 @@ typedef struct _Device {
     char* data = nullptr;
     char* levelname = nullptr;
     unsigned short level = 0;
-    unsigned short idx = 0;
+    short idx = 0;
     unsigned short type = TYPE_UNUSED;
     unsigned short lenData = 0;
     unsigned short maxlevel = 100;
@@ -47,9 +48,9 @@ typedef struct _Device {
 
 void Init_data();
 void FillDeviceData(Device *d, int idx);
-bool HttpInitDevice(Device *d, int id);
+bool HttpInitDevice(Device *d, int idx);
 int * GetGraphValue(int type, int idx, int *, int *);
-const char *GetListdevice(void);
+const char *GetListdevice(int page, bool displayAll = true);
 void GetThermostatValue(int idx, int *min, int *max, float *step, float *setpoint);
 
 #endif
