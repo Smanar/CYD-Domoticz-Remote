@@ -54,7 +54,6 @@ For the hardware part (according to your device) mains settings are in the file 
 	-DFORCECALIBRATE=false # Reset the calibration at every restart, used to reset it after a config change.
 	#-DOLD_DOMOTICZ # If you are using older Domoticz version < 2023.2
 	-DPAGES=1 # Count of home pages
-	-DBONUSPAGE=0 # Special page to add, similar to Homepage but not updated, from 1 to 3
 	-DFASTCLIC # Enable 1 clic action for some widget
 	#-DNO_INFO_PAGE # Disable the Info panel
 	#-DNO_GROUP_PAGE # Disable the Group/scene panel

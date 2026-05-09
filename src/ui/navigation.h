@@ -15,15 +15,6 @@ void RefreshDevicePanel(void);
 enum {
     TOOL_PANEL,
     HOMEPAGE_PANEL,
-#if BONUSPAGE > 0
-    BONUSPAGE_PANEL1,
-#endif
-#if BONUSPAGE > 1
-    BONUSPAGE_PANEL2,
-#endif
-#if BONUSPAGE > 2
-    BONUSPAGE_PANEL3,
-#endif
 #ifndef NO_GROUP_PAGE
     GROUP_PANEL,
 #endif
