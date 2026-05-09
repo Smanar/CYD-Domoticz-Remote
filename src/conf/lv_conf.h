@@ -52,7 +52,7 @@
     //#define LV_MEM_SIZE (32U * 1024U)          /*[bytes]*/
 #if PAGES < 3
     #define LV_MEM_SIZE (32U * 1024U) 
-#elif
+#else
     #define LV_MEM_SIZE (48U * 1024U) 
 #endif
 

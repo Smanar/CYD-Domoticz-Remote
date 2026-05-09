@@ -29,11 +29,12 @@ void VerifyVersion(){
     Preferences preferences;
 
     if (!preferences.begin("global_config", true)) return;
-
-    // TODO : preference is open and close too many time for nothing, but all this code will be removed later.
-
-    unsigned char version = 0;
-    preferences.getBytes("global_config", &version, sizeof(version));
+    // As size changes between V3 (larger) and V4 (smaller), we should read existing
+    //    preferences into a local buffer with appropriate size
+    size_t prefLength = preferences.getBytesLength("global_config");
+    char prefBuffer[prefLength];
+    preferences.getBytes("global_config", &prefBuffer, prefLength);
+    unsigned char version = prefBuffer[0];
     preferences.end();
 
     Serial.printf("Config version: %d\n", version);
