@@ -9,9 +9,6 @@ static int actived_panel = 0;
 static int master_panel = 0;
 
 extern Device myDevices[];
-#if BONUSPAGE > 0
-extern Device myDevicesP2[];
-#endif
 
 int GetActivePanel(void)
 {
@@ -79,17 +76,11 @@ void navigation_screen(unsigned char active_panel)
             break;
         case HOMEPAGE_PANEL: // Homepage
             master_panel = active_panel;
-//#if (BONUSPAGE == 0) && defined(LIGHTWS)
-//            subscribedeviceWS(0, GetListdevice());
-//#endif
             home_panel_init(panel, myDevices);
             break;
 #ifndef NO_GROUP_PAGE
         case GROUP_PANEL: //Group/Scene panel
             master_panel = active_panel;
-//#if (BONUSPAGE == 0) && defined(LIGHTWS)
-//            subscribedeviceWS(1, "getscenes");
-//#endif
             group_panel_init(panel);
             break;
 #endif
@@ -97,24 +88,6 @@ void navigation_screen(unsigned char active_panel)
         case INFO_PANEL: //Info panel
             master_panel = active_panel;
             info_panel_init(panel);
-            break;
-#endif
-#if BONUSPAGE > 0
-        case BONUSPAGE_PANEL1:// Second Device list page
-            master_panel = active_panel;
-            home_panel_init(panel, myDevicesP2);
-            break;
-#endif
-#if BONUSPAGE > 1
-        case BONUSPAGE_PANEL2:// third  Device list page
-            master_panel = active_panel;
-            home_panel_init(panel, myDevicesP2,1);
-            break;
-#endif
-#if BONUSPAGE > 2
-        case BONUSPAGE_PANEL3:// fourth Device list page
-            master_panel = active_panel;
-            home_panel_init(panel, myDevicesP2,2);
             break;
 #endif
         case DEVICE_PANEL: // Device panel

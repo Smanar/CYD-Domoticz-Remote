@@ -17,35 +17,15 @@ static int tab[24]; // Tab for graph
 extern int currentPage;
 String _ListDevice;
 
-
-#if BONUSPAGE > 0
-Device myDevicesP2[TOTAL_ICONX*TOTAL_ICONY*BONUSPAGE];
-const static unsigned short TabP2[] = {72, 80, 34, // Page 1, 3* 3 icons
-                                       36, 28, 35, 
-                                       57, 89, 45,
-                                       28, 80, 45, // Page 2, 3* 3 icons
-                                       36, 89, 35,
-                                       57, 89, 45 };
-#endif
-
 void RefreshHomePage(void);
 
-
-
-char * Cleandata(unsigned short t, const char *origin, const char *bonus = nullptr) 
+char * Cleandata(unsigned short t, const char *origin) 
 {
     if (!origin) return TmpBuffer;
     
     if (strncmp(origin, "Humidity ", 9) == 0) origin += 9;
 
-    if (bonus)
-    {
-        snprintf(TmpBuffer, sizeof(TmpBuffer), "%s;%s", origin, bonus);
-    }
-    else
-    {
-        snprintf(TmpBuffer, sizeof(TmpBuffer), "%s", origin);
-    }
+    snprintf(TmpBuffer, sizeof(TmpBuffer), "%s", origin);
 
     if (t == TYPE_SETPOINT || t == TYPE_THERMOSTAT) {
         strncat(TmpBuffer, "°C", sizeof(TmpBuffer) - strlen(TmpBuffer) - 1);
@@ -73,25 +53,9 @@ void Init_data(void)
         }
     }
 
-#if (BONUSPAGE == 0) && defined(LIGHTWS)
+#if defined(LIGHTWS)
     subscribedeviceWS(0, GetListdevice(currentPage, false));
 #endif
-
-#if BONUSPAGE > 0
-    for (int i = 0; i < (TOTAL_ICONX*TOTAL_ICONY*BONUSPAGE); i = i + 1)
-    {
-        if (i < SIZEOF(TabP2))
-        {
-            myDevicesP2[i].type = TYPE_UNUSED;
-            if (TabP2[i] && HttpInitDevice(&myDevicesP2[i], TabP2[i]))
-            {
-                Serial.printf("Initialize Domoticz device id: %d , Name : %s\n", TabP2[i], myDevicesP2[i].name);
-                delay(50); // During tests, the device spam Domoticz to get data too fast, and Domoticz "skip" some answers, 50ms is not a big delay.
-            }
-        }
-    }
-#endif
-
 }
 
 void FillDeviceData(Device *d, int idx)
