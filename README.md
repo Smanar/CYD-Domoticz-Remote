@@ -53,15 +53,17 @@ For the hardware part (according to your device) mains settings are in the file 
 	#-DFORCE_CONFIG # Enable or disable the forced network configuration.
 	-DFORCECALIBRATE=false # Reset the calibration at every restart, used to reset it after a config change.
 	#-DOLD_DOMOTICZ # If you are using older Domoticz version < 2023.2
+	-DPAGES=1 # Count of home pages
 	-DBONUSPAGE=0 # Special page to add, similar to Homepage but not updated, from 1 to 3
 	-DFASTCLIC # Enable 1 clic action for some widget
 	#-DNO_INFO_PAGE # Disable the Info panel
 	#-DNO_GROUP_PAGE # Disable the Group/scene panel
 	#-DFONT_TO_USE=1 # 1=Standard 2=Custom 3=French, See fonts paragraph
 	#-DAUTO_BRIGHTNESS
-	#-DLIGHTWS # Only possible for version > 16088, decrease WS requests.
-	#-DPUSHOTA # To enable PUSH OTA (Don't enable both OTA)
+	-DLIGHTWS # Only possible for version > 16088, decrease WS requests.
+	-DPUSHOTA # To enable PUSH OTA (Don't enable both OTA)
 	#-DPULLOTA # To enable PULL OTA (Don't enable both OTA)
+	#-DCORE_DEBUG_LEVEL=5 # To enable debug on serial for librairies and core
 ``` 
 
 ## OTA

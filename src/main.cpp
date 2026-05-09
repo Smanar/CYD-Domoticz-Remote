@@ -15,6 +15,8 @@
 #include "LittleFS.h"
 //#include "core/sound.h"
 
+extern int currentPage;
+
 unsigned long now;
 void Websocket_loop(void);
 
@@ -26,16 +28,39 @@ static void scr_event_cb(lv_event_t * e)
     {
 
         lv_dir_t dir = lv_indev_get_gesture_dir(lv_indev_get_act());
-        if (dir == LV_DIR_LEFT) p +=1;
-        if (dir == LV_DIR_RIGHT) p -=1;
+        if (dir == LV_DIR_LEFT) {
+            if (p == HOMEPAGE_PANEL) {
+                if (currentPage < PAGES - 1) {
+                    currentPage +=1;
+                    Init_data();
+                    RefreshHomePage();                                  // Reload page as widget changed
+                } else {
+                    p +=1;
+                }
+            } else {
+                p +=1;
+            }
+        }
+        if (dir == LV_DIR_RIGHT) {
+            if (p == HOMEPAGE_PANEL) {
+                if (currentPage > 0) {
+                    currentPage -=1;
+                    Init_data();
+                    RefreshHomePage();                                  // Reload page as widget changed
+                } else {
+                    p -=1;
+                }
+            } else {
+                p -=1;
+            }
+        }
 
         if (p < 0) p = 0;
         if (p >= MAX_PANEL_SCROLL) p = MAX_PANEL_SCROLL - 1;
 
         lv_indev_wait_release(lv_indev_get_act());
 
-        //Serial.printf("Dir: %d\n", dir);
-        //Serial.printf("Page: %d\n", p);
+        //Serial.printf("Dir: %d, page: %d, currentPage: %d\n", dir, p, currentPage);
         
         navigation_screen(p);
     }

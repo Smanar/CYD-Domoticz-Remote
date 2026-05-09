@@ -6,7 +6,7 @@
 // USED for memorised settings
 #define CONFIG_VERSION 4
 // USED for OTA
-#define APPLICATION_VERSION "26.5.8-1"
+#define APPLICATION_VERSION "26.5.9-1"
 
 #if PAGES < 1
     #error PAGES should be at least 1
