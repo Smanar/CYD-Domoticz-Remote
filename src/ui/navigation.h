@@ -15,6 +15,9 @@ void RefreshDevicePanel(void);
 enum {
     TOOL_PANEL,
     HOMEPAGE_PANEL,
+#if PAGES > 0
+    SPECIAL_PAGES = HOMEPAGE_PANEL + PAGES,
+#endif
 #ifndef NO_GROUP_PAGE
     GROUP_PANEL,
 #endif

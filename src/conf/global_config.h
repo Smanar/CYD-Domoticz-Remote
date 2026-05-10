@@ -8,8 +8,8 @@
 // USED for OTA
 #define APPLICATION_VERSION "26.5.9-1"
 
-#if PAGES < 1
-    #error PAGES should be at least 1
+#if PAGES > 15
+    #error Too much pages asked
 #endif
 
 typedef struct _GLOBAL_PAGE {

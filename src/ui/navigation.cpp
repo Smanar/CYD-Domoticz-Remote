@@ -9,6 +9,7 @@ static int actived_panel = 0;
 static int master_panel = 0;
 
 extern Device myDevices[];
+extern Device myDevices2[][TOTAL_ICONX*TOTAL_ICONY];
 
 int GetActivePanel(void)
 {
@@ -78,6 +79,12 @@ void navigation_screen(unsigned char active_panel)
             master_panel = active_panel;
             home_panel_init(panel, myDevices);
             break;
+#if PAGES > 0
+        case (HOMEPAGE_PANEL + 1) ... SPECIAL_PAGES:
+            master_panel = active_panel;
+            home_panel_init(panel, myDevices2[active_panel - HOMEPAGE_PANEL - 1]);
+            break;
+#endif
 #ifndef NO_GROUP_PAGE
         case GROUP_PANEL: //Group/Scene panel
             master_panel = active_panel;

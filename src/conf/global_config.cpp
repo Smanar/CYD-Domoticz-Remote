@@ -3,7 +3,7 @@
 #include "lvgl.h"
 
 GLOBAL_CONFIG global_config = {0};
-GLOBAL_PAGE global_pages[PAGES] = {0};
+GLOBAL_PAGE global_pages[PAGES + 1] = {0}; // Home Page + Special pages
 
 COLOR_DEF color_defs[] = {
     {LV_PALETTE_BLUE, LV_PALETTE_RED},
@@ -65,12 +65,12 @@ void VerifyVersion(){
         for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++) {
             global_pages[0].ListDevices[i] = configV3.ListDevices[i];
         }
-        for (uint p=1; p < PAGES; p++) {                            // Clear unused pages
+        for (uint p=1; p <= PAGES; p++) {                            // Clear unused pages
             for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++) {
                 global_pages[p].ListDevices[i] = 0;
             }
         }
-        for (uint p=0; p < PAGES; p++) {                            // Set default names
+        for (uint p=0; p <= PAGES; p++) {                            // Set default names
             snprintf(global_pages[p].name, sizeof(global_pages[p].name), "Page %d", p+1);
         }
         global_config.color_scheme = configV3.color_scheme;
@@ -94,13 +94,9 @@ void LoadGlobalConfig() {
     global_config.brightness = 255;
     global_config.screenTimeout = 0;
 
-    for (uint p=0; p<PAGES; p++)
+    for (uint p=0; p<=PAGES; p++)
     {
         if (p > 0) snprintf(global_pages[p].name, sizeof(global_pages[p].name), "Page %d", p+1); // No name for Homepage ?
-        //for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++) {
-        //    global_pages[p].ListDevices[i] = 0;
-        //}
-        //Already set with GLOBAL_PAGE global_pages[PAGES] = {0};
     }
 
     Preferences preferences;

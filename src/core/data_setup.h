@@ -48,9 +48,9 @@ typedef struct _Device {
 
 void Init_data();
 void FillDeviceData(Device *d, int idx);
-bool HttpInitDevice(Device *d, int idx);
+bool HttpInitDevice(Device *d, const char* c);
 int * GetGraphValue(int type, int idx, int *, int *);
-const char *GetListdevice(int page, bool displayAll = true);
+const char *GetListdevice(int page, bool displayAll = false);
 void GetThermostatValue(int idx, int *min, int *max, float *step, float *setpoint);
 
 #endif

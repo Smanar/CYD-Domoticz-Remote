@@ -15,8 +15,6 @@
 #include "LittleFS.h"
 //#include "core/sound.h"
 
-extern int currentPage;
-
 unsigned long now;
 void Websocket_loop(void);
 
@@ -28,39 +26,44 @@ static void scr_event_cb(lv_event_t * e)
     {
 
         lv_dir_t dir = lv_indev_get_gesture_dir(lv_indev_get_act());
-        if (dir == LV_DIR_LEFT) {
-            if (p == HOMEPAGE_PANEL) {
-                if (currentPage < PAGES - 1) {
-                    currentPage +=1;
-                    Init_data();
-                    RefreshHomePage();                                  // Reload page as widget changed
-                } else {
-                    p +=1;
-                }
-            } else {
-                p +=1;
-            }
+
+#ifndef SLIDE
+        if ((p == HOMEPAGE_PANEL) && (dir == LV_DIR_LEFT))
+        {
+            //Skip all others pages
+            p = SPECIAL_PAGES + 1;
         }
-        if (dir == LV_DIR_RIGHT) {
-            if (p == HOMEPAGE_PANEL) {
-                if (currentPage > 0) {
-                    currentPage -=1;
-                    Init_data();
-                    RefreshHomePage();                                  // Reload page as widget changed
-                } else {
-                    p -=1;
-                }
-            } else {
-                p -=1;
-            }
+        else if ((p == SPECIAL_PAGES + 1) && (dir == LV_DIR_RIGHT ))
+        {
+            // Skip all others pages
+            p = HOMEPAGE_PANEL;
         }
+        else if ((p > HOMEPAGE_PANEL) && (p <= SPECIAL_PAGES ))
+        {
+            // return to Homepage
+            p = HOMEPAGE_PANEL;
+        }
+        else
+        {
+            if (dir == LV_DIR_LEFT) p +=1;
+            if (dir == LV_DIR_RIGHT) p -=1;
+        }
+#else
+        if (dir == LV_DIR_LEFT) p +=1;
+        if (dir == LV_DIR_RIGHT) p -=1;
+#endif
 
         if (p < 0) p = 0;
         if (p >= MAX_PANEL_SCROLL) p = MAX_PANEL_SCROLL - 1;
 
         lv_indev_wait_release(lv_indev_get_act());
 
-        //Serial.printf("Dir: %d, page: %d, currentPage: %d\n", dir, p, currentPage);
+        Serial.printf("Dir: %d, page: %d\n", dir, p);
+
+#ifndef SLIDE
+        //If slide disabled
+
+#endif
         
         navigation_screen(p);
     }
@@ -118,13 +121,13 @@ void setup() {
             strcpy(global_config.ServerHost, SERVERHOST);
             global_config.ServerPort = SERVERPORT;
             const static short t[] = DEVICELIST;
-
+        #else
             strcpy(global_config.wifiPassword, "xxxxxxxxxxxxxxxxxxx");
             strcpy(global_config.wifiSSID, "xxxxxxxxxxxxxxx");
             strcpy(global_config.ServerHost, "192.168.1.1");
             global_config.ServerPort = 8080;
-            const static short t[] = {122, 75, 16, 36, 28, -2, 63, 90, 145};
-            const static short t2[] = {12, 75, 16, 36, 28, -2, 63, 0, 0};
+            const static short t[] = {122, 75, 16, 36, 28, -1, 63, 90, 145};
+            const static short t2[] = {12, 75, 16, 36, 28, -1, 63, 0, 0};
         #endif
 
         global_config.wifiConfigured = true;
@@ -132,18 +135,21 @@ void setup() {
 
         short v;
 
+        //Home Page
         for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++)
         {
             if (i < sizeof(t) / sizeof(t[0])) { v = t[i]; } else { v = 0; }
             global_pages[0].ListDevices[i] = v;
         }
 
-        // To test
+#if PAGES > 0
+        //More pages to test
         for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++)
         {
             if (i < sizeof(t) / sizeof(t[0])) { v = t2[i]; } else { v = 0; }
             global_pages[1].ListDevices[i] = v;
         }
+#endif
 
         WriteGlobalConfig();
     #endif

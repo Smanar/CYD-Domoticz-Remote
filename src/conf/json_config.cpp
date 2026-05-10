@@ -31,7 +31,7 @@ JsonDocument loadJson() {
     settings["color_scheme"] = global_config.color_scheme;
     settings["brightness"] = global_config.brightness;
     settings["screenTimeout"] = global_config.screenTimeout;
-    for (uint p=0; p<PAGES; p++) {
+    for (uint p=0; p<=PAGES; p++) {
         settings["pages"][p]["name"] = global_pages[p].name;
         settings["pages"][p]["number"] = p+1;
         for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++) {
@@ -126,7 +126,7 @@ bool readJsonConfig(const char* jsonFile) {
     if (charPtr) strncpy(global_config.ServerHost, charPtr,sizeof(global_config.ServerHost));
     Serial.printf("ServerHost:%s-%s-%s\n", charPtr, global_config.ServerHost, global_config.ServerHost);
     global_config.ServerPort = settings["ServerPort"].as<unsigned short>();
-    for (uint p=0; p<PAGES; p++) {
+    for (uint p=0; p<=PAGES; p++) {
         charPtr = settings["pages"][p]["name"].as<const char*>();
         if (charPtr) strncpy(global_pages[p].name, charPtr, sizeof(global_pages[p].name));
         for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++) {

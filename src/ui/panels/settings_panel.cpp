@@ -302,7 +302,7 @@ void settings_panel_init(lv_obj_t* panel)
     create_settings_widget("Not used yet", toggle, panel);
 
     char buffer[80];
-    for (int p=0; p<PAGES; p++) {
+    for (int p=0; p<=PAGES; p++) {
         lv_obj_t * textarea = lv_textarea_create(panel);
         lv_obj_add_event_cb(textarea, edit_page_name, LV_EVENT_ALL, (void*) p);
         lv_textarea_add_text(textarea, global_pages[p].name);

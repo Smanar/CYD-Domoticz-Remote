@@ -19,8 +19,6 @@ int Size_h = int(LCD_HEIGHT/TOTAL_ICONY) - TOTAL_OFFSET_Y;
 //Icon size
 //int Size_icon = 35;
 
-int currentPage = 0;
-
 static void btn_event_cb_group(lv_event_t * e)
 {
     int idx = (int)lv_event_get_user_data(e);
@@ -66,16 +64,19 @@ static void btn_event_cb(lv_event_t * e)
             HTTPGETRequest(buff);
             return;
         }
-        if (d2->type == TYPE_PAGE) {                                // Clicked on a page button?
-            unsigned int pagePtr = -d2->idx - 1;                    // Get back to page index (0 - PAGES -1)
-            if (pagePtr < PAGES) {                                  // Withion range?
-                currentPage = pagePtr;                              // Set current page
-                Init_data();                                        // Reload data
-                RefreshHomePage();                                  // Reload page as widget changed
+#endif
+
+#if PAGES > 0
+        if (d2->type == TYPE_PAGE)
+        {                               // Clicked on a page button?
+            unsigned int pagePtr = -d2->idx;                       // Get back to page index (0 - PAGES)
+            if (pagePtr <= PAGES) {                                // Withion range?
+                navigation_screen(pagePtr + SPECIAL_PAGES - 1);
                 return;
             }
         }
 #endif
+
         //Serial.printf("Clic sur boutton: %d", * btn_no);
         Select_deviceMemorised(d);
 }
@@ -263,11 +264,11 @@ static void Widget_button_group(lv_obj_t* panel, char* desc, int x, int y, int w
 
 }
 
-void home_panel_init(lv_obj_t* panel, Device d[], short page)
+void home_panel_init(lv_obj_t* panel, Device d[])
 {
     short x,y;
     short cx,cy;
-    short i = (page * TOTAL_ICONX * TOTAL_ICONY);
+    short i = 0; //TODO : useless
 
     for (y=0; y<TOTAL_ICONY; y=y+1)
     {
