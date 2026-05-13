@@ -49,13 +49,7 @@
 #define LV_MEM_CUSTOM 0
 #if LV_MEM_CUSTOM == 0
     /*Size of the memory available for `lv_mem_alloc()` in bytes (>= 2kB)*/
-    //#define LV_MEM_SIZE (32U * 1024U)          /*[bytes]*/
-#if PAGES < 3
-    #define LV_MEM_SIZE (32U * 1024U) 
-#else
-    #define LV_MEM_SIZE (48U * 1024U) 
-#endif
-
+    #define LV_MEM_SIZE (32U * 1024U)          /*[bytes]*/
 
     /*Set an address for the memory pool instead of allocating it as a normal array. Can be in external SRAM too.*/
     #define LV_MEM_ADR 0     /*0: unused*/
@@ -200,7 +194,7 @@
  *-----------*/
 
 /*Enable the log module*/
-#define LV_USE_LOG 1 //// 0
+#define LV_USE_LOG 0
 #if LV_USE_LOG
 
     /*How important log should be added:
@@ -540,7 +534,7 @@
 
 #define LV_USE_TEXTAREA   1   /*Requires: lv_label*/
 #if LV_USE_TEXTAREA != 0
-    #define LV_TEXTAREA_DEF_PWD_SHOW_TIME 1500    /*ms*/
+    #define LV_TEXTAREA_DEF_PWD_SHOW_TIME 0    /*ms*/
 #endif
 
 #define LV_USE_TABLE      1

@@ -31,8 +31,14 @@ JsonDocument loadJson() {
     settings["color_scheme"] = global_config.color_scheme;
     settings["brightness"] = global_config.brightness;
     settings["screenTimeout"] = global_config.screenTimeout;
-    for (uint p=0; p<=PAGES; p++) {
+    settings["protectionPassword"] = global_config.protectionPassword;
+    settings["protectSetting"] = global_config.protectSetting;
+    settings["protectTool"] = global_config.protectTool;
+    settings["protectGroup"] = global_config.protectGroup;
+    settings["protectInfo"] = global_config.protectInfo;
+    for (uint p=0; p<PAGES; p++) {
         settings["pages"][p]["name"] = global_pages[p].name;
+        settings["pages"][p]["isProtected"] = global_pages[p].isProtected;
         settings["pages"][p]["number"] = p+1;
         for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++) {
             settings["pages"][p]["idx"][i] = global_pages[p].ListDevices[i];
@@ -126,9 +132,10 @@ bool readJsonConfig(const char* jsonFile) {
     if (charPtr) strncpy(global_config.ServerHost, charPtr,sizeof(global_config.ServerHost));
     Serial.printf("ServerHost:%s-%s-%s\n", charPtr, global_config.ServerHost, global_config.ServerHost);
     global_config.ServerPort = settings["ServerPort"].as<unsigned short>();
-    for (uint p=0; p<=PAGES; p++) {
+    for (uint p=0; p<PAGES; p++) {
         charPtr = settings["pages"][p]["name"].as<const char*>();
         if (charPtr) strncpy(global_pages[p].name, charPtr, sizeof(global_pages[p].name));
+        global_pages[p].isProtected = settings["pages"][p]["isProtected"].as<bool>();
         for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++) {
             global_pages[p].ListDevices[i] = settings["pages"][p]["idx"][i].as<int>();
         }
@@ -136,6 +143,12 @@ bool readJsonConfig(const char* jsonFile) {
     global_config.color_scheme = settings["color_scheme"].as<unsigned char>();
     global_config.brightness = settings["brightness"].as<unsigned char>();
     global_config.screenTimeout = settings["screenTimeout"].as<unsigned char>();
+    charPtr = settings["protectionPassword"].as<const char*>();
+    if (charPtr) strncpy(global_config.protectionPassword, charPtr,sizeof(global_config.protectionPassword));
+    global_config.protectSetting = settings["protectSetting"].as<bool>();
+    global_config.protectTool = settings["protectTool"].as<bool>();
+    global_config.protectGroup = settings["protectGroup"].as<bool>();
+    global_config.protectInfo = settings["protectInfo"].as<bool>();
     
     return true;
 }

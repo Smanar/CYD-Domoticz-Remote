@@ -1,3 +1,5 @@
+#include "Arduino.h"
+
 #ifndef DATA_SETUP_H
 #define DATA_SETUP_H
 
@@ -48,9 +50,9 @@ typedef struct _Device {
 
 void Init_data();
 void FillDeviceData(Device *d, int idx);
-bool HttpInitDevice(Device *d, const char* c);
+bool HttpInitDevice(Device *d, int idx);
 int * GetGraphValue(int type, int idx, int *, int *);
-const char *GetListdevice(int page, bool displayAll = false);
+bool loadDeviceList(int page, char* deviceList, size_t deviceListLen, bool displayAll);
 void GetThermostatValue(int idx, int *min, int *max, float *step, float *setpoint);
 
 #endif

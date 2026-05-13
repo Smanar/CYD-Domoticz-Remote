@@ -6,7 +6,13 @@
 #include "../../ui/navigation.h"
 
 void Init_data(void);
+
 int y_offset = 0;
+int pageToChange = 0;
+lv_obj_t * pageName;
+lv_obj_t * pageIsProtected;
+lv_obj_t * pageDeviceList;
+
 const int y_element_size = 50;
 const int y_seperator_size = 1;
 const int y_seperator_x_padding = 50;
@@ -97,6 +103,23 @@ static void wake_timeout_dropdown(lv_event_t * e){
     set_screen_timer_period();
 }
 
+static void page_dropdown(lv_event_t * e){
+    const lv_obj_t * dropdown = lv_event_get_target(e);
+    auto selected = lv_dropdown_get_selected(dropdown);
+    if (selected >= 0 && selected < PAGES) {
+        pageToChange = selected;
+        if (global_pages[pageToChange].isProtected) {
+            lv_obj_add_state(pageIsProtected, LV_STATE_CHECKED);
+        } else {
+            lv_obj_clear_state(pageIsProtected, LV_STATE_CHECKED);
+        }
+        lv_textarea_set_text(pageName, global_pages[pageToChange].name);
+        char deviceList[TOTAL_ICONX*TOTAL_ICONY*6];
+        loadDeviceList(pageToChange, deviceList, sizeof(deviceList), true);
+        lv_textarea_set_text(pageDeviceList, deviceList);
+    }
+}
+
 static void rotate_screen_switch(lv_event_t* e){
     auto state = lv_obj_get_state(lv_event_get_target(e));
     bool checked = (state & LV_STATE_CHECKED == LV_STATE_CHECKED);
@@ -104,6 +127,19 @@ static void rotate_screen_switch(lv_event_t* e){
     global_config.screenCalibrated = false;
     WriteGlobalConfig();
     ESP.restart();
+}
+
+static void protect_xxx_cb(lv_event_t* e){
+    auto state = lv_obj_get_state(lv_event_get_target(e));
+    bool checked = (state & LV_STATE_CHECKED == LV_STATE_CHECKED);
+    int ptr =  (int) lv_event_get_user_data(e);
+    switch (ptr) {
+        case 1: global_config.protectTool = checked; break;
+        case 2: global_config.protectSetting = checked; break;
+        case 3: global_config.protectGroup = checked; break;
+        case 4: global_config.protectInfo = checked; break;
+    };
+    WriteGlobalConfig();
 }
 
 static void not_used_yet_switch(lv_event_t* e){
@@ -157,8 +193,6 @@ static void edit_device_list_switch(lv_event_t * e)
         }
         WriteGlobalConfig();
         Init_data();
-        ////navigation_screen(HOMEPAGE_PANEL);
- 
     }
 }
 
@@ -201,9 +235,57 @@ static void edit_page_name(lv_event_t * e)
 
         WriteGlobalConfig();
         Init_data();
-        ////navigation_screen(HOMEPAGE_PANEL);
      }
 }
+
+static void edit_protect_password_cb(lv_event_t * e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    lv_obj_t * ta = lv_event_get_target(e);
+
+    if (code == LV_EVENT_FOCUSED)
+    {
+        if (kb == NULL) {
+            kb = lv_keyboard_create(lv_scr_act());
+            lv_obj_set_style_max_height(kb, LV_HOR_RES * 2 / 3, 0);
+        }
+
+        lv_obj_update_layout(settings_panel);   /*Be sure the sizes are recalculated*/
+        lv_obj_set_height(settings_panel, LV_VER_RES - lv_obj_get_height(kb));
+        lv_indev_wait_release(lv_indev_get_act());
+        lv_obj_scroll_to_view_recursive(ta, LV_ANIM_OFF);
+
+        lv_obj_clear_flag(kb, LV_OBJ_FLAG_HIDDEN);
+        //lv_obj_move_foreground(kb); // Show the keyboard
+
+        lv_keyboard_set_textarea(kb, ta);
+    }
+    else if (code == LV_EVENT_DEFOCUSED)
+    {
+        lv_obj_set_height(settings_panel, LV_VER_RES);
+        lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
+    }
+    else if(code == LV_EVENT_READY || code == LV_EVENT_CANCEL) {
+        //lv_obj_move_background(kb); // Hide the keyboard
+        lv_obj_set_height(settings_panel, LV_VER_RES);
+        lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_clear_state(ta, LV_STATE_FOCUSED);
+        lv_indev_reset(NULL, ta);   /*To forget the last clicked object to make it focusable again*/
+
+        strncpy(global_config.protectionPassword, lv_textarea_get_text(ta), sizeof(global_config.protectionPassword));
+
+        WriteGlobalConfig();
+     }
+}
+
+static void invert_page_isProtected(lv_event_t * e){
+    auto state = lv_obj_get_state(lv_event_get_target(e));
+    bool checked = (state & LV_STATE_CHECKED == LV_STATE_CHECKED);
+    int pagePtr =  (int) lv_event_get_user_data(e);
+    global_pages[pagePtr].isProtected = checked;
+    WriteGlobalConfig();
+}
+
 void create_settings_widget(const char* label_text, lv_obj_t* object, lv_obj_t* root_panel){
     lv_obj_t * panel = lv_obj_create(root_panel);
     lv_obj_set_style_border_width(panel, 0, 0);
@@ -301,24 +383,69 @@ void settings_panel_init(lv_obj_t* panel)
         lv_obj_add_state(toggle, LV_STATE_CHECKED);
     create_settings_widget("Not used yet", toggle, panel);
 
-    char buffer[80];
-    for (int p=0; p<=PAGES; p++) {
-        lv_obj_t * textarea = lv_textarea_create(panel);
-        lv_obj_add_event_cb(textarea, edit_page_name, LV_EVENT_ALL, (void*) p);
-        lv_textarea_add_text(textarea, global_pages[p].name);
-        lv_textarea_set_one_line(textarea, true);
-        lv_obj_set_width(textarea, lv_pct(75));
-        snprintf(buffer, sizeof(buffer), "Page %d name", p+1);
-        create_settings_widget(buffer, textarea, panel);
-
-        textarea = lv_textarea_create(panel);
-        lv_obj_add_event_cb(textarea, edit_device_list_switch, LV_EVENT_ALL, (void*) p);
-        lv_textarea_add_text(textarea, GetListdevice(p, true));
-        lv_textarea_set_one_line(textarea, true);
-        lv_obj_set_width(textarea, lv_pct(75));
-        snprintf(buffer, sizeof(buffer), "Page %d devices", p+1);
-        create_settings_widget(buffer, textarea, panel);
+    dropdown = lv_dropdown_create(panel);
+    String pageList = "";
+    for (int p=0; p<PAGES; p++) {
+        pageList += "\nPage " + String(p+1) + " - " + global_pages[p].name;
     }
+    lv_dropdown_set_options(dropdown, pageList.substring(1).c_str());
+    lv_dropdown_set_selected(dropdown, pageToChange);
+    lv_obj_set_width(dropdown, lv_pct(70));
+    lv_obj_add_event_cb(dropdown, page_dropdown, LV_EVENT_VALUE_CHANGED, NULL);
+    create_settings_widget("Page to change", dropdown, panel);
+
+    pageName = lv_textarea_create(panel);
+    lv_obj_add_event_cb(pageName, edit_page_name, LV_EVENT_ALL, (void*) pageToChange);
+    lv_textarea_add_text(pageName, global_pages[pageToChange].name);
+    lv_textarea_set_one_line(pageName, true);
+    lv_obj_set_width(pageName, lv_pct(70));
+    create_settings_widget("... name", pageName, panel);
+
+    pageIsProtected = lv_switch_create(panel);
+    lv_obj_add_event_cb(pageIsProtected, invert_page_isProtected, LV_EVENT_VALUE_CHANGED, (void *) pageToChange);
+    if (global_pages[pageToChange].isProtected)
+        lv_obj_add_state(pageIsProtected, LV_STATE_CHECKED);
+    create_settings_widget("... protected", pageIsProtected, panel);
+
+    pageDeviceList = lv_textarea_create(panel);
+    lv_obj_add_event_cb(pageDeviceList, edit_device_list_switch, LV_EVENT_ALL, (void*) pageToChange);
+    char deviceList[TOTAL_ICONX*TOTAL_ICONY*6];
+    loadDeviceList(pageToChange, deviceList, sizeof(deviceList), true);
+    lv_textarea_add_text(pageDeviceList, deviceList);
+    lv_textarea_set_one_line(pageDeviceList, true);
+    lv_obj_set_width(pageDeviceList, lv_pct(70));
+    create_settings_widget("... devices", pageDeviceList, panel);
+
+    lv_obj_t * text = lv_textarea_create(panel);
+    lv_obj_add_event_cb(text, edit_protect_password_cb, LV_EVENT_ALL, NULL);
+    lv_textarea_add_text(text, global_config.protectionPassword);
+    lv_textarea_set_one_line(text, true);
+    lv_obj_set_width(text, lv_pct(70));
+    create_settings_widget("Protection password", text, panel);
+
+    toggle = lv_switch_create(panel);
+    lv_obj_add_event_cb(toggle, protect_xxx_cb, LV_EVENT_VALUE_CHANGED, (void*) 1);
+    if (global_config.protectTool)
+        lv_obj_add_state(toggle, LV_STATE_CHECKED);
+    create_settings_widget("Protect tool page", toggle, panel);
+
+    toggle = lv_switch_create(panel);
+    lv_obj_add_event_cb(toggle, protect_xxx_cb, LV_EVENT_VALUE_CHANGED, (void*) 2);
+    if (global_config.protectSetting)
+        lv_obj_add_state(toggle, LV_STATE_CHECKED);
+    create_settings_widget("Protect setting page", toggle, panel);
+
+    toggle = lv_switch_create(panel);
+    lv_obj_add_event_cb(toggle, protect_xxx_cb, LV_EVENT_VALUE_CHANGED, (void*) 3);
+    if (global_config.protectGroup)
+        lv_obj_add_state(toggle, LV_STATE_CHECKED);
+    create_settings_widget("Protect group page", toggle, panel);
+
+    toggle = lv_switch_create(panel);
+    lv_obj_add_event_cb(toggle, protect_xxx_cb, LV_EVENT_VALUE_CHANGED, (void*) 4);
+    if (global_config.protectInfo)
+        lv_obj_add_state(toggle, LV_STATE_CHECKED);
+    create_settings_widget("Protect info page", toggle, panel);
 
     btn = lv_btn_create(panel);
     lv_obj_add_event_cb(btn, exit_click, LV_EVENT_CLICKED, NULL);
@@ -326,5 +453,4 @@ void settings_panel_init(lv_obj_t* panel)
     lv_label_set_text_static(label, "Quit");
     lv_obj_center(label);
     create_settings_widget("Exit Option", btn, panel);
-
 }

@@ -4,18 +4,24 @@
 #include "lvgl.h"
 
 // USED for memorised settings
-#define CONFIG_VERSION 4
+#define CONFIG_VERSION 6
 // USED for OTA
-#define APPLICATION_VERSION "26.5.9-1"
+#define APPLICATION_VERSION "26.5.12-1"
 
-#if PAGES > 15
-    #error Too much pages asked
+#if PAGES < 1
+    #error PAGES should be at least 1
 #endif
 
 typedef struct _GLOBAL_PAGE {
     char name[32];
     int ListDevices[TOTAL_ICONX*TOTAL_ICONY];
+    bool isProtected;
 } GLOBAL_PAGE;
+
+typedef struct _GLOBAL_PAGE_V4 {
+    char name[32];
+    int ListDevices[TOTAL_ICONX*TOTAL_ICONY];
+} GLOBAL_PAGE_V4;
 
 typedef struct _GLOBAL_CONFIG {
     unsigned char version;
@@ -50,7 +56,52 @@ typedef struct _GLOBAL_CONFIG {
     unsigned int totalIconX;
     unsigned int totalIconY;
 
+    union {
+        unsigned char protectRaw;
+        struct {
+            bool protectSetting : 1;
+            bool protectTool : 1;
+            bool protectGroup : 1;
+            bool protectInfo : 1;
+        };
+    };
+    char protectionPassword[16];
 } GLOBAL_CONFIG;
+
+typedef struct _GLOBAL_CONFIG_V5 {
+    unsigned char version;
+    union {
+        unsigned char raw;
+        struct {
+            bool screenCalibrated : 1;
+            bool wifiConfigured : 1;
+            bool ipConfigured : 1;
+            bool lightMode : 1;
+            bool invertColors : 1;
+            bool rotateScreen : 1;
+            bool notused : 1;
+        };
+    };
+    float screenCalXOffset;
+    float screenCalXMult;
+    float screenCalYOffset;
+    float screenCalYMult;
+
+    char wifiSSID[32];
+    char wifiPassword[64];
+
+    char ServerHost[64];
+    unsigned short ServerPort;
+
+    unsigned char color_scheme;
+    unsigned char brightness;
+    unsigned char screenTimeout;
+
+    unsigned int savedPageCount;
+    unsigned int totalIconX;
+    unsigned int totalIconY;
+
+} GLOBAL_CONFIG_V5;
 
 typedef struct _GLOBAL_CONFIG_V3 {
     unsigned char version;

@@ -6,6 +6,7 @@
 #include "../../conf/global_config.h"
 #include "../../core/ip_engine.h"
 #include "../navigation.h"
+#include "../../conf/global_config.h"
 
 extern lv_style_t style_shadow;
 extern lv_style_t style_pressed;
@@ -18,6 +19,8 @@ int Size_w = int(LCD_WIDTH/TOTAL_ICONX) -  TOTAL_OFFSET_X;
 int Size_h = int(LCD_HEIGHT/TOTAL_ICONY) - TOTAL_OFFSET_Y;
 //Icon size
 //int Size_icon = 35;
+
+static void go_page_cb(int pagrPtr);
 
 static void btn_event_cb_group(lv_event_t * e)
 {
@@ -55,7 +58,7 @@ static void btn_event_cb(lv_event_t * e)
     //int *d = (int*)lv_event_get_param(e);
     void * d = (void *)lv_event_get_user_data(e); // cast the return pointer to data type pointer
 
-#ifdef FASTCLIC
+    #ifdef FASTCLIC
         Device *d2 = (Device *)d;
         if ((d2->type == TYPE_PUSH) || (d2->type == TYPE_LIGHT) || (d2->type == TYPE_SWITCH) || (d2->type == TYPE_PLUG))
         {
@@ -64,21 +67,20 @@ static void btn_event_cb(lv_event_t * e)
             HTTPGETRequest(buff);
             return;
         }
-#endif
-
-#if PAGES > 0
-        if (d2->type == TYPE_PAGE)
-        {                               // Clicked on a page button?
-            unsigned int pagePtr = -d2->idx;                       // Get back to page index (0 - PAGES)
-            if (pagePtr <= PAGES) {                                // Withion range?
-                navigation_screen(pagePtr + SPECIAL_PAGES - 1);
-                return;
-            }
+    #endif
+    if (d2->type == TYPE_PAGE) {                                // Clicked on a page button?
+        unsigned int pagePtr = -d2->idx - 1;                    // Get back to page index (0 - PAGES -1)
+        if (pagePtr < PAGES) {                                  // Withion range?
+            checkAdminRights(pagePtr + HOMEPAGE_PANEL, &go_page_cb, 0); // Check for admin rights
         }
-#endif
+        return;
+    }
+    //Serial.printf("Clic sur boutton: %d", * btn_no);
+    Select_deviceMemorised(d);
+}
 
-        //Serial.printf("Clic sur boutton: %d", * btn_no);
-        Select_deviceMemorised(d);
+static void go_page_cb(int pagePtr) {
+    navigation_screen(pagePtr);                                     // Goto right page 
 }
 
 static void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int h, lv_color_t color, Device *d, const lv_img_dsc_t* icon)
@@ -268,7 +270,9 @@ void home_panel_init(lv_obj_t* panel, Device d[])
 {
     short x,y;
     short cx,cy;
-    short i = 0; //TODO : useless
+    short i = 0;
+
+    Init_data();
 
     for (y=0; y<TOTAL_ICONY; y=y+1)
     {
@@ -322,10 +326,9 @@ void home_panel_init(lv_obj_t* panel, Device d[])
                 break;
             }
 
-            i = i + 1;
+            i++;
         }
     }
-
 }
 
 struct _Group
