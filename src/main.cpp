@@ -17,12 +17,42 @@
 
 unsigned long now;
 void Websocket_loop(void);
+short OldPage = 0;
 
 // Display page
 void pageValidated(int page) {
     lv_indev_wait_release(lv_indev_get_act());
     navigation_screen(page);
 }
+
+void RefreshOldPage()
+{
+    pageValidated(OldPage);
+}
+
+#if 0 
+static void scr_event_cb(lv_event_t * e)
+{
+    int p = GetActivePanel();
+    OldPage = p;
+
+    lv_dir_t dir = lv_indev_get_gesture_dir(lv_indev_get_act());
+
+    if (dir == LV_DIR_LEFT)
+    {
+        Serial.printf("Starting left gesture at page %d\n", p);
+        if (p < MAX_PANEL_SCROLL) p += 1;
+        checkAdminRights(p, &pageValidated, &testPreviousPage);
+    }
+    else if (dir == LV_DIR_RIGHT)
+    {
+        Serial.printf("Starting right gesture at page %d\n", p);
+        if (p >= 0) p -=1;
+        checkAdminRights(p, &pageValidated, &testPreviousPage);
+    }
+}
+#endif
+
 
 // Test previous page
 void testPreviousPage(int page) {
@@ -31,7 +61,6 @@ void testPreviousPage(int page) {
         checkAdminRights(page, &pageValidated, &testPreviousPage);
     }
 }
-
 // Test next page
 void testNextPage(int page) {
     page += 1;
@@ -39,7 +68,6 @@ void testNextPage(int page) {
         checkAdminRights(page, &pageValidated, &testNextPage);
     }
 }
-
 static void scr_event_cb(lv_event_t * e)
 {
     int p = GetActivePanel();
@@ -53,6 +81,7 @@ static void scr_event_cb(lv_event_t * e)
         testPreviousPage(p);
     }
 }
+
 
 void setup() {
 
@@ -112,9 +141,8 @@ void setup() {
             strcpy(global_config.ServerHost, "192.168.1.1");
             global_config.ServerPort = 8080;
             const static short t[] = {
-                122, 75, 16, 36, 28, -1, 63, 90, 145    // Page 1
-                ,
-                12, 75, 16, 36, 28, -1, 63, 0, 0        // Page 2
+                122, 75, 16, 36, 28, -1, 63, 90, 145,    // Page 1
+                12, 75, 16, 36, 28, -1, 63, 0, 0         // Page 2
             };
         #endif
 
@@ -129,8 +157,10 @@ void setup() {
             {
                 if (ptr < sizeof(t) / sizeof(t[0])) { v = t[ptr]; } else { v = 0; }
                 global_pages[p].ListDevices[i] = v;
+                ptr += 1;
             }
-	}
+	    }
+
         WriteGlobalConfig();
     #endif
 

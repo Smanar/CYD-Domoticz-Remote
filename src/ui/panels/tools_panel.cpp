@@ -103,8 +103,8 @@ void tools_panel_init(lv_obj_t* panel)
     char Text[350];
     lv_snprintf(Text, sizeof(Text),
         "+ HEAP Memory Usable (Kb) %d, Max %d, Total %d\n", ESP.getMaxAllocHeap()/1024, ESP.getFreeHeap()/1024, ESP.getHeapSize()/1024);
-    lv_snprintf(Text + strlen(Text), sizeof(Text) - strlen(Text),
-        "+ PSRAM Memory Free (Kb) %d, Total %d\n", ESP.getFreePsram()/1024, ESP.getPsramSize()/1024); // Not used, CRASH
+    //lv_snprintf(Text + strlen(Text), sizeof(Text) - strlen(Text),
+    //    "+ PSRAM Memory Free (Kb) %d, Total %d\n", ESP.getFreePsram()/1024, ESP.getPsramSize()/1024); // Not used, CRASH
     lv_snprintf(Text + strlen(Text), sizeof(Text) - strlen(Text),
         "+ LV Heap %d kB used (%d %%) %d%% frag.\n", used_size / 1024, mon.used_pct, mon.frag_pct);
     lv_snprintf(Text + strlen(Text), sizeof(Text) - strlen(Text),

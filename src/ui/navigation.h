@@ -2,11 +2,11 @@
 void navigation_screen(unsigned char active_panel);
 void ReturnPreviouspage(void);
 void nav_style_setup();
-int GetActiveDevicePage(void);
+int GetActiveWidgetPage(void);
 int GetActivePanel(void);
 void SetActivePanel(int);
-void RefreshHomePage(void);
-void RefreshScenePage(void);
+void RefreshWidgetsPanel(void);
+void RefreshScenePanel(void);
 void RefreshDevicePanel(void);
 
 typedef void (checkAdminCallback_t)(const int);

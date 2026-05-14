@@ -11,7 +11,7 @@ static int master_panel = 0;
 
 extern Device myDevices[];
 
-int GetActiveDevicePage(void)
+int GetActiveWidgetPage(void)
 {
     return actived_panel - HOMEPAGE_PANEL;
 }
@@ -31,7 +31,7 @@ void ReturnPreviouspage(void)
     navigation_screen(master_panel);
 }
 
-void RefreshHomePage(void)
+void RefreshWidgetsPanel(void)
 {
     if (actived_panel >= HOMEPAGE_PANEL && actived_panel <= LAST_PAGE_PANEL)
     {                           
@@ -48,7 +48,7 @@ void RefreshDevicePanel(void)
 }
 
 #ifndef NO_GROUP_PAGE
-void RefreshScenePage(void)
+void RefreshScenePanel(void)
 {
     if (actived_panel == GROUP_PANEL)
     {                           
@@ -72,26 +72,38 @@ void navigation_screen(unsigned char active_panel)
     lv_obj_set_style_pad_all(panel, 0, 0);
     //lv_obj_clear_flag(panel, LV_OBJ_FLAG_SCROLLABLE);
 
-    if (active_panel == TOOL_PANEL) {                               // Tools
-        master_panel = active_panel;
-        tools_panel_init(panel);
-    } else if (active_panel >= HOMEPAGE_PANEL && active_panel <= LAST_PAGE_PANEL) {  // Homepage
-        master_panel = active_panel;
-        home_panel_init(panel, myDevices);
-    #ifndef NO_GROUP_PAGE
-    } else if (active_panel == GROUP_PANEL) {                       //Group/Scene panel
-        master_panel = active_panel;
-        group_panel_init(panel);
-    #endif
-    #ifndef NO_INFO_PAGE
-    } else if (active_panel == INFO_PANEL) {                        //Info panel
-        master_panel = active_panel;
-        info_panel_init(panel);
-    #endif
-    } else if (active_panel == DEVICE_PANEL) {                      // Device panel    
-        device_panel_init(panel);
-    } else if (active_panel == SETTING_PANEL) {                     // Settings
-        settings_panel_init(panel);
+    switch (active_panel)
+    {
+        case TOOL_PANEL: // Tools
+            master_panel = active_panel;
+            tools_panel_init(panel);
+            break;
+        case HOMEPAGE_PANEL ... (LAST_PAGE_PANEL): // Widget pages
+            master_panel = active_panel;
+            widget_panel_init(panel);
+            break;
+#ifndef NO_GROUP_PAGE
+        case GROUP_PANEL: //Group/Scene panel
+            master_panel = active_panel;
+            group_panel_init(panel);
+            break;
+#endif
+#ifndef NO_INFO_PAGE
+        case INFO_PANEL: //Info panel
+            master_panel = active_panel;
+            info_panel_init(panel);
+            break;
+#endif
+        case DEVICE_PANEL: // Device panel
+            device_panel_init(panel);
+            break;
+        case SETTING_PANEL:// Settings
+            settings_panel_init(panel);
+            break;
+
+        default:
+            tools_panel_init(panel);
+            break;
     }
 }
 

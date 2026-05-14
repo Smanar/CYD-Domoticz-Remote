@@ -71,7 +71,7 @@ void VerifyVersion(){
             }
         }
         for (uint p=0; p < PAGES; p++) {                            // Set default names
-            snprintf(global_pages[p].name, sizeof(global_pages[p].name), "Page %d", p+1);
+            lv_snprintf(global_pages[p].name, sizeof(global_pages[p].name), "Page %d", p+1);
         }
         global_config.color_scheme = configV3.color_scheme;
         global_config.brightness = configV3.brightness;

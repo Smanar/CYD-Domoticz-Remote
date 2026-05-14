@@ -11,6 +11,8 @@
 extern lv_style_t style_shadow;
 extern lv_style_t style_pressed;
 
+extern Device myDevices[];
+
 //Calculate values to use to display the homepage (even number)
 #define TOTAL_OFFSET_X 10
 #define TOTAL_OFFSET_Y 10
@@ -69,7 +71,7 @@ static void btn_event_cb(lv_event_t * e)
         }
     #endif
     if (d2->type == TYPE_PAGE) {                                // Clicked on a page button?
-        unsigned int pagePtr = -d2->idx - 1;                    // Get back to page index (0 - PAGES -1)
+        unsigned int pagePtr = -d2->idx -1;                     // Get back to page index (0 - PAGES -1)
         if (pagePtr < PAGES) {                                  // Withion range?
             checkAdminRights(pagePtr + HOMEPAGE_PANEL, &go_page_cb, 0); // Check for admin rights
         }
@@ -266,25 +268,25 @@ static void Widget_button_group(lv_obj_t* panel, char* desc, int x, int y, int w
 
 }
 
-void home_panel_init(lv_obj_t* panel, Device d[])
+void widget_panel_init(lv_obj_t* panel)
 {
     short x,y;
     short cx,cy;
     short i = 0;
 
-    Init_data();
+    Init_data_widget_page();
 
     for (y=0; y<TOTAL_ICONY; y=y+1)
     {
         for (x=0; x<TOTAL_ICONX; x=x+1)
         {
-            const lv_color_t device_color = Getcolor(d[i].type);
-            const lv_img_dsc_t *icon = Geticon(d[i].type);
+            const lv_color_t device_color = Getcolor(myDevices[i].type);
+            const lv_img_dsc_t *icon = Geticon(myDevices[i].type);
 
             cx = TOTAL_OFFSET_X / 2 + (Size_w + TOTAL_OFFSET_X) * x;
             cy = TOTAL_OFFSET_Y / 2 + (Size_h + TOTAL_OFFSET_Y) * y;
 
-            switch (d[i].type)
+            switch (myDevices[i].type)
             {
                 case TYPE_UNUSED:  // Not used device
                 break;
@@ -301,7 +303,7 @@ void home_panel_init(lv_obj_t* panel, Device d[])
                 case TYPE_THERMOSTAT:
                 case TYPE_AIR_QUALITY:
                 {
-                    Widget_sensor(panel, d[i].name, d[i].data, cx , cy , Size_w , Size_h, device_color, &d[i],icon);
+                    Widget_sensor(panel, myDevices[i].name, myDevices[i].data, cx , cy , Size_w , Size_h, device_color, &myDevices[i],icon);
                 }
                 break;
                 case TYPE_UNKNOWN: // Unknown type
@@ -318,11 +320,11 @@ void home_panel_init(lv_obj_t* panel, Device d[])
                 case TYPE_TEXT: // This one is a sensor, but too much text to be displayed on homepage
                 case TYPE_PAGE:
                 {
-                    Widget_button(panel, d[i].name, cx, cy, Size_w , Size_h, device_color, &d[i], icon); 
+                    Widget_button(panel, myDevices[i].name, cx, cy, Size_w , Size_h, device_color, &myDevices[i], icon); 
                 }
                 break;
                 default:
-                    Serial.printf("Undefined widget for HomePage: %d\n", d[i].type);
+                    Serial.printf("Undefined widget for HomePage: %d\n", myDevices[i].type);
                 break;
             }
 
@@ -395,6 +397,6 @@ void group_panel_init(lv_obj_t* panel)
 void Update_scene_data(void)
 {
 #ifndef NO_GROUP_PAGE
-    RefreshScenePage();
+    RefreshScenePanel();
 #endif
 }

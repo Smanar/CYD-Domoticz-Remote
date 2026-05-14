@@ -74,9 +74,10 @@ void password_keyboard_display(void){
     lv_style_set_bg_main_stop(&bg_style, 30);                       // Main Stop Color 30
     lv_style_set_bg_grad_stop(&bg_style, 30);                       // Gradient stop color 30
     lv_obj_add_style(pwd_bg_cont, &bg_style, 0);                    // Add a style to the object
-    lv_obj_set_size(pwd_bg_cont, 353, 415);                         // Setting size
-    lv_obj_align(pwd_bg_cont, LV_ALIGN_TOP_MID, 0, 33);             // Top Case
+    lv_obj_set_size(pwd_bg_cont, LV_PCT(100), LV_PCT(100));         // Setting size
+    lv_obj_align(pwd_bg_cont, LV_ALIGN_TOP_MID, 0, 0);              // Top Case
 
+#if 0
     // Keyboard Title Style
     static lv_style_t title_label_style;
     lv_style_reset(&title_label_style);
@@ -85,11 +86,11 @@ void password_keyboard_display(void){
     lv_style_set_border_width(&title_label_style, 0);               // Set the border width
     lv_style_set_text_color(&title_label_style, lv_color_white());  // Font Color Settings to White
     lv_style_set_text_font(&title_label_style, &medium_font);       // Setting Font
-
+#endif
     // Create a keyboard title object based on the keyboard background object
     lv_obj_t *title_label = lv_label_create(pwd_bg_cont);
     lv_label_set_long_mode(title_label, LV_LABEL_LONG_SCROLL_CIRCULAR); // Set long text loop scrolling mode
-    lv_obj_add_style(title_label, &title_label_style, 0);           // Add a style to btn_label
+    //lv_obj_add_style(title_label, &title_label_style, 0);           // Add a style to btn_label
     lv_obj_align(title_label, LV_ALIGN_TOP_MID, 0, 10);             // Top Case
     lv_label_set_text(title_label, "Input password");               // Setting the text content
 
@@ -107,8 +108,8 @@ void password_keyboard_display(void){
     lv_textarea_set_password_mode(pwd_text_area, true);             // Password Mode
     lv_textarea_set_max_length(pwd_text_area, sizeof(global_config.protectionPassword)-1); // Set the maximum length of the entered text
     lv_obj_add_style(pwd_text_area, &pwd_text_style, 0);            // Add a style to btn_label
-    lv_obj_set_size(pwd_text_area, 295, 41);                        // Settings Object Size
-    lv_obj_align_to(pwd_text_area, title_label, LV_ALIGN_OUT_BOTTOM_MID, 0, 30); // Top Case
+    lv_obj_set_size(pwd_text_area, lv_pct(80), 20);                 // Settings Object Size
+    lv_obj_align_to(pwd_text_area, title_label, LV_ALIGN_OUT_BOTTOM_MID, 0, 0); // Top Case
 
     // Create a password check tab based on the keyboard background object
     hint_label = lv_label_create(pwd_bg_cont);
@@ -136,12 +137,12 @@ void password_keyboard_display(void){
     lv_style_set_bg_color(&pwd_kb_style, lv_color_hex(0xF98E2D));
     lv_style_set_text_opa(&pwd_kb_style, LV_OPA_COVER);
     lv_style_set_text_font(&pwd_kb_style,& big_font_bold);          // Setting Font
-    lv_obj_set_size(pwd_keyboard, 300, 220);                        // Set the keyboard size
+    lv_obj_set_size(pwd_keyboard, lv_pct(90), lv_pct(50));         // Set the keyboard size
     lv_keyboard_set_mode(pwd_keyboard, LV_KEYBOARD_MODE_NUMBER);    // Set the keyboard mode as numeric keypad
     lv_keyboard_set_map(pwd_keyboard, LV_KEYBOARD_MODE_NUMBER, keyboard_map, keyboard_ctrl); // Set keyboard mapping
     lv_keyboard_set_textarea(pwd_keyboard, pwd_text_area);          // Keyboard Object and Text Box Bind
     lv_obj_add_style(pwd_keyboard, &pwd_kb_style, 0);               // Add Style
-    lv_obj_align(pwd_keyboard, LV_ALIGN_TOP_MID, 0, 130);
+    //lv_obj_align(pwd_keyboard, LV_ALIGN_TOP_MID, 0, 130);
 
     static lv_style_t btn_style;
     lv_style_reset(&btn_style);
@@ -211,14 +212,15 @@ static void cancel_btn_event_callback(lv_event_t* event){
     lv_event_code_t code = lv_event_get_code(event);
     if(code == LV_EVENT_CLICKED){
         Serial.print("Cancel button clicked\n");
-        if(pwd_text_area != NULL){
-            lv_textarea_set_text(pwd_text_area, "");                // Text box
-        }
-        if(hint_label != NULL){
-            lv_label_set_text(hint_label, "");
-        }
-        refuseAccess();                                             // Refuse callback
+        //if(pwd_text_area != NULL){
+        //    lv_textarea_set_text(pwd_text_area, "");                // Text box
+        //}
+        //if(hint_label != NULL){
+        //    lv_label_set_text(hint_label, "");
+        //}
         lv_obj_del(pwd_main_cont);                                  // Delete me
+
+        refuseAccess();                                             // Refuse callback
     }
 }
 

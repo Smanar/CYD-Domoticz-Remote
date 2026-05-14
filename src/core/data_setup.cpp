@@ -9,13 +9,20 @@
 
 #define SIZEOF(arr) (sizeof(arr) / sizeof(*arr))
 
-int GetActiveDevicePage(void);
-
 Device myDevices[TOTAL_ICONX*TOTAL_ICONY];
 char TmpBuffer[255]; // To prevent multiple re-alloc
 static int tab[24]; // Tab for graph
 
-void RefreshHomePage(void);
+void RefreshWidgetsPanel(void);
+
+static bool SetNewString(char **dst, const char *src)
+{
+    free(*dst);
+    *dst = (char*)malloc(strlen(src) + 1);
+    if (!*dst) return false;
+    strcpy(*dst, src);
+    return true;
+}
 
 char * Cleandata(unsigned short t, const char *origin, const char *bonus = nullptr)
 {
@@ -25,11 +32,11 @@ char * Cleandata(unsigned short t, const char *origin, const char *bonus = nullp
 
     if (bonus)
     {
-        snprintf(TmpBuffer, sizeof(TmpBuffer), "%s;%s", origin, bonus);
+        lv_snprintf(TmpBuffer, sizeof(TmpBuffer), "%s;%s", origin, bonus);
     }
     else
     {
-        snprintf(TmpBuffer, sizeof(TmpBuffer), "%s", origin);
+        lv_snprintf(TmpBuffer, sizeof(TmpBuffer), "%s", origin);
     }
 
     if (t == TYPE_SETPOINT || t == TYPE_THERMOSTAT) {
@@ -44,34 +51,48 @@ char * Cleandata(unsigned short t, const char *origin, const char *bonus = nullp
     return TmpBuffer;
 }
 
-void Init_data(void)
+void Init_data_widget_page()
 {
-    int activeDevicePage = GetActiveDevicePage();
+
     int idx;
+    int page = GetActiveWidgetPage();
 
     for (int i = 0; i < (TOTAL_ICONX*TOTAL_ICONY); i = i + 1)
     {
+        idx = global_pages[page].ListDevices[i];
+
         myDevices[i].type = TYPE_UNUSED;
-        if (global_pages[activeDevicePage].ListDevices[i] && HttpInitDevice(&myDevices[i], global_pages[activeDevicePage].ListDevices[i]))
+        myDevices[i].idx = idx;
+
+        if (idx < 0) //Sub page or buggy
         {
-            Serial.printf("Initialize Domoticz device id: %d , Name : %s\n", global_pages[activeDevicePage].ListDevices[i], myDevices[i].name);
-            delay(50); // During tests, the device spam Domoticz to get data too fast, and Domoticz "skip" some answers, 50ms is not a big delay.
-        }
+            if (-idx <= PAGES)                                           // Ok, page index
+            {                                                            // Check if given page is within range
+                int pagePtr = -idx - 1;                                  // Page pointer (0 to PAGES - 1)
+                SetNewString(&myDevices[i].name, global_pages[pagePtr].name);
+
+                myDevices[i].type = TYPE_PAGE;
+            }
+        } 
+
     }
 
+    //Ask for data, only real widget
+    InitDeviceRequest(myDevices, loadDeviceList(page, false));
+    delay(50); // During tests, the device spam Domoticz to get data too fast, and Domoticz "skip" some answers, 50ms is not a big delay.
+
+    //Subscribe Websocket, only for real widget
 #if defined(LIGHTWS)
-    char deviceList[TOTAL_ICONX*TOTAL_ICONY*6];
-    loadDeviceList(GetActiveDevicePage(), deviceList, sizeof(deviceList), false);
-    subscribedeviceWS(0, deviceList);
+    subscribedeviceWS(0, loadDeviceList(page, false));
 #endif
+
 }
 
 void FillDeviceData(Device *d, int idx)
 {
-    if (HttpInitDevice(d, idx))
-    {
-        Serial.printf("Initialize Domoticz device id: %d , Name : %s\n", idx, d->name);
-    }
+    char tmp8[5];
+    lv_snprintf(tmp8, sizeof(tmp8), "%d" , idx);
+    InitDeviceRequest(d, tmp8);
 }
 
 int Get_ID_Device(int JSonidx)
@@ -89,21 +110,86 @@ int Get_ID_Device(int JSonidx)
 // Load list of device associated to a page
 //      deviceList = char to load
 //      displayAll = false to get only Domoticz devices
-bool loadDeviceList(int page, char* deviceList, size_t deviceListLen, bool displayAll)
+char tmp7[TOTAL_ICONX*TOTAL_ICONY * 6] = ""; // 5 digits + comma
+const char * loadDeviceList(int page, bool displayAll)
 {
     int idx;
     int offset = 0;
-    bool oneFound = false;
-    memset(deviceList, 0, deviceListLen);                              // Clear device list
+    tmp7[0] = '\0';
+
     for (int i = 0; i < (TOTAL_ICONX*TOTAL_ICONY); i++)
     {
         idx = global_pages[page].ListDevices[i];
         if (displayAll || idx > 0) {
-            oneFound = true;
-            offset += snprintf(deviceList + offset, deviceListLen - offset, (i == 0) ? "%d" : ",%d", idx);
+            offset += lv_snprintf(tmp7 + offset, sizeof(tmp7) - offset, (i == 0) ? "%d" : ",%d", global_pages[page].ListDevices[i]);
         }
     }
-    return oneFound;
+    return tmp7;
+}
+
+bool HandleDomoticzData(JsonObject RJson2, Device * d)
+{
+    char * data;
+    bool NeedUpdate = false;
+
+    const char* JSondata = NULL;
+    int JSonLevel = 0;
+
+    if (RJson2["Data"].is<const char*>()) JSondata = RJson2["Data"];
+    if (RJson2["Level"].is<int>()) JSonLevel = RJson2["Level"];
+
+    if (RJson2["Rain"].is<const char*>())
+    {
+        data = Cleandata(d->type, RJson2["Rain"]);
+    }
+    else if ((d->type == TYPE_TEXT) || (d->type == TYPE_WARNING))
+    {
+        //Keep it unchanged
+        data = (char *)JSondata;
+    }
+    else if (d->type == TYPE_THERMOSTAT)
+    {
+        char t[10];
+        lv_snprintf(t, 10, "%.1f", RJson2["Temp"].as<float>());
+        data = Cleandata(d->type, t);
+    }
+    else
+    {
+        data = Cleandata(d->type, JSondata);
+    }
+
+    if (d->data && strcmp(data, d->data) != 0)
+    {
+        //Use dynamic array, but only 1 time
+        size_t dataLen = strlen(data);
+        if (dataLen >= d->lenData)
+        {
+            if (d->data) free(d->data);
+            d->data = (char*)malloc(dataLen + 1);
+            if (!d->data) return false; // malloc failed
+            d->lenData = dataLen;
+        }
+
+        strncpy(d->data, data, d->lenData + 1);
+        NeedUpdate = true;
+    }
+    else if (!d->data)
+    {
+        // First update: allocate and store initial data
+        d->data = (char*)malloc(strlen(data) + 1);
+        if (!d->data) return false; // malloc failed
+        d->lenData = strlen(data);
+        strncpy(d->data, data, d->lenData + 1);
+        NeedUpdate = true;
+    }
+
+    if (d->level != JSonLevel)
+    {
+        d->level = JSonLevel;
+        NeedUpdate = true;
+    }
+
+    return NeedUpdate;
 }
 
 void Update_device_data(JsonObject RJson2)
@@ -121,71 +207,9 @@ void Update_device_data(JsonObject RJson2)
     int ID = Get_ID_Device(JSonidx);
     if (ID < 0) return ; // Not in list
 
-    const char* JSondata = NULL;
-    int JSonLevel = 0;
+    Serial.printf("Update device Id: %d, Domo Idx: %d\n", ID, JSonidx);
 
-    //if (RJson2.containsKey("Data")) JSondata = RJson2["Data"];
-    //if (RJson2.containsKey("Level")) JSonLevel = RJson2["Level"];
-    if (RJson2["Data"].is<const char*>()) JSondata = RJson2["Data"];
-    if (RJson2["Level"].is<int>()) JSonLevel = RJson2["Level"];
-
-    Serial.printf("Update HP device Id: %d, Domo Idx: %d\n", ID, JSonidx);
-
-    bool NeedUpdate = false;
-
-    //Special device
-    char * data;
-
-    if (RJson2["Rain"].is<const char*>())
-    {
-        data = Cleandata(myDevices[ID].type, RJson2["Rain"]);
-    }
-    else if ((myDevices[ID].type == TYPE_TEXT) || (myDevices[ID].type == TYPE_WARNING))
-    {
-        //Keep it unchanged
-        data = (char *)JSondata;
-    }
-    else if (myDevices[ID].type == TYPE_THERMOSTAT)
-    {
-        char t[10];
-        lv_snprintf(t, 10, "%.1f", RJson2["Temp"].as<float>());
-        data = Cleandata(myDevices[ID].type, t);
-    }
-    else
-    {
-        data = Cleandata(myDevices[ID].type, JSondata);
-    }
-
-    if (myDevices[ID].data && strcmp(data, myDevices[ID].data) != 0)
-    {
-        //Use dynamic array, but only 1 time
-        size_t dataLen = strlen(data);
-        if (dataLen >= myDevices[ID].lenData)
-        {
-            if (myDevices[ID].data) free(myDevices[ID].data);
-            myDevices[ID].data = (char*)malloc(dataLen + 1);
-            if (!myDevices[ID].data) return; // malloc failed
-            myDevices[ID].lenData = dataLen;
-        }
-
-        strncpy(myDevices[ID].data, data, myDevices[ID].lenData + 1);
-        NeedUpdate = true;
-    }
-    else if (!myDevices[ID].data)
-    {
-        // First update: allocate and store initial data
-        myDevices[ID].data = (char*)malloc(strlen(data) + 1);
-        if (!myDevices[ID].data) return; // malloc failed
-        myDevices[ID].lenData = strlen(data);
-        strncpy(myDevices[ID].data, data, myDevices[ID].lenData + 1);
-        NeedUpdate = true;
-    }
-
-    if (myDevices[ID].level != JSonLevel)
-    {
-        myDevices[ID].level = JSonLevel;
-        NeedUpdate = true;
-    }
+    bool NeedUpdate = HandleDomoticzData(RJson2, &myDevices[ID]);
 
     if (NeedUpdate)
     {
@@ -204,7 +228,7 @@ void Update_device_data(JsonObject RJson2)
             }
             else
             {
-                RefreshHomePage();
+                RefreshWidgetsPanel();
             }
         }
     }
@@ -353,132 +377,113 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
 }
 
 
-bool HttpInitDevice(Device *d, int idx)
+bool InitDeviceRequest(Device *dd, const char* c)
 {
-    if (idx > 0) {                                                  // Positive id -> Domoticz idx
-        JsonDocument doc;
-        #ifdef OLD_DOMOTICZ
-            String url = "/json.htm?type=devices&rid=" + String(idx);
-        #else
-            String url = "/json.htm?type=command&param=getdevices&rid=" + String(idx);
-        #endif
 
-        if (!HTTPGETRequestWithReturn((char *)url.c_str(), &doc)) return false;
+    JsonDocument doc;
+    int idx = 0;
 
-        JsonArray JS;
-        JS = doc["result"];
+    #ifdef OLD_DOMOTICZ
+        String url = "/json.htm?type=devices&rid=" + String(c);
+    #else
+        String url = "/json.htm?type=command&param=getdevices&rid=" + String(c);
+    #endif
 
-        if (JS.isNull())
+    if (!HTTPGETRequestWithReturn((char *)url.c_str(), &doc)) return false;
+
+    JsonArray JS;
+    JS = doc["result"];
+
+    if (JS.isNull())
+    {
+        Serial.println(F("Json not available\n"));
+        return false;
+    }
+
+    Device *d = nullptr;
+
+    for (auto i : JS)
+    {
+
+        //First need the idx
+        if (i["idx"].is<int>())
         {
-            Serial.println(F("Json not available\n"));
+            idx = i["idx"].as<int>();
+        }
+        else if (i["idx"].is<const char*>())
+        {
+            idx = atoi(i["idx"].as<const char*>());
+        }
+
+        //Check the array
+        d = nullptr;
+        for (int j = 0; j < (TOTAL_ICONX*TOTAL_ICONY); j +=1 )
+        {
+            if (dd[j].idx == idx)
+            {
+                d = &dd[j];
+            }
+        }
+        // Not present ? Something is wrong in the request, skip it
+        if (!d) continue;
+
+        if (!SetNewString(&d->name, i["Name"])) return false;
+
+        Serial.printf("Initialize Domoticz devices id: %d, name %s\n", d->idx, d->name);
+
+        const char* JSondata = NULL;
+        const char* type = NULL;
+        const char* subtype = NULL;
+        const char* image = NULL;
+
+        type = i["Type"];
+        subtype = i["SubType"];
+        image = i["Image"];
+        JSondata = i["Data"];
+
+        if (!type || !subtype || !JSondata)
+        {
+            Serial.println(F("Json incomplete"));
             return false;
         }
 
-        for (auto i : JS)  // Scan the array (only 1)
+        if (!SetNewString(&d->ID, i["ID"])) return false;
+
+        d->level = i["Level"];
+
+        //Set a defaut value
+        d->type = TYPE_UNKNOWN;
+
+        if (strcmp(type, "Light/Switch") == 0)
         {
-            if (d->name) free(d->name);
-            d->name = (char*)malloc(strlen(i["Name"]) + 1);
-            if (!d->name) return false; // malloc failed
-            strncpy(d->name, i["Name"],strlen(i["Name"]) + 1);
+            d->type = TYPE_LIGHT;
 
-            const char* JSondata = NULL;
-            const char* type = NULL;
-            const char* subtype = NULL;
-            const char* image = NULL;
-
-            type = i["Type"];
-            subtype = i["SubType"];
-            image = i["Image"];
-            JSondata = i["Data"];
-
-            if (!type || !subtype || !JSondata)
+            if (strcmp(subtype,"Selector Switch") == 0)
             {
-                Serial.println(F("Json incomplete"));
-                return false;
-            }
 
-            if (d->ID) free(d->ID);
-            d->ID = (char*)malloc(strlen(i["ID"]) + 1);
-            if (!d->ID) return false; // malloc failed
-            strncpy(d->ID, i["ID"],strlen(i["ID"]) + 1);
+                d->type = TYPE_SELECTOR;
+                const char *base64 = i["LevelNames"];
+                if (d->levelname) free(d->levelname);
+                // Decoded string is always smaller, bytes = (string_length(encoded_string) − 814) / 1.37
+                // So we loose 30% of memory for nothing but don't need to re-alloc it.
+                d->levelname = (char*)malloc(strlen(i["LevelNames"]) + 1);
+                if (!d->levelname) return false; // malloc failed
 
-            if (i["idx"].is<int>())
-            {
-                d->idx = i["idx"].as<int>();
-            }
-            else if (i["idx"].is<const char*>())
-            {
-                d->idx = atoi(i["idx"].as<const char*>());
-            }
+                unsigned int string_length = decode_base64((const unsigned char*)base64, (unsigned char *)d->levelname);
+                d->levelname[string_length] = '\0';
 
-            d->level = i["Level"];
-
-            //Set a defaut value
-            d->type = TYPE_UNKNOWN;
-
-            if (strcmp(type, "Light/Switch") == 0)
-            {
-                d->type = TYPE_LIGHT;
-
-                if (strcmp(subtype,"Selector Switch") == 0)
+                char *ptr = d->levelname;
+                while (*ptr != '\0')
                 {
-
-                    d->type = TYPE_SELECTOR;
-                    const char *base64 = i["LevelNames"];
-                    if (d->levelname) free(d->levelname);
-                    // Decoded string is always smaller, bytes = (string_length(encoded_string) − 814) / 1.37
-                    // So we loose 30% of memory for nothing but don't need to re-alloc it.
-                    d->levelname = (char*)malloc(strlen(i["LevelNames"]) + 1);
-                    if (!d->levelname) return false; // malloc failed
-
-                    unsigned int string_length = decode_base64((const unsigned char*)base64, (unsigned char *)d->levelname);
-                    d->levelname[string_length] = '\0';
-
-                    char *ptr = d->levelname;
-                    while (*ptr != '\0')
-                    {
-                        if (*ptr == '|') { *ptr = '\n'; }
-                        ptr++;
-                    }
-
-                }
-                else // Type "switch"
-                {
-                    const char* switchtype = i["SwitchType"];
-
-                    if (strcmp(switchtype,"Dimmer") == 0)
-                    {
-                        d->type = TYPE_DIMMER;
-
-                        // some device don't have 0/100 values
-                        if (i["MaxDimLevel"].is<double>()) d->maxlevel = i["MaxDimLevel"];
-
-                    }
-                    else if (strcmp(switchtype,"On/Off") == 0)
-                    {
-                        d->type = TYPE_LIGHT;
-                    }
-                    else if ((strcmp(switchtype,"Push On Button") == 0) || (strcmp(switchtype,"Push Off Button") == 0))
-                    {
-                        d->type = TYPE_PUSH;
-                    }
-                    else if ((strcmp(switchtype,"Venetian Blinds EU") == 0) || (strcmp(switchtype,"Venetian Blinds US") == 0)
-                    || (strcmp(switchtype,"Blinds Percentage") == 0) || (strcmp(switchtype,"Blinds % + Stop") == 0))
-                    {
-                        d->type = TYPE_BLINDS;
-                    }
-                    else // Just passive sensor
-                    {
-                        d->type = TYPE_SWITCH_SENSOR;
-                    }
+                    if (*ptr == '|') { *ptr = '\n'; }
+                    ptr++;
                 }
 
             }
-            else if (strncmp(type, "Lighting", 8) == 0)
+            else // Type "switch"
             {
-                d->type = TYPE_LIGHT;
-                
                 const char* switchtype = i["SwitchType"];
+
                 if (strcmp(switchtype,"Dimmer") == 0)
                 {
                     d->type = TYPE_DIMMER;
@@ -487,122 +492,114 @@ bool HttpInitDevice(Device *d, int idx)
                     if (i["MaxDimLevel"].is<double>()) d->maxlevel = i["MaxDimLevel"];
 
                 }
-            }
-            else if (strcmp(type, "Color Switch") == 0)
-            {
-                d->type = TYPE_COLOR;
-            }
-            else if (strncmp(type, "Temp",4) == 0)
-            {
-                d->type = TYPE_TEMPERATURE;
-            }
-            else if (strcmp(type, "Humidity") == 0)
-            {
-                d->type = TYPE_HUMIDITY;
-            }
-            else if (strcmp(type, "Rain") == 0)
-            {
-                d->type = TYPE_METEO;
-            }
-            else if (strcmp(type, "Usage") == 0)
-            {
-                d->type = TYPE_POWER;
-            }
-            else if ((strcmp(type, "P1 Smart Meter") == 0) || (strcmp(type, "RFXMeter") == 0))
-            {
-                d->type = TYPE_CONSUMPTION;
-            }
-            else if (strcmp(type, "Weight") == 0)
-            {
-                d->type = TYPE_WEIGHT;
-            }
-            else if (strcmp(type, "Air Quality") == 0)
-            {
-                d->type = TYPE_AIR_QUALITY;
-            }
-            else if (strcmp(type, "General") == 0)
-            {
-                d->type = TYPE_SWITCH_SENSOR;
-
-                if (strcmp(subtype,"Alert") == 0) d->type = TYPE_WARNING;
-                else if (strcmp(subtype,"Percentage") == 0) d->type = TYPE_PERCENT_SENSOR;
-                else if (strcmp(subtype,"Text") == 0) d->type = TYPE_TEXT;
-                else if (strcmp(subtype,"kWh") == 0) d->type = TYPE_CONSUMPTION;
-                else if (strcmp(subtype,"Custom Sensor") == 0) d->type = TYPE_VALUE_SENSOR;
-            }
-            else if (strcmp(type, "Lux") == 0)
-            {
-                d->type = TYPE_LUX;
-            }
-            else if ((strcmp(type, "Setpoint") == 0) || (strcmp(type, "Thermostat") == 0))
-            {
-                d->type = TYPE_SETPOINT;
-            }
-            else if (strcmp(type, "Thermostat 6") == 0)
-            {
-                d->type = TYPE_THERMOSTAT;
-            }
-            if (image)
-            {
-                // Correction by image
-                if (strcmp(image,"WallSocket") == 0)
+                else if (strcmp(switchtype,"On/Off") == 0)
                 {
-                    d->type = TYPE_PLUG;
+                    d->type = TYPE_LIGHT;
                 }
-                else if (strcmp(image,"Speaker") == 0)
+                else if ((strcmp(switchtype,"Push On Button") == 0) || (strcmp(switchtype,"Push Off Button") == 0))
                 {
-                    d->type = TYPE_SPEAKER;
+                    d->type = TYPE_PUSH;
+                }
+                else if ((strcmp(switchtype,"Venetian Blinds EU") == 0) || (strcmp(switchtype,"Venetian Blinds US") == 0)
+                || (strcmp(switchtype,"Blinds Percentage") == 0) || (strcmp(switchtype,"Blinds % + Stop") == 0))
+                {
+                    d->type = TYPE_BLINDS;
+                }
+                else // Just passive sensor
+                {
+                    d->type = TYPE_SWITCH_SENSOR;
                 }
             }
 
-            //Special device
-            char * data;
-
-            if (i["Rain"].is<const char*>())
-            {
-            data = Cleandata(d->type, i["Rain"]);
-            }
-            else if ((d->type == TYPE_TEXT) || (d->type == TYPE_WARNING))
-            {
-                //Keep it unchanged
-                data = (char *)JSondata;
-            }
-            else if (d->type == TYPE_THERMOSTAT)
-            {
-                char t[10];
-                lv_snprintf(t, 10, "%.1f", i["Temp"].as<float>());
-                data = Cleandata(d->type, t);
-            }
-            else
-            {
-                data = Cleandata(d->type, JSondata);
-            }
-
-            //Use dynamic array if needed, but only 1 time if needed to prevent fragmentation
-            if (strlen(data) > d->lenData)
-            {
-                if (d->data) free(d->data);
-                d->data = (char*)malloc(strlen(data) + 1);
-                if (!d->data) return false; // malloc failed
-                //Serial.printf("Re-alloc from %d to %d\n", d->lenData, strlen(data));
-                d->lenData = strlen(data);
-            }
-
-            if (d->data) strncpy(d->data, data, d->lenData + 1);
         }
-        return true;
-    } else if (idx < 0) {                                            // Negative ID -> page
-        if (-idx <= PAGES) {                                         // Check if given page is within range
-            int pagePtr = -idx - 1;                                  // Page pointer (0 to PAGES - 1)
-            if (d->name) free(d->name);
-            d->name = (char*)malloc(strlen(global_pages[pagePtr].name) + 1);
-            if (!d->name) return false; // malloc failed
-            strncpy(d->name, global_pages[pagePtr].name, strlen(global_pages[pagePtr].name) + 1);
-            d->idx = idx;
-            d->type = TYPE_PAGE;
+        else if (strncmp(type, "Lighting", 8) == 0)
+        {
+            d->type = TYPE_LIGHT;
+            
+            const char* switchtype = i["SwitchType"];
+            if (strcmp(switchtype,"Dimmer") == 0)
+            {
+                d->type = TYPE_DIMMER;
+
+                // some device don't have 0/100 values
+                if (i["MaxDimLevel"].is<double>()) d->maxlevel = i["MaxDimLevel"];
+
+            }
         }
-    }    
-    return false;
+        else if (strcmp(type, "Color Switch") == 0)
+        {
+            d->type = TYPE_COLOR;
+        }
+        else if (strncmp(type, "Temp",4) == 0)
+        {
+            d->type = TYPE_TEMPERATURE;
+        }
+        else if (strcmp(type, "Humidity") == 0)
+        {
+            d->type = TYPE_HUMIDITY;
+        }
+        else if (strcmp(type, "Rain") == 0)
+        {
+            d->type = TYPE_METEO;
+        }
+        else if (strcmp(type, "Usage") == 0)
+        {
+            d->type = TYPE_POWER;
+        }
+        else if ((strcmp(type, "P1 Smart Meter") == 0) || (strcmp(type, "RFXMeter") == 0))
+        {
+            d->type = TYPE_CONSUMPTION;
+        }
+        else if (strcmp(type, "Weight") == 0)
+        {
+            d->type = TYPE_WEIGHT;
+        }
+        else if (strcmp(type, "Air Quality") == 0)
+        {
+            d->type = TYPE_AIR_QUALITY;
+        }
+        else if (strcmp(type, "General") == 0)
+        {
+            d->type = TYPE_SWITCH_SENSOR;
+
+            if (strcmp(subtype,"Alert") == 0) d->type = TYPE_WARNING;
+            else if (strcmp(subtype,"Percentage") == 0) d->type = TYPE_PERCENT_SENSOR;
+            else if (strcmp(subtype,"Text") == 0) d->type = TYPE_TEXT;
+            else if (strcmp(subtype,"kWh") == 0) d->type = TYPE_CONSUMPTION;
+            else if (strcmp(subtype,"Custom Sensor") == 0) d->type = TYPE_VALUE_SENSOR;
+        }
+        else if (strcmp(type, "Lux") == 0)
+        {
+            d->type = TYPE_LUX;
+        }
+        else if ((strcmp(type, "Setpoint") == 0) || (strcmp(type, "Thermostat") == 0))
+        {
+            d->type = TYPE_SETPOINT;
+        }
+        else if (strcmp(type, "Thermostat 6") == 0)
+        {
+            d->type = TYPE_THERMOSTAT;
+        }
+        if (image)
+        {
+            // Correction by image
+            if (strcmp(image,"WallSocket") == 0)
+            {
+                d->type = TYPE_PLUG;
+            }
+            else if (strcmp(image,"Speaker") == 0)
+            {
+                d->type = TYPE_SPEAKER;
+            }
+        }
+
+        //If not already updated
+        HandleDomoticzData(i, d);
+
+    }
+    
+    return true;
+
 }
 
 void GetThermostatValue(int idx, int *min, int *max, float *step, float *setpoint)
