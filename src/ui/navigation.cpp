@@ -3,13 +3,18 @@
 #include "panels/panel.h"
 #include "../core/data_setup.h"
 #include "../core/ip_engine.h"
+#include "../conf/global_config.h"
 
 static lv_obj_t * tv;
 static int actived_panel = 0;
 static int master_panel = 0;
 
 extern Device myDevices[];
-extern Device myDevices2[][TOTAL_ICONX*TOTAL_ICONY];
+
+int GetActiveDevicePage(void)
+{
+    return actived_panel - HOMEPAGE_PANEL;
+}
 
 int GetActivePanel(void)
 {
@@ -28,9 +33,9 @@ void ReturnPreviouspage(void)
 
 void RefreshHomePage(void)
 {
-    if (actived_panel == HOMEPAGE_PANEL)
+    if (actived_panel >= HOMEPAGE_PANEL && actived_panel <= LAST_PAGE_PANEL)
     {                           
-        navigation_screen(HOMEPAGE_PANEL);
+        navigation_screen(actived_panel);
     }
 }
 
@@ -52,8 +57,6 @@ void RefreshScenePage(void)
 }
 #endif
 
-
-
 void navigation_screen(unsigned char active_panel)
 {
     actived_panel = active_panel;
@@ -69,49 +72,50 @@ void navigation_screen(unsigned char active_panel)
     lv_obj_set_style_pad_all(panel, 0, 0);
     //lv_obj_clear_flag(panel, LV_OBJ_FLAG_SCROLLABLE);
 
-    switch (active_panel)
-    {
-        case TOOL_PANEL: // Tools
-            master_panel = active_panel;
-            tools_panel_init(panel);
-            break;
-        case HOMEPAGE_PANEL: // Homepage
-            master_panel = active_panel;
-            home_panel_init(panel, myDevices);
-            break;
-#if PAGES > 0
-        case (HOMEPAGE_PANEL + 1) ... SPECIAL_PAGES:
-            master_panel = active_panel;
-            home_panel_init(panel, myDevices2[active_panel - HOMEPAGE_PANEL - 1]);
-            break;
-#endif
-#ifndef NO_GROUP_PAGE
-        case GROUP_PANEL: //Group/Scene panel
-            master_panel = active_panel;
-            group_panel_init(panel);
-            break;
-#endif
-#ifndef NO_INFO_PAGE
-        case INFO_PANEL: //Info panel
-            master_panel = active_panel;
-            info_panel_init(panel);
-            break;
-#endif
-        case DEVICE_PANEL: // Device panel
-            device_panel_init(panel);
-            break;
-        case SETTING_PANEL:// Settings
-            settings_panel_init(panel);
-            break;
-
-        default:
-            settings_panel_init(panel);
-            break;
+    if (active_panel == TOOL_PANEL) {                               // Tools
+        master_panel = active_panel;
+        tools_panel_init(panel);
+    } else if (active_panel >= HOMEPAGE_PANEL && active_panel <= LAST_PAGE_PANEL) {  // Homepage
+        master_panel = active_panel;
+        home_panel_init(panel, myDevices);
+    #ifndef NO_GROUP_PAGE
+    } else if (active_panel == GROUP_PANEL) {                       //Group/Scene panel
+        master_panel = active_panel;
+        group_panel_init(panel);
+    #endif
+    #ifndef NO_INFO_PAGE
+    } else if (active_panel == INFO_PANEL) {                        //Info panel
+        master_panel = active_panel;
+        info_panel_init(panel);
+    #endif
+    } else if (active_panel == DEVICE_PANEL) {                      // Device panel    
+        device_panel_init(panel);
+    } else if (active_panel == SETTING_PANEL) {                     // Settings
+        settings_panel_init(panel);
     }
-
 }
 
 void nav_style_setup()
 {
 
+}
+
+// Check if a given page is protected
+bool isPageProtected(int page) {
+    if (page == TOOL_PANEL) {                                       // Tools
+        return global_config.protectTool;
+    } else if (page >= HOMEPAGE_PANEL && page <= LAST_PAGE_PANEL) { // Homepage
+        return global_pages[page - HOMEPAGE_PANEL].isProtected;
+    #ifndef NO_GROUP_PAGE
+    } else if (page == GROUP_PANEL) {                               //Group/Scene panel
+        return global_config.protectGroup;
+    #endif
+    #ifndef NO_INFO_PAGE
+    } else if (page == INFO_PANEL) {                                //Info panel
+        return global_config.protectInfo;
+    #endif
+    } else if (page == SETTING_PANEL) {                             // Settings
+        return global_config.protectSetting;
+    }
+    return false;                                                   // By default (including DEVICE_PANEL)
 }

@@ -3,7 +3,7 @@
 #include "lvgl.h"
 
 GLOBAL_CONFIG global_config = {0};
-GLOBAL_PAGE global_pages[PAGES + 1] = {0}; // Home Page + Special pages
+GLOBAL_PAGE global_pages[PAGES] = {0};
 
 COLOR_DEF color_defs[] = {
     {LV_PALETTE_BLUE, LV_PALETTE_RED},
@@ -65,17 +65,62 @@ void VerifyVersion(){
         for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++) {
             global_pages[0].ListDevices[i] = configV3.ListDevices[i];
         }
-        for (uint p=1; p <= PAGES; p++) {                            // Clear unused pages
+        for (uint p=1; p < PAGES; p++) {                            // Clear unused pages
             for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++) {
                 global_pages[p].ListDevices[i] = 0;
             }
         }
-        for (uint p=0; p <= PAGES; p++) {                            // Set default names
+        for (uint p=0; p < PAGES; p++) {                            // Set default names
             snprintf(global_pages[p].name, sizeof(global_pages[p].name), "Page %d", p+1);
         }
         global_config.color_scheme = configV3.color_scheme;
         global_config.brightness = configV3.brightness;
         global_config.screenTimeout = configV3.screenTimeout;
+        WriteGlobalConfig();
+    }
+
+    // Convert V4 to V5 if needed
+    if (version == 4) {
+        Serial.println(F("Converting pages from V4 to V5"));
+        GLOBAL_CONFIG global_config = {0};
+        if (!preferences.begin("global_config", true)) return;
+        preferences.getBytes("global_config", &global_config, sizeof(global_config));
+        global_config.version = 5;
+
+        GLOBAL_PAGE_V4 pages_V4[PAGES] = {0};
+        preferences.getBytes("pages", &pages_V4, sizeof(pages_V4));
+        preferences.end();
+
+        for (uint p=0; p < PAGES; p++) {                            // Load previous V4 pages
+            for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++) {
+                global_pages[p].ListDevices[i] = pages_V4[p].ListDevices[i];
+            }
+            strncpy(global_pages[p].name, pages_V4[p].name, sizeof(global_pages[p].name));
+            global_pages[p].isProtected = false;
+        }
+        WriteGlobalConfig();
+    }
+
+    // Convert V5 to V6 if needed
+    if (version == 5) {
+        Serial.println(F("Converting pages from V5 to V6"));
+        GLOBAL_CONFIG_V5 global_config_V5 = {0};
+        if (!preferences.begin("global_config", true)) return;
+        preferences.getBytes("global_config", &global_config_V5, sizeof(global_config));
+        // Copy begining of V5 data
+        memmove(&global_config, &global_config_V5, sizeof(global_config_V5));
+        // Change version
+        global_config.version = 6;
+        // Clear prorection password and flags
+        strcpy(global_config.protectionPassword, "");
+        global_config.protectSetting = true;
+        global_config.protectTool = false;
+        global_config.protectGroup = false;
+        global_config.protectInfo = true;
+
+        // Read pages "as-is"
+        preferences.getBytes("pages", &global_pages, sizeof(global_pages));
+        preferences.end();
         WriteGlobalConfig();
     }
 
@@ -94,7 +139,7 @@ void LoadGlobalConfig() {
     global_config.brightness = 255;
     global_config.screenTimeout = 0;
 
-    for (uint p=0; p<=PAGES; p++)
+    for (uint p=0; p<PAGES; p++)
     {
         if (p > 0) snprintf(global_pages[p].name, sizeof(global_pages[p].name), "Page %d", p+1); // No name for Homepage ?
     }

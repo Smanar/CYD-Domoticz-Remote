@@ -2,11 +2,17 @@
 void navigation_screen(unsigned char active_panel);
 void ReturnPreviouspage(void);
 void nav_style_setup();
+int GetActiveDevicePage(void);
 int GetActivePanel(void);
 void SetActivePanel(int);
 void RefreshHomePage(void);
 void RefreshScenePage(void);
 void RefreshDevicePanel(void);
+
+typedef void (checkAdminCallback_t)(const int);
+
+void checkAdminRights(const int pagePtr, checkAdminCallback_t allowedCallback, checkAdminCallback_t refusedCallback);
+bool isPageProtected(int page);
 
 #define DATA_REMOTE_STATE 1
 #define DATA_REMOTE_DATA 2
@@ -15,9 +21,7 @@ void RefreshDevicePanel(void);
 enum {
     TOOL_PANEL,
     HOMEPAGE_PANEL,
-#if PAGES > 0
-    SPECIAL_PAGES = HOMEPAGE_PANEL + PAGES,
-#endif
+    LAST_PAGE_PANEL = (HOMEPAGE_PANEL + PAGES - 1),
 #ifndef NO_GROUP_PAGE
     GROUP_PANEL,
 #endif

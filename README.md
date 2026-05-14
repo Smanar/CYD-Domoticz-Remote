@@ -65,6 +65,9 @@ For the hardware part (according to your device) mains settings are in the file 
 	#-DCORE_DEBUG_LEVEL=5 # To enable debug on serial for librairies and core
 ``` 
 
+## Page protection
+You can protect any page from unauthorized access. When a protection password is defined in settngs, user will have to provide this password to be allowed accessing the page. Page validation or rejection is kept for 30 seconds.
+
 ## OTA
 There is 2 options for OTA, PUSHOTA and PULLOTA you can enable one of them or nothing (not both ofc).
 

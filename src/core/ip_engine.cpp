@@ -189,7 +189,12 @@ static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
 			//Serial.printf("[WSc] get text: %s\n", payload);
             if (length > 0)
             {
-
+                #if (0)
+                // Print just received message (debug)
+                char payloadText[length+1];
+                strncpy(payloadText, (const char*) payload, sizeof(payloadText));
+                Serial.printf("WS text %s\n", payloadText);
+                #endif
                 total_data_lengh += length;
 
                 JsonDocument doc;

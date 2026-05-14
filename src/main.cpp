@@ -18,54 +18,39 @@
 unsigned long now;
 void Websocket_loop(void);
 
+// Display page
+void pageValidated(int page) {
+    lv_indev_wait_release(lv_indev_get_act());
+    navigation_screen(page);
+}
+
+// Test previous page
+void testPreviousPage(int page) {
+    page -=1;
+    if (page >= 0) {
+        checkAdminRights(page, &pageValidated, &testPreviousPage);
+    }
+}
+
+// Test next page
+void testNextPage(int page) {
+    page += 1;
+    if (page < MAX_PANEL_SCROLL) {
+        checkAdminRights(page, &pageValidated, &testNextPage);
+    }
+}
+
 static void scr_event_cb(lv_event_t * e)
 {
     int p = GetActivePanel();
+    lv_dir_t dir = lv_indev_get_gesture_dir(lv_indev_get_act());
 
-    if (p < MAX_PANEL_SCROLL)
-    {
-
-        lv_dir_t dir = lv_indev_get_gesture_dir(lv_indev_get_act());
-
-#ifndef SLIDE
-        if ((p == HOMEPAGE_PANEL) && (dir == LV_DIR_LEFT))
-        {
-            //Skip all others pages
-            p = SPECIAL_PAGES + 1;
-        }
-        else if ((p == SPECIAL_PAGES + 1) && (dir == LV_DIR_RIGHT ))
-        {
-            // Skip all others pages
-            p = HOMEPAGE_PANEL;
-        }
-        else if ((p > HOMEPAGE_PANEL) && (p <= SPECIAL_PAGES ))
-        {
-            // return to Homepage
-            p = HOMEPAGE_PANEL;
-        }
-        else
-        {
-            if (dir == LV_DIR_LEFT) p +=1;
-            if (dir == LV_DIR_RIGHT) p -=1;
-        }
-#else
-        if (dir == LV_DIR_LEFT) p +=1;
-        if (dir == LV_DIR_RIGHT) p -=1;
-#endif
-
-        if (p < 0) p = 0;
-        if (p >= MAX_PANEL_SCROLL) p = MAX_PANEL_SCROLL - 1;
-
-        lv_indev_wait_release(lv_indev_get_act());
-
-        Serial.printf("Dir: %d, page: %d\n", dir, p);
-
-#ifndef SLIDE
-        //If slide disabled
-
-#endif
-        
-        navigation_screen(p);
+    if (dir == LV_DIR_LEFT) {
+        Serial.printf("Starting left gesture at page %d\n", p);
+        testNextPage(p);
+    } else if (dir == LV_DIR_RIGHT) {
+        Serial.printf("Starting right gesture at page %d\n", p);
+        testPreviousPage(p);
     }
 }
 
@@ -126,8 +111,11 @@ void setup() {
             strcpy(global_config.wifiSSID, "xxxxxxxxxxxxxxx");
             strcpy(global_config.ServerHost, "192.168.1.1");
             global_config.ServerPort = 8080;
-            const static short t[] = {122, 75, 16, 36, 28, -1, 63, 90, 145};
-            const static short t2[] = {12, 75, 16, 36, 28, -1, 63, 0, 0};
+            const static short t[] = {
+                122, 75, 16, 36, 28, -1, 63, 90, 145    // Page 1
+                ,
+                12, 75, 16, 36, 28, -1, 63, 0, 0        // Page 2
+            };
         #endif
 
         global_config.wifiConfigured = true;
@@ -135,22 +123,14 @@ void setup() {
 
         short v;
 
-        //Home Page
-        for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++)
-        {
-            if (i < sizeof(t) / sizeof(t[0])) { v = t[i]; } else { v = 0; }
-            global_pages[0].ListDevices[i] = v;
-        }
-
-#if PAGES > 0
-        //More pages to test
-        for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++)
-        {
-            if (i < sizeof(t) / sizeof(t[0])) { v = t2[i]; } else { v = 0; }
-            global_pages[1].ListDevices[i] = v;
-        }
-#endif
-
+        int ptr = 0;
+        for (uint p=0; p<PAGES; p++) {
+            for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++)
+            {
+                if (ptr < sizeof(t) / sizeof(t[0])) { v = t[ptr]; } else { v = 0; }
+                global_pages[p].ListDevices[i] = v;
+            }
+	}
         WriteGlobalConfig();
     #endif
 
@@ -184,7 +164,6 @@ analogSetAttenuation(ADC_0db); // 0dB(1.0x) 0~800mV
     InitIPEngine(); // IP stuff
     wifi_init(); // Wifi initialisation
     WS_init(); // Websocket initialisation
-    Init_data(); // Data initialisation
 
 #ifdef PUSHOTA
     //Webserver for OTA
@@ -208,7 +187,6 @@ analogSetAttenuation(ADC_0db); // 0dB(1.0x) 0~800mV
 
     //Start on Home panel
     navigation_screen(HOMEPAGE_PANEL);
-
 }
 
 void loop(){
