@@ -19,18 +19,6 @@ unsigned long now;
 void Websocket_loop(void);
 short OldPage = 0;
 
-// Display page
-void pageValidated(int page) {
-    lv_indev_wait_release(lv_indev_get_act());
-    navigation_screen(page);
-}
-
-void RefreshOldPage()
-{
-    pageValidated(OldPage);
-}
-
-#if 0 
 static void scr_event_cb(lv_event_t * e)
 {
     int p = GetActivePanel();
@@ -41,47 +29,19 @@ static void scr_event_cb(lv_event_t * e)
     if (dir == LV_DIR_LEFT)
     {
         Serial.printf("Starting left gesture at page %d\n", p);
-        if (p < MAX_PANEL_SCROLL) p += 1;
-        checkAdminRights(p, &pageValidated, &testPreviousPage);
+        if (p < MAX_PANEL_SCROLL - 1) p += 1;
     }
     else if (dir == LV_DIR_RIGHT)
     {
         Serial.printf("Starting right gesture at page %d\n", p);
-        if (p >= 0) p -=1;
-        checkAdminRights(p, &pageValidated, &testPreviousPage);
+        if (p > 0) p -=1;
     }
-}
-#endif
 
+    lv_indev_wait_release(lv_indev_get_act()); // Needed after a slide
 
-// Test previous page
-void testPreviousPage(int page) {
-    page -=1;
-    if (page >= 0) {
-        checkAdminRights(page, &pageValidated, &testPreviousPage);
-    }
-}
-// Test next page
-void testNextPage(int page) {
-    page += 1;
-    if (page < MAX_PANEL_SCROLL) {
-        checkAdminRights(page, &pageValidated, &testNextPage);
-    }
-}
-static void scr_event_cb(lv_event_t * e)
-{
-    int p = GetActivePanel();
-    lv_dir_t dir = lv_indev_get_gesture_dir(lv_indev_get_act());
+    if (checkAdminRights(p, OldPage)) navigation_screen(p);
 
-    if (dir == LV_DIR_LEFT) {
-        Serial.printf("Starting left gesture at page %d\n", p);
-        testNextPage(p);
-    } else if (dir == LV_DIR_RIGHT) {
-        Serial.printf("Starting right gesture at page %d\n", p);
-        testPreviousPage(p);
-    }
 }
-
 
 void setup() {
 
@@ -140,9 +100,13 @@ void setup() {
             strcpy(global_config.wifiSSID, "xxxxxxxxxxxxxxx");
             strcpy(global_config.ServerHost, "192.168.1.1");
             global_config.ServerPort = 8080;
-            const static short t[] = {
-                122, 75, 16, 36, 28, -1, 63, 90, 145,    // Page 1
-                12, 75, 16, 36, 28, -1, 63, 0, 0         // Page 2
+            //  0 is disabled
+            // -1 is the Home page
+            // -2 is the first sub page
+            const static short t[] =
+            {
+                122, 75, 16, 36, 28, -2, 63, 90, 145,    // HomePage
+                12, 75, 16, 36, 28, 0, 63, 0, -1         // Subpage 1
             };
         #endif
 

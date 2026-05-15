@@ -9,9 +9,7 @@ void RefreshWidgetsPanel(void);
 void RefreshScenePanel(void);
 void RefreshDevicePanel(void);
 
-typedef void (checkAdminCallback_t)(const int);
-
-void checkAdminRights(const int pagePtr, checkAdminCallback_t allowedCallback, checkAdminCallback_t refusedCallback);
+bool checkAdminRights(const int, const int);
 bool isPageProtected(int page);
 
 #define DATA_REMOTE_STATE 1

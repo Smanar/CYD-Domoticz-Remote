@@ -28,7 +28,10 @@ static void tools_btn_event_handler(lv_event_t * e)
     //const lv_obj_t *label = lv_obj_get_child(ta, 0);
     int b = (int)lv_event_get_user_data(e);
 
-    if (b == 1) checkAdminRights(SETTING_PANEL, &go_setting_panel_cb, 0);
+    if (b == 1)
+    {
+        if (checkAdminRights(SETTING_PANEL, TOOL_PANEL)) navigation_screen(SETTING_PANEL);
+    }
     if (b == 2) ESP.restart();
 #ifdef PULLOTA
     if (b == 3) OTAUpdate();

@@ -73,16 +73,12 @@ static void btn_event_cb(lv_event_t * e)
     if (d2->type == TYPE_PAGE) {                                // Clicked on a page button?
         unsigned int pagePtr = -d2->idx -1;                     // Get back to page index (0 - PAGES -1)
         if (pagePtr < PAGES) {                                  // Withion range?
-            checkAdminRights(pagePtr + HOMEPAGE_PANEL, &go_page_cb, 0); // Check for admin rights
+            if (checkAdminRights(pagePtr + HOMEPAGE_PANEL, 0)) navigation_screen(pagePtr + HOMEPAGE_PANEL);
         }
         return;
     }
     //Serial.printf("Clic sur boutton: %d", * btn_no);
     Select_deviceMemorised(d);
-}
-
-static void go_page_cb(int pagePtr) {
-    navigation_screen(pagePtr);                                     // Goto right page 
 }
 
 static void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int h, lv_color_t color, Device *d, const lv_img_dsc_t* icon)

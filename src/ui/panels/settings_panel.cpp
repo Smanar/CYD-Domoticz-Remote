@@ -304,8 +304,11 @@ void create_settings_widget(const char* label_text, lv_obj_t* object, lv_obj_t* 
     lv_label_set_text(label, label_text);
     lv_obj_align(label, LV_ALIGN_LEFT_MID, 0, 0);
 
-    lv_obj_set_parent(object, panel);
-    lv_obj_align(object, LV_ALIGN_RIGHT_MID, 0, 0);
+    if (object)
+    {
+        lv_obj_set_parent(object, panel);
+        lv_obj_align(object, LV_ALIGN_RIGHT_MID, 0, 0);
+    }
     y_offset += y_element_size;
 }
 
@@ -386,7 +389,7 @@ void settings_panel_init(lv_obj_t* panel)
     dropdown = lv_dropdown_create(panel);
     String pageList = "";
     for (int p=0; p<PAGES; p++) {
-        pageList += "\nPage " + String(p+1) + " - " + global_pages[p].name;
+        pageList += "\nPage " + String(p+1);
     }
     lv_dropdown_set_options(dropdown, pageList.substring(1).c_str());
     lv_dropdown_set_selected(dropdown, pageToChange);
