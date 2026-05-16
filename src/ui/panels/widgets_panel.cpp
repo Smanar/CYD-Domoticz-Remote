@@ -58,10 +58,9 @@ static void btn_event_cb(lv_event_t * e)
     //lv_event_code_t code = lv_event_get_code(e);
     //lv_obj_t * btn = lv_event_get_target(e);
     //int *d = (int*)lv_event_get_param(e);
-    void * d = (void *)lv_event_get_user_data(e); // cast the return pointer to data type pointer
+    Device * d2 = (Device *)lv_event_get_user_data(e);
 
     #ifdef FASTCLIC
-        Device *d2 = (Device *)d;
         if ((d2->type == TYPE_PUSH) || (d2->type == TYPE_LIGHT) || (d2->type == TYPE_SWITCH) || (d2->type == TYPE_PLUG))
         {
             char buff[256] = {};
@@ -78,7 +77,7 @@ static void btn_event_cb(lv_event_t * e)
         return;
     }
     //Serial.printf("Clic sur boutton: %d", * btn_no);
-    Select_deviceMemorised(d);
+    Select_deviceMemorised(d2);
 }
 
 static void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int h, lv_color_t color, Device *d, const lv_img_dsc_t* icon)

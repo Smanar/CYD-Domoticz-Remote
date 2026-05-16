@@ -42,9 +42,7 @@ static int GetIntTok(const char * str, int t, const char c)
 }
 
 static void invert_color_switch(lv_event_t * e){
-    auto state = lv_obj_get_state(lv_event_get_target(e));
-    bool checked = (state & LV_STATE_CHECKED == LV_STATE_CHECKED);
-    global_config.invertColors = checked;
+    global_config.invertColors = lv_obj_has_state(lv_event_get_target(e), LV_STATE_CHECKED);
     WriteGlobalConfig();
     set_invert_display();
 }
@@ -67,9 +65,7 @@ static void exit_click(lv_event_t * e){
 }
 
 static void light_mode_switch(lv_event_t * e){
-    auto state = lv_obj_get_state(lv_event_get_target(e));
-    bool checked = (state & LV_STATE_CHECKED == LV_STATE_CHECKED);
-    global_config.lightMode = checked;
+    global_config.lightMode = lv_obj_has_state(lv_event_get_target(e), LV_STATE_CHECKED);
     WriteGlobalConfig();
     set_color_scheme();
 }
@@ -122,16 +118,14 @@ static void page_dropdown(lv_event_t * e){
 
 static void rotate_screen_switch(lv_event_t* e){
     auto state = lv_obj_get_state(lv_event_get_target(e));
-    bool checked = (state & LV_STATE_CHECKED == LV_STATE_CHECKED);
-    global_config.rotateScreen = checked;
+    global_config.rotateScreen = (state & LV_STATE_CHECKED == LV_STATE_CHECKED);;
     global_config.screenCalibrated = false;
     WriteGlobalConfig();
     ESP.restart();
 }
 
 static void protect_xxx_cb(lv_event_t* e){
-    auto state = lv_obj_get_state(lv_event_get_target(e));
-    bool checked = (state & LV_STATE_CHECKED == LV_STATE_CHECKED);
+    bool checked = lv_obj_has_state(lv_event_get_target(e), LV_STATE_CHECKED);
     int ptr =  (int) lv_event_get_user_data(e);
     switch (ptr) {
         case 1: global_config.protectTool = checked; break;
@@ -143,9 +137,7 @@ static void protect_xxx_cb(lv_event_t* e){
 }
 
 static void not_used_yet_switch(lv_event_t* e){
-    auto state = lv_obj_get_state(lv_event_get_target(e));
-    bool checked = (state & LV_STATE_CHECKED == LV_STATE_CHECKED);
-    global_config.notused = checked;
+    global_config.notused = lv_obj_has_state(lv_event_get_target(e), LV_STATE_CHECKED);
     check_if_screen_needs_to_be_disabled();
     WriteGlobalConfig();
 }
@@ -185,7 +177,7 @@ static void edit_device_list_switch(lv_event_t * e)
         lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
         lv_obj_clear_state(ta, LV_STATE_FOCUSED);
         lv_indev_reset(NULL, ta);   /*To forget the last clicked object to make it focusable again*/
-        const char * str = lv_textarea_get_text(ta);
+        //const char * str = lv_textarea_get_text(ta);
 
         for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++)
         {
@@ -279,10 +271,8 @@ static void edit_protect_password_cb(lv_event_t * e)
 }
 
 static void invert_page_isProtected(lv_event_t * e){
-    auto state = lv_obj_get_state(lv_event_get_target(e));
-    bool checked = (state & LV_STATE_CHECKED == LV_STATE_CHECKED);
     //int pagePtr =  (int) lv_event_get_user_data(e);
-    global_pages[pageToChange].isProtected = checked;
+    global_pages[pageToChange].isProtected = lv_obj_has_state(lv_event_get_target(e), LV_STATE_CHECKED);
     WriteGlobalConfig();
 }
 

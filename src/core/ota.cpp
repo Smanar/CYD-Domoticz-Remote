@@ -77,7 +77,7 @@ void OTAUpdate()
                 offset += bytes_written;
 
                 lv_timer_handler();
-                lv_task_handler();
+                //lv_task_handler();
 
                 lv_bar_set_value(bar1, offset * 100 / totalLength , LV_ANIM_ON);
                 Serial.printf("OTA %d %\n", offset * 100 / totalLength );
@@ -93,7 +93,7 @@ void OTAUpdate()
 
                     lv_refr_now(NULL);
                     lv_timer_handler();
-                    lv_task_handler();
+                    //lv_task_handler();
                 }
             }
 

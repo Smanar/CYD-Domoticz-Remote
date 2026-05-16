@@ -104,7 +104,7 @@ void wifi_init_inner(){
     lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
 
     lv_timer_handler();
-    lv_task_handler();
+    //lv_task_handler();
     lv_refr_now(NULL);
 
     lv_obj_clean(lv_scr_act());
@@ -155,7 +155,7 @@ void wifi_init()
         while (!global_config.wifiConfigured)
         {
             lv_timer_handler();
-            lv_task_handler();
+            //lv_task_handler();
         }
     }
 
@@ -211,7 +211,7 @@ void wifi_init()
         }
         
         lv_timer_handler();
-        lv_task_handler();
+        //lv_task_handler();
     }
     Serial.println(F("Wifi connected"));
 }
