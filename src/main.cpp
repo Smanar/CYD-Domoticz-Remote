@@ -17,12 +17,11 @@
 
 unsigned long now;
 void Websocket_loop(void);
-short OldPage = 0;
 
 static void scr_event_cb(lv_event_t * e)
 {
     int p = GetActivePanel();
-    OldPage = p;
+    int OldPage = p;
 
     lv_dir_t dir = lv_indev_get_gesture_dir(lv_indev_get_act());
 

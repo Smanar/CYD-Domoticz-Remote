@@ -74,6 +74,7 @@ void password_keyboard_display(void){
     lv_obj_add_style(pwd_bg_cont, &bg_style, 0);                    // Add a style to the object
 #endif
     lv_obj_set_size(pwd_bg_cont, LV_PCT(100), LV_PCT(100));         // Setting size
+    lv_obj_clear_flag( pwd_bg_cont, LV_OBJ_FLAG_SCROLLABLE );         // Remove scrollbar
     lv_obj_align(pwd_bg_cont, LV_ALIGN_TOP_MID, 0, 0);              // Top Case
 
 #if 0
@@ -111,6 +112,7 @@ void password_keyboard_display(void){
     lv_textarea_set_max_length(pwd_text_area, sizeof(global_config.protectionPassword)-1); // Set the maximum length of the entered text
     lv_obj_set_size(pwd_text_area, lv_pct(80), 25);                 // Settings Object Size
     lv_obj_align_to(pwd_text_area, title_label, LV_ALIGN_OUT_BOTTOM_MID, 0, 5); // Top Case
+    lv_obj_clear_flag( pwd_text_area, LV_OBJ_FLAG_SCROLLABLE );         // Remove scrollbar
 
     // Create a password check tab based on the keyboard background object
     hint_label = lv_label_create(pwd_bg_cont);
@@ -125,13 +127,14 @@ void password_keyboard_display(void){
     lv_style_set_text_font(&hint_label_style, &medium_font);         // Setting Font
     lv_obj_add_style(hint_label, &hint_label_style, 0);             // Add a style to btn_label
 #endif
-    lv_label_set_long_mode(hint_label, LV_LABEL_LONG_SCROLL_CIRCULAR); // Long text loop scrolling
-    lv_obj_align_to(hint_label, pwd_text_area, LV_ALIGN_OUT_BOTTOM_MID, 0, 5);
+    //lv_label_set_long_mode(hint_label, LV_LABEL_LONG_SCROLL_CIRCULAR); // Long text loop scrolling
+    lv_obj_align_to(hint_label, pwd_text_area, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
     lv_label_set_text(hint_label, "");                              // Setting the text content
 
     // Create a keyboard object based on the keyboard background object
     lv_obj_t * pwd_keyboard = lv_keyboard_create(pwd_bg_cont);
     // Keyboard style
+#if 1
     static lv_style_t pwd_kb_style;
     lv_style_reset(&pwd_kb_style);
     lv_style_init(&pwd_kb_style);                                   // Initialization Sample
@@ -140,13 +143,15 @@ void password_keyboard_display(void){
     lv_style_set_bg_color(&pwd_kb_style, lv_color_hex(0xF98E2D));
     lv_style_set_text_opa(&pwd_kb_style, LV_OPA_COVER);
     lv_style_set_text_font(&pwd_kb_style,& big_font_bold);          // Setting Font
+    lv_obj_add_style(pwd_keyboard, &pwd_kb_style, 0);               // Add Style
+#endif
     lv_obj_set_size(pwd_keyboard, lv_pct(90), lv_pct(50));         // Set the keyboard size
     lv_keyboard_set_mode(pwd_keyboard, LV_KEYBOARD_MODE_NUMBER);    // Set the keyboard mode as numeric keypad
     lv_keyboard_set_map(pwd_keyboard, LV_KEYBOARD_MODE_NUMBER, keyboard_map, keyboard_ctrl); // Set keyboard mapping
     lv_keyboard_set_textarea(pwd_keyboard, pwd_text_area);          // Keyboard Object and Text Box Bind
-    lv_obj_add_style(pwd_keyboard, &pwd_kb_style, 0);               // Add Style
     lv_obj_align_to(pwd_keyboard, hint_label, LV_ALIGN_OUT_BOTTOM_MID, 0, 5);
 
+#if 0
     static lv_style_t btn_style;
     lv_style_reset(&btn_style);
     lv_style_init(&btn_style);                                      // Initialization
@@ -155,11 +160,12 @@ void password_keyboard_display(void){
     lv_style_set_bg_color(&btn_style, lv_color_hex(0xF98E2D));
     lv_style_set_text_color(&btn_style, lv_color_hex(0xFFFFFF));
     lv_style_set_text_font(&btn_style, &big_font_bold);             // Setting Font
+#endif
 
     // Create a confirmation button based on the keyboard background object
     lv_obj_t * confirm_btn = lv_btn_create(pwd_bg_cont);
     lv_obj_add_event_cb(confirm_btn, confirm_btn_event_callback, LV_EVENT_CLICKED, NULL); // Add Click events and event processing callback functions to the object
-    lv_obj_add_style(confirm_btn, &btn_style, 0);                   // Add button style
+    //lv_obj_add_style(confirm_btn, &btn_style, 0);                   // Add button style
     lv_obj_set_size(confirm_btn, 112, 27);                          // Set button object size
     lv_obj_align(confirm_btn, LV_ALIGN_TOP_MID, -65, lv_pct(90));          // Set button object location
     // Create a label based on the Confirm_BTN object
@@ -170,7 +176,7 @@ void password_keyboard_display(void){
     // Create a cancel button based on the keyboard background object
     lv_obj_t * cancel_btn = lv_btn_create(pwd_bg_cont);
     lv_obj_add_event_cb(cancel_btn, cancel_btn_event_callback, LV_EVENT_CLICKED, NULL); // Add Click events and event processing callback functions to objects to objects
-    lv_obj_add_style(cancel_btn, &btn_style, 0);
+    //lv_obj_add_style(cancel_btn, &btn_style, 0);
     lv_obj_set_size(cancel_btn, 112, 27);
     lv_obj_align(cancel_btn, LV_ALIGN_TOP_MID, 65, lv_pct(90));
     // Create a label based on the Cancel object

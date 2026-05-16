@@ -54,7 +54,7 @@ void tools_panel_init(lv_obj_t* panel)
     lv_obj_clear_flag( cont1, LV_OBJ_FLAG_SCROLLABLE );
 
     // Setting button
-    obj= lv_btn_create(cont1);
+    obj = lv_btn_create(cont1);
     lv_obj_set_size(obj, LV_PCT(30), 40);
     lv_obj_align(obj, LV_ALIGN_RIGHT_MID, 0, 0);
     label = lv_label_create(obj);
@@ -62,7 +62,7 @@ void tools_panel_init(lv_obj_t* panel)
     lv_obj_center(label);
     lv_obj_add_event_cb(obj, tools_btn_event_handler, LV_EVENT_CLICKED, (void *)1);
     // Reboot button
-    obj= lv_btn_create(cont1);
+    obj = lv_btn_create(cont1);
     lv_obj_set_size(obj, LV_PCT(30), 40);
     lv_obj_align(obj, LV_ALIGN_LEFT_MID, 0, 0);
     label = lv_label_create(obj);

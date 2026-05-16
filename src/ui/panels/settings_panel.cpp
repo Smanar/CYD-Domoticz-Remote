@@ -155,7 +155,7 @@ static void edit_device_list_switch(lv_event_t * e)
 {
     lv_event_code_t code = lv_event_get_code(e);
     lv_obj_t * ta = lv_event_get_target(e);
-    int pagePtr =  (int) lv_event_get_user_data(e);
+    //int pagePtr =  (int) lv_event_get_user_data(e);
 
     if (code == LV_EVENT_FOCUSED)
     {
@@ -189,7 +189,7 @@ static void edit_device_list_switch(lv_event_t * e)
 
         for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++)
         {
-            global_pages[pagePtr].ListDevices[i] = GetIntTok(lv_textarea_get_text(ta), i,',');
+            global_pages[pageToChange].ListDevices[i] = GetIntTok(lv_textarea_get_text(ta), i,',');
         }
         WriteGlobalConfig();
         Init_data_widget_page();
@@ -200,7 +200,7 @@ static void edit_page_name(lv_event_t * e)
 {
     lv_event_code_t code = lv_event_get_code(e);
     lv_obj_t * ta = lv_event_get_target(e);
-    int pagePtr =  (int) lv_event_get_user_data(e);
+    //int pagePtr =  (int) lv_event_get_user_data(e);
 
     if (code == LV_EVENT_FOCUSED)
     {
@@ -231,7 +231,7 @@ static void edit_page_name(lv_event_t * e)
         lv_obj_clear_state(ta, LV_STATE_FOCUSED);
         lv_indev_reset(NULL, ta);   /*To forget the last clicked object to make it focusable again*/
 
-        strncpy(global_pages[pagePtr].name, lv_textarea_get_text(ta), sizeof(global_pages[pagePtr].name));
+        strncpy(global_pages[pageToChange].name, lv_textarea_get_text(ta), sizeof(global_pages[pageToChange].name));
 
         WriteGlobalConfig();
         Init_data_widget_page();
@@ -281,8 +281,8 @@ static void edit_protect_password_cb(lv_event_t * e)
 static void invert_page_isProtected(lv_event_t * e){
     auto state = lv_obj_get_state(lv_event_get_target(e));
     bool checked = (state & LV_STATE_CHECKED == LV_STATE_CHECKED);
-    int pagePtr =  (int) lv_event_get_user_data(e);
-    global_pages[pagePtr].isProtected = checked;
+    //int pagePtr =  (int) lv_event_get_user_data(e);
+    global_pages[pageToChange].isProtected = checked;
     WriteGlobalConfig();
 }
 
@@ -398,20 +398,19 @@ void settings_panel_init(lv_obj_t* panel)
     create_settings_widget("Page to change", dropdown, panel);
 
     pageName = lv_textarea_create(panel);
-    lv_obj_add_event_cb(pageName, edit_page_name, LV_EVENT_ALL, (void*) pageToChange);
+    lv_obj_add_event_cb(pageName, edit_page_name, LV_EVENT_ALL, NULL);
     lv_textarea_add_text(pageName, global_pages[pageToChange].name);
     lv_textarea_set_one_line(pageName, true);
     lv_obj_set_width(pageName, lv_pct(70));
     create_settings_widget("... name", pageName, panel);
 
     pageIsProtected = lv_switch_create(panel);
-    lv_obj_add_event_cb(pageIsProtected, invert_page_isProtected, LV_EVENT_VALUE_CHANGED, (void *) pageToChange);
-    if (global_pages[pageToChange].isProtected)
-    lv_obj_add_state(pageIsProtected, LV_STATE_CHECKED);
+    lv_obj_add_event_cb(pageIsProtected, invert_page_isProtected, LV_EVENT_VALUE_CHANGED, NULL);
+    if (global_pages[pageToChange].isProtected) lv_obj_add_state(pageIsProtected, LV_STATE_CHECKED);
     create_settings_widget("... protected", pageIsProtected, panel);
 
     pageDeviceList = lv_textarea_create(panel);
-    lv_obj_add_event_cb(pageDeviceList, edit_device_list_switch, LV_EVENT_ALL, (void*) pageToChange);
+    lv_obj_add_event_cb(pageDeviceList, edit_device_list_switch, LV_EVENT_ALL, NULL);
     lv_textarea_add_text(pageDeviceList, loadDeviceList(pageToChange, true));
     lv_textarea_set_one_line(pageDeviceList, true);
     lv_obj_set_width(pageDeviceList, lv_pct(70));
