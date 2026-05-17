@@ -16,12 +16,11 @@
 //#include "core/sound.h"
 
 unsigned long now;
-void Websocket_loop(void);
 
 static void scr_event_cb(lv_event_t * e)
 {
     int p = GetActivePanel();
-    int OldPage = p;
+    int default_page = p;
 
     lv_dir_t dir = lv_indev_get_gesture_dir(lv_indev_get_act());
 
@@ -29,16 +28,39 @@ static void scr_event_cb(lv_event_t * e)
     {
         Serial.printf("Starting left gesture at page %d\n", p);
         if (p < MAX_PANEL_SCROLL - 1) p += 1;
+
+        int i = default_page;
+        while (i < MAX_PANEL_SCROLL - 1)
+        {
+            i += 1;
+            if (!isPageProtected(i))
+            {
+                default_page = i;
+                break;
+            }
+        }
     }
     else if (dir == LV_DIR_RIGHT)
     {
         Serial.printf("Starting right gesture at page %d\n", p);
         if (p > 0) p -=1;
+
+        int i = default_page;
+        while (i > 0)
+        {
+            i -= 1;
+            if (!isPageProtected(i))
+            {
+                default_page = i;
+                break;
+            }
+        }
+
     }
 
     lv_indev_wait_release(lv_indev_get_act()); // Needed after a slide
 
-    if (checkAdminRights(p, OldPage)) navigation_screen(p);
+    navigation_screen(checkAdminRights(p, default_page));
 
 }
 
@@ -142,8 +164,6 @@ digitalWrite(RGB_LED_B, true);
 analogReadMilliVolts(CDS);
 #endif
 
-
-
 //Enable light sensor
 #if defined (BOARD_HAS_CDS) && defined (AUTO_BRIGHTNESS)
 pinMode(CDS, INPUT);
@@ -180,6 +200,7 @@ analogSetAttenuation(ADC_0db); // 0dB(1.0x) 0~800mV
 
     //Start on Home panel
     navigation_screen(HOMEPAGE_PANEL);
+
 }
 
 void loop(){

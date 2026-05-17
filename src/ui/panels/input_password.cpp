@@ -16,6 +16,7 @@ static unsigned long lastAdminRightRefused = 0;                     // Last time
 
 static void validateAccess(void);
 static void refuseAccess(void);
+void password_keyboard_display(void);
 
 static const char * keyboard_map[] = {
     "1","2", "3","\n",
@@ -38,9 +39,13 @@ static void confirm_btn_event_callback(lv_event_t* event);
 static void cancel_btn_event_callback(lv_event_t* event);
 
 // Display the keyboard input interface
-void password_keyboard_display(void){
+void password_keyboard_display(lv_obj_t* panel){
+
+    lv_obj_clean(panel); // Clear the page
+
+#if 1
     // Current page canvas container
-    pwd_main_cont = lv_obj_create(lv_scr_act());                    // Based on the screen creates a container
+    pwd_main_cont = lv_obj_create(panel);                    // Based on the screen creates a container
     // Canvas style
     static lv_style_t main_cont_style;
     lv_style_reset(&main_cont_style);
@@ -53,6 +58,7 @@ void password_keyboard_display(void){
     lv_obj_add_style(pwd_main_cont, &main_cont_style, 0);           // Add a style to the object
     lv_obj_set_size(pwd_main_cont, LV_PCT(100), LV_PCT(100));       // Setting size to max
     lv_obj_center(pwd_main_cont);                                   // Object in the middle of the screen display
+#endif
 
     // Keyboard background container
     lv_obj_t * pwd_bg_cont = lv_obj_create(pwd_main_cont);
@@ -238,10 +244,10 @@ static void cancel_btn_event_callback(lv_event_t* event){
 }
 
 // Routine to display password keyboard and get admin rights
-bool checkAdminRights(const int pagePtr, const int pagePrevious)
+int checkAdminRights(const int pagePtr, const int DefaultPage)
 {
     checkAdminPagePtr = pagePtr;                                    // Page pointer to send to routine
-    checkAdminPagePrevious = pagePrevious;
+    checkAdminPagePrevious = DefaultPage;
 
     #if (1)
     Serial.printf("checkAdminRights: page %d, protected %d, given %lu, refused %lu\n", 
@@ -254,16 +260,15 @@ bool checkAdminRights(const int pagePtr, const int pagePrevious)
             && isPageProtected(pagePtr))                            // ... and page protected?
     {
         if (lastAdminRightGiven && ((millis() - lastAdminRightGiven) < ADMIN_RIGHTS_TIMEOUT)) { // If right given recently
-            return true;
+            return pagePtr;
         } else if (!lastAdminRightRefused || ((millis() - lastAdminRightRefused) >= ADMIN_RIGHTS_TIMEOUT)) { // Unless rights refused recently
-            password_keyboard_display();                            // Display password keyboard
-            return false;
+            return PASS_PANEL;
         }
-        return false;
+        return DefaultPage;
     }
     else
     {                                                        // No protection password given
-        return true;
+        return pagePtr;
     }
 }
 

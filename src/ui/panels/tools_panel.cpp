@@ -30,7 +30,7 @@ static void tools_btn_event_handler(lv_event_t * e)
 
     if (b == 1)
     {
-        if (checkAdminRights(SETTING_PANEL, TOOL_PANEL)) navigation_screen(SETTING_PANEL);
+        navigation_screen(checkAdminRights(SETTING_PANEL, TOOL_PANEL));
     }
     if (b == 2) ESP.restart();
 #ifdef PULLOTA

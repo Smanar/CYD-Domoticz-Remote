@@ -21,24 +21,32 @@ const int y_element_x_padding = 30;
 const static lv_point_t line_points[] = { {0, 0}, {panel_width - y_seperator_x_padding, 0} };
 static lv_obj_t * settings_panel;
 
-static int GetIntTok(const char * str, int t, const char c)
+static int GetIntTok(const char* str, int t, const char c)
 {
     if (!str) return 0;
-    int i, str_length = strlen(str);
+
     int v = 0, tot = 0;
- 
-    for (i = 0; i<str_length; i++) {
-        if ((str[i] == c) || (str[i] == '\0'))
+    bool negative = false;
+    bool in_token = (t == 0);
+
+    for (int i = 0; str[i] != '\0'; i++)
+    {
+        if (str[i] == c)
         {
-            tot +=1;
-            if (tot > t) break;
+            if (tot == t) break;
+            tot++;
+            negative = false;
+            v = 0;
+            in_token = (tot == t);
         }
-        else if (tot == t)
+        else if (in_token)
         {
-            v = v * 10 + (str[i]-48);
+            if (str[i] == '-' && v == 0 && !negative) negative = true;
+            else if (str[i] >= '0' && str[i] <= '9') v = v * 10 + (str[i] - '0');
         }
     }
-    return v;
+
+    return negative ? -v : v;
 }
 
 static void invert_color_switch(lv_event_t * e){
@@ -327,13 +335,13 @@ void settings_panel_init(lv_obj_t* panel)
     lv_obj_t * toggle = lv_switch_create(panel);
     lv_obj_add_event_cb(toggle, invert_color_switch, LV_EVENT_VALUE_CHANGED, NULL);
     if (global_config.invertColors)
-        lv_obj_add_state(toggle, LV_STATE_CHECKED);
+    lv_obj_add_state(toggle, LV_STATE_CHECKED);
     create_settings_widget("Invert Colors", toggle, panel);
 
     toggle = lv_switch_create(panel);
     lv_obj_add_event_cb(toggle, light_mode_switch, LV_EVENT_VALUE_CHANGED, NULL);
     if (global_config.lightMode)
-        lv_obj_add_state(toggle, LV_STATE_CHECKED);
+    lv_obj_add_state(toggle, LV_STATE_CHECKED);
     create_settings_widget("Light Mode", toggle, panel);
 
     lv_obj_t * dropdown = lv_dropdown_create(panel);
@@ -367,13 +375,13 @@ void settings_panel_init(lv_obj_t* panel)
     toggle = lv_switch_create(panel);
     lv_obj_add_event_cb(toggle, rotate_screen_switch, LV_EVENT_VALUE_CHANGED, NULL);
     if (global_config.rotateScreen)
-        lv_obj_add_state(toggle, LV_STATE_CHECKED);
+    lv_obj_add_state(toggle, LV_STATE_CHECKED);
     create_settings_widget("Rotate Screen", toggle, panel);
 
     toggle = lv_switch_create(panel);
     lv_obj_add_event_cb(toggle, not_used_yet_switch, LV_EVENT_VALUE_CHANGED, NULL);
     if (global_config.notused)
-        lv_obj_add_state(toggle, LV_STATE_CHECKED);
+    lv_obj_add_state(toggle, LV_STATE_CHECKED);
     create_settings_widget("Not used yet", toggle, panel);
 
     dropdown = lv_dropdown_create(panel);

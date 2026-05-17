@@ -163,7 +163,6 @@ void wifi_init()
     WiFi.disconnect();
     wifi_Connecting_screen();
 
-
     // Special config ?
     #if __has_include("../personal_settings.h")
         #include "../personal_settings.h"

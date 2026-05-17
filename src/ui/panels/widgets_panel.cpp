@@ -72,10 +72,11 @@ static void btn_event_cb(lv_event_t * e)
     if (d2->type == TYPE_PAGE) {                                // Clicked on a page button?
         unsigned int pagePtr = -d2->idx -1;                     // Get back to page index (0 - PAGES -1)
         if (pagePtr < PAGES) {                                  // Withion range?
-            if (checkAdminRights(pagePtr + HOMEPAGE_PANEL, GetActivePanel())) navigation_screen(pagePtr + HOMEPAGE_PANEL);
+            navigation_screen(checkAdminRights(pagePtr + HOMEPAGE_PANEL, GetActivePanel()));
         }
         return;
     }
+    
     //Serial.printf("Clic sur boutton: %d", * btn_no);
     Select_deviceMemorised(d2);
 }

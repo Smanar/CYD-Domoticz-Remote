@@ -72,6 +72,8 @@ void navigation_screen(unsigned char active_panel)
     lv_obj_set_style_pad_all(panel, 0, 0);
     //lv_obj_clear_flag(panel, LV_OBJ_FLAG_SCROLLABLE);
 
+    Serial.printf("Showing page %d\n", active_panel);
+
     switch (active_panel)
     {
         case TOOL_PANEL: // Tools
@@ -99,6 +101,9 @@ void navigation_screen(unsigned char active_panel)
             break;
         case SETTING_PANEL:// Settings
             settings_panel_init(panel);
+            break;
+        case PASS_PANEL://Password entry
+            password_keyboard_display(panel);
             break;
 
         default:

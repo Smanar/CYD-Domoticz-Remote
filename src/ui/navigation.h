@@ -9,8 +9,9 @@ void RefreshWidgetsPanel(void);
 void RefreshScenePanel(void);
 void RefreshDevicePanel(void);
 
-bool checkAdminRights(const int, const int);
+int checkAdminRights(const int, const int);
 bool isPageProtected(int page);
+void password_keyboard_display(lv_obj_t* panel);
 
 #define DATA_REMOTE_STATE 1
 #define DATA_REMOTE_DATA 2
@@ -28,5 +29,6 @@ enum {
 #endif
     MAX_PANEL_SCROLL,
     DEVICE_PANEL,
-    SETTING_PANEL
+    SETTING_PANEL,
+    PASS_PANEL
 };
