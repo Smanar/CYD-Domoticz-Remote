@@ -52,7 +52,7 @@ JsonDocument loadJson() {
 //  Write current preferences to settings file
 //
 void writeJsonConfig() {
-    JsonDocument settings = loadJson();                                  // Load JSON data
+    JsonDocument settings = loadJson();                             // Load JSON data
     File settingsFile = LittleFS.open(SETTINGS_FILE, "w");          // Open settings file
     if (!settingsFile) {                                            // Error opening?
         Serial.printf("Can't open %s for write\n", SETTINGS_FILE);
@@ -70,8 +70,8 @@ void writeJsonConfig() {
 
 //
 //  Check json config file
-//      If file is ok, preferences will be modified, saved, and a new settings.json will be written.
-//      Returns true if file is ok, false else
+//  If file is ok, preferences will be modified, saved, and a new settings.json will be written.
+//  Returns true if file is ok, false else
 //
 bool checkJsonConfig(const char* jsonFile) {
     if (readJsonConfig(jsonFile)) {
@@ -162,4 +162,36 @@ void dumpConfig() {
     JsonDocument settings = loadJson();                                          // Load JSON data
     serializeJsonPretty(settings, buffer);
     Serial.println(buffer);
+}
+
+void JsonSetting_Init(void)
+{
+    bool lastStatus;
+    lastStatus = LittleFS.begin();
+    if (!lastStatus) {
+        Serial.println(F("Formattiong LittleFS!"));
+        lastStatus = LittleFS.begin(true);
+    }
+    size_t usedBytes = LittleFS.usedBytes();
+    size_t totalBytes = LittleFS.totalBytes();
+    size_t remainingBytes = totalBytes - usedBytes;
+    Serial.printf("LittleFS %s, %d kB free (%d%%)\n", lastStatus?"ok":"*BAD*", remainingBytes / 1024, (100 * remainingBytes) / totalBytes);
+
+    // List content of LittleFS
+    #ifdef DUMP_FILE_SYSTEM
+        String path = "/";
+        File dir = LittleFS.open(path);
+        Serial.println("Files saved:");
+        File entry = dir.openNextFile();
+        short fileCount = 0;
+        while(entry){
+            String fileName = String(entry.name());
+            fileName = path + fileName;
+            Serial.printf("\t%s\n", fileName.c_str());
+            fileCount++;
+            entry = dir.openNextFile();
+        }
+        Serial.printf("\t%d file%s found\n", fileCount, fileCount != 1?"s":"");
+        dir.close();
+    #endif
 }

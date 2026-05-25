@@ -11,5 +11,6 @@
     bool checkJsonConfig(const char* jsonFile);
     bool readJsonConfig(const char* jsonFile);
     void dumpConfig();
+    void JsonSetting_Init(void);
 
 #endif // !_JSON_CONFIG_INIT

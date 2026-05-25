@@ -12,7 +12,7 @@
 #include "ui/main_ui.h"
 #include "ui/navigation.h"
 #include "ui/panels/panel.h"
-#include "LittleFS.h"
+
 //#include "core/sound.h"
 
 unsigned long now;
@@ -71,39 +71,10 @@ void setup() {
     Serial.begin(115200);
     delay(500);    // add a delay to be sure the serial is ready, while(!Serial) has, to my knowledge. no effect on a nodeMcu
     Serial.println(F("Starting application"));
-    LoadGlobalConfig(); // Loading setting
-    screen_setup(); // Set display
-    Serial.println(F("Screen init done"));
-    bool lastStatus;
-    lastStatus = LittleFS.begin();
-    if (!lastStatus) {
-        Serial.println(F("Formattiong LittleFS!"));
-        lastStatus = LittleFS.begin(true);
-    }
-    size_t usedBytes = LittleFS.usedBytes();
-    size_t totalBytes = LittleFS.totalBytes();
-    size_t remainingBytes = totalBytes - usedBytes;
-    Serial.printf("LittleFS %s, %d kB free (%d%%)\n", lastStatus?"ok":"*BAD*", remainingBytes / 1024, (100 * remainingBytes) / totalBytes);
 
-    // List content of LittleFS
-    #ifdef DUMP_FILE_SYSTEM
-        String path = "/";
-        File dir = LittleFS.open(path);
-        Serial.println("Files saved:");
-        File entry = dir.openNextFile();
-        short fileCount = 0;
-        while(entry){
-            String fileName = String(entry.name());
-            fileName = path + fileName;
-            Serial.printf("\t%s\n", fileName.c_str());
-            fileCount++;
-            entry = dir.openNextFile();
-        }
-        Serial.printf("\t%d file%s found\n", fileCount, fileCount != 1?"s":"");
-        dir.close();
-    #endif
+    JsonSetting_Init(); // Prepare json settings
+    LoadGlobalConfig(); // Load setting
 
-    
     // Personal Settings to don't have to set them at every reset.
     // They are saved after have been set, so the flag FORCE_CONFIG can be disabled after
     #if FORCE_CONFIG
@@ -148,6 +119,9 @@ void setup() {
 
         WriteGlobalConfig();
     #endif
+
+    screen_setup(); // Set display
+    Serial.println(F("Screen init done"));
 
 //Disable LED
 #ifdef BOARD_HAS_RGB_LED

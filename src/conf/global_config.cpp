@@ -1,6 +1,8 @@
 #include <Preferences.h>
-#include "global_config.h"
+
 #include "lvgl.h"
+#include "global_config.h"
+#include "json_config.h"
 
 GLOBAL_CONFIG global_config = {0};
 GLOBAL_PAGE global_pages[PAGES] = {0};
@@ -17,35 +19,40 @@ COLOR_DEF color_defs[] = {
 
 
 void WriteGlobalConfig() {
+#if 0
     Preferences preferences;
     preferences.begin("global_config", false);
     preferences.putBytes("global_config", &global_config, sizeof(global_config));
     preferences.putBytes("global_pages", &global_pages, sizeof(global_pages));
     preferences.end();
+#endif
     writeJsonConfig();
 }
 
-void VerifyVersion(){
+void VerifyOldVersion(){
     Preferences preferences;
 
     if (!preferences.begin("global_config", true)) return;
-    // As size changes between V3 (larger) and V4 (smaller), we should read existing
-    //    preferences into a local buffer with appropriate size
+    // As size changes between V3 (larger) and the new version (smaller), we should read existing
+    // preferences into a local buffer with appropriate size
     size_t prefLength = preferences.getBytesLength("global_config");
     char prefBuffer[prefLength];
     preferences.getBytes("global_config", &prefBuffer, prefLength);
     unsigned char version = prefBuffer[0];
     preferences.end();
 
-    Serial.printf("Config version: %d\n", version);
+    Serial.printf("Old Config version: %d\n", version);
 
-    // Convert V3 to V4 if needed
+    // Convert V3 to last version if needed
     if (version == 3) {
-        Serial.println(F("Converting preferences from V3 to V4"));
+        Serial.println(F("Converting preferences from V3 to last version"));
+        //Load old settings
         GLOBAL_CONFIG_V3 configV3 = {0};
         if (!preferences.begin("global_config", true)) return;
         preferences.getBytes("global_config", &configV3, sizeof(configV3));
         preferences.end();
+
+        //Update from V3 to V4
         global_config.version = 4;
         global_config.screenCalibrated = configV3.screenCalibrated;
         global_config.wifiConfigured = configV3.wifiConfigured;
@@ -62,6 +69,7 @@ void VerifyVersion(){
         strncpy(global_config.wifiPassword, configV3.wifiPassword, sizeof(global_config.wifiPassword));
         strncpy(global_config.ServerHost, configV3.ServerHost, sizeof(global_config.ServerHost));
         global_config.ServerPort = configV3.ServerPort;
+
         for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++) {
             global_pages[0].ListDevices[i] = configV3.ListDevices[i];
         }
@@ -70,66 +78,46 @@ void VerifyVersion(){
                 global_pages[p].ListDevices[i] = 0;
             }
         }
+        
         for (uint p=0; p < PAGES; p++) {                            // Set default names
             lv_snprintf(global_pages[p].name, sizeof(global_pages[p].name), "Page %d", p+1);
+            global_pages[p].isProtected = false;
         }
         global_config.color_scheme = configV3.color_scheme;
         global_config.brightness = configV3.brightness;
         global_config.screenTimeout = configV3.screenTimeout;
+
+        global_config.version = 5; // The fonction Updatejsonversion() will update the rest
+
+        //Save settings using littleFS and json
         WriteGlobalConfig();
-    }
 
-    // Convert V4 to V5 if needed
-    if (version == 4) {
-        Serial.println(F("Converting pages from V4 to V5"));
-        GLOBAL_CONFIG global_config = {0};
-        if (!preferences.begin("global_config", true)) return;
-        preferences.getBytes("global_config", &global_config, sizeof(global_config));
-        global_config.version = 5;
-
-        GLOBAL_PAGE_V4 pages_V4[PAGES] = {0};
-        preferences.getBytes("pages", &pages_V4, sizeof(pages_V4));
+#if 0
+        //Clear old data
+        Serial.println(F("Clearing Global Config"));
+        if (!preferences.begin("global_config", false)) return;
+        preferences.clear();
         preferences.end();
+#endif
 
-        for (uint p=0; p < PAGES; p++) {                            // Load previous V4 pages
-            for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++) {
-                global_pages[p].ListDevices[i] = pages_V4[p].ListDevices[i];
-            }
-            strncpy(global_pages[p].name, pages_V4[p].name, sizeof(global_pages[p].name));
-            global_pages[p].isProtected = false;
-        }
-        WriteGlobalConfig();
     }
 
-    // Convert V5 to V6 if needed
-    if (version == 5) {
-        Serial.println(F("Converting pages from V5 to V6"));
-        GLOBAL_CONFIG_V5 global_config_V5 = {0};
-        if (!preferences.begin("global_config", true)) return;
-        preferences.getBytes("global_config", &global_config_V5, sizeof(global_config));
-        // Copy begining of V5 data
-        memmove(&global_config, &global_config_V5, sizeof(global_config_V5));
-        // Change version
-        global_config.version = 6;
-        // Clear prorection password and flags
+}
+
+void Updatejsonversion(void)
+{
+    if ( global_config.version == 5)
+    {
         strcpy(global_config.protectionPassword, "");
         global_config.protectSetting = true;
         global_config.protectTool = false;
         global_config.protectGroup = false;
         global_config.protectInfo = true;
-
-        // Read pages "as-is"
-        preferences.getBytes("pages", &global_pages, sizeof(global_pages));
-        preferences.end();
-        WriteGlobalConfig();
     }
 
-    if (global_config.version != CONFIG_VERSION) {
-        Serial.println(F("Clearing Global Config"));
-        if (!preferences.begin("global_config", false)) return;
-        preferences.clear();
-        preferences.end();
-    }
+    global_config.version == CONFIG_VERSION;
+    WriteGlobalConfig();
+
 }
 
 void LoadGlobalConfig() {
@@ -142,12 +130,22 @@ void LoadGlobalConfig() {
     for (uint p=0; p<PAGES; p++)
     {
         if (p > 0) snprintf(global_pages[p].name, sizeof(global_pages[p].name), "Page %d", p+1); // No name for Homepage ?
+        global_pages[p].isProtected = false;
     }
 
-    Preferences preferences;
-    preferences.begin("global_config", true);
-    preferences.getBytes("global_config", &global_config, sizeof(global_config));
-    preferences.getBytes("global_pages", &global_pages, sizeof(global_pages));
-    preferences.end();
-    VerifyVersion();
+    // Load json setting
+    if (!readJsonConfig(SETTINGS_FILE))
+    {
+        //json not present or failed to load
+        //check for old version that use "preference"
+        VerifyOldVersion();
+    }
+
+    //check for version
+    if (global_config.version != CONFIG_VERSION)
+    {
+        Serial.printf("Version missmatch: %d <> %d\n", global_config.version, CONFIG_VERSION);
+        Updatejsonversion();
+    }
+
 }
