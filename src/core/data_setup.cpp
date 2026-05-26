@@ -90,7 +90,7 @@ void Init_data_widget_page()
 
 void FillDeviceData(Device *d, int idx)
 {
-    char tmp8[5];
+    char tmp8[6];					// 5 chars + null
     lv_snprintf(tmp8, sizeof(tmp8), "%d" , idx);
     InitDeviceRequest(d, tmp8);
 }
@@ -121,7 +121,7 @@ const char * loadDeviceList(int page, bool displayAll)
     {
         idx = global_pages[page].ListDevices[i];
         if (displayAll || idx > 0) {
-            offset += lv_snprintf(tmp7 + offset, sizeof(tmp7) - offset, (i == 0) ? "%d" : ",%d", global_pages[page].ListDevices[i]);
+            offset += lv_snprintf(tmp7 + offset, sizeof(tmp7) - offset, (offset == 0) ? "%d" : ",%d", global_pages[page].ListDevices[i]);
         }
     }
     return tmp7;
@@ -380,6 +380,7 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
 bool InitDeviceRequest(Device *dd, const char* c)
 {
 
+    if (!*c) return false;                                          // Don't send empty request (will else send all devices)
     JsonDocument doc;
     int idx = 0;
 
