@@ -58,6 +58,7 @@ For the hardware part (according to your device) mains settings are in the file 
 	#-DNO_INFO_PAGE # Disable the Info panel
 	#-DNO_GROUP_PAGE # Disable the Group/scene panel
 	#-DFONT_TO_USE=1 # 1=Standard 2=Custom 3=French, See fonts paragraph
+	-DHIDE_PASSWORD # Hide password input (else show it)
 	#-DAUTO_BRIGHTNESS
 	-DLIGHTWS # Only possible for version > 16088, decrease WS requests.
 	-DPUSHOTA # To enable PUSH OTA (Don't enable both OTA)
