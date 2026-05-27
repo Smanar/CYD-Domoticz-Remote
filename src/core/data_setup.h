@@ -50,7 +50,7 @@ typedef struct _Device {
 
 void Init_data_widget_page();
 void FillDeviceData(Device *d, int idx);
-bool InitDeviceRequest(Device *dd, const char* c);
+bool InitDeviceRequest(Device *dd, const char* c, bool isarray = true);
 int * GetGraphValue(int type, int idx, int *, int *);
 const char * loadDeviceList(int page, bool displayAll = false);
 void GetThermostatValue(int idx, int *min, int *max, float *step, float *setpoint);

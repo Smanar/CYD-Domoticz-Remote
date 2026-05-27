@@ -92,7 +92,7 @@ void FillDeviceData(Device *d, int idx)
 {
     char tmp8[6];					// 5 chars + null
     lv_snprintf(tmp8, sizeof(tmp8), "%d" , idx);
-    InitDeviceRequest(d, tmp8);
+    InitDeviceRequest(d, tmp8, false);
 }
 
 int Get_ID_Device(int JSonidx)
@@ -377,7 +377,7 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
 }
 
 
-bool InitDeviceRequest(Device *dd, const char* c)
+bool InitDeviceRequest(Device *dd, const char* c, bool isarray)
 {
 
     if (!*c) return false;                                          // Don't send empty request (will else send all devices)
@@ -416,17 +416,26 @@ bool InitDeviceRequest(Device *dd, const char* c)
             idx = atoi(i["idx"].as<const char*>());
         }
 
-        //Check the array
-        d = nullptr;
-        for (int j = 0; j < (TOTAL_ICONX*TOTAL_ICONY); j +=1 )
+        if (isarray)
         {
-            if (dd[j].idx == idx)
+            //Check the array
+            d = nullptr;
+            for (int j = 0; j < (TOTAL_ICONX*TOTAL_ICONY); j +=1 )
             {
-                d = &dd[j];
+                if (dd[j].idx == idx)
+                {
+                    d = &dd[j];
+                }
             }
+            // Not present ? Something is wrong in the request, skip it
+            if (!d) continue;
         }
-        // Not present ? Something is wrong in the request, skip it
-        if (!d) continue;
+        else
+        {
+            d = dd;
+            d->idx = idx;
+        }
+
 
         if (!SetNewString(&d->name, i["Name"])) return false;
 
