@@ -115,7 +115,8 @@ void password_keyboard_display(lv_obj_t* panel){
     lv_keyboard_set_map(pwd_keyboard, LV_KEYBOARD_MODE_NUMBER, keyboard_map, keyboard_ctrl); // Set keyboard mapping
     lv_keyboard_set_textarea(pwd_keyboard, pwd_text_area);          // Keyboard Object and Text Box Bind
     lv_obj_add_event_cb(pwd_keyboard, password_change_event_callback, LV_EVENT_VALUE_CHANGED, NULL); // Add password change event
-    lv_obj_align(pwd_keyboard, LV_ALIGN_CENTER, 0, 0);
+    //lv_obj_align(pwd_keyboard, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_align_to(pwd_keyboard, hint_label, LV_ALIGN_OUT_BOTTOM_MID, 0, 5);
 
     // Create a confirmation button based on the keyboard background object
     lv_obj_t * confirm_btn = lv_btn_create(pwd_bg_cont);

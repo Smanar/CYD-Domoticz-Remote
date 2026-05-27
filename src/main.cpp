@@ -106,9 +106,10 @@ void setup() {
         global_config.ipConfigured = true;
 
         short v;
+        short pmax = (sizeof(t) / sizeof(t[0])) / (TOTAL_ICONX*TOTAL_ICONY);
 
         int ptr = 0;
-        for (uint p=0; p<PAGES; p++) {
+        for (uint p=0; p<pmax; p++) {
             for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++)
             {
                 if (ptr < sizeof(t) / sizeof(t[0])) { v = t[ptr]; } else { v = 0; }

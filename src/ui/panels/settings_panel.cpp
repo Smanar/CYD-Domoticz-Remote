@@ -21,6 +21,14 @@ const int y_element_x_padding = 30;
 const static lv_point_t line_points[] = { {0, 0}, {panel_width - y_seperator_x_padding, 0} };
 static lv_obj_t * settings_panel;
 
+bool isAllDigits(const char* str) {
+    if (str == nullptr || str[0] == '\0') return false;
+    for (int i = 0; str[i] != '\0'; i++) {
+        if (!std::isdigit(str[i])) return false;
+    }
+    return true;
+}
+
 static int GetIntTok(const char* str, int t, const char c)
 {
     if (!str) return 0;
@@ -271,10 +279,11 @@ static void edit_protect_password_cb(lv_event_t * e)
         lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
         lv_obj_clear_state(ta, LV_STATE_FOCUSED);
         lv_indev_reset(NULL, ta);   /*To forget the last clicked object to make it focusable again*/
-
-        strncpy(global_config.protectionPassword, lv_textarea_get_text(ta), sizeof(global_config.protectionPassword));
-
-        WriteGlobalConfig();
+        if (isAllDigits(lv_textarea_get_text(ta)))
+        {
+            strncpy(global_config.protectionPassword, lv_textarea_get_text(ta), sizeof(global_config.protectionPassword));
+            WriteGlobalConfig();
+        }
      }
 }
 
@@ -418,8 +427,8 @@ void settings_panel_init(lv_obj_t* panel)
     lv_obj_add_event_cb(text, edit_protect_password_cb, LV_EVENT_ALL, NULL);
     lv_textarea_add_text(text, global_config.protectionPassword);
     lv_textarea_set_one_line(text, true);
-    lv_obj_set_width(text, lv_pct(70));
-    create_settings_widget("Protection password", text, panel);
+    lv_obj_set_width(text, lv_pct(60));
+    create_settings_widget("Password", text, panel);
 
     toggle = lv_switch_create(panel);
     lv_obj_add_event_cb(toggle, protect_xxx_cb, LV_EVENT_VALUE_CHANGED, (void*) 1);
