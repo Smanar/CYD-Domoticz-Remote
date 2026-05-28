@@ -21,5 +21,8 @@ void set_invert_display();
 void screen_timer_wake();
 void set_screen_timer_period();
 void set_screen_brightness();
+#ifdef ESP32_S3TOUCHLCD7
+    void ioExpanderInit(void);
+#endif
 
 #endif // _SCREEN_DRIVER_INIT

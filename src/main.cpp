@@ -123,6 +123,9 @@ void setup() {
 
     screen_setup(); // Set display
     Serial.println(F("Screen init done"));
+    #ifdef ESP32_S3TOUCHLCD7
+        ioExpanderInit();
+    #endif
 
 //Disable LED
 #ifdef BOARD_HAS_RGB_LED

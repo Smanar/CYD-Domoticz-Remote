@@ -102,6 +102,24 @@ static lv_disp_draw_buf_t draw_buf;
 
 #endif
 
+// IO expander (CH422G for ESP32_S3TOUCHLCD7)
+#ifdef ESP32_S3TOUCHLCD7
+    #include <Arduino.h>
+    #include <esp_io_expander.hpp>
+
+    esp_expander::CH422G *expander = NULL;
+
+    // IO expander initialization
+    void ioExpanderInit(void) {
+        // Create expander as master without I2C init
+        expander = new esp_expander::CH422G(0, ESP_IO_EXPANDER_I2C_CH422G_ADDRESS);
+        expander->init();
+        expander->begin();
+        expander->enableAllIO_Output();
+    }
+
+#endif
+
 // Touch Driver
 #if !defined(TOUCH_911) && !defined(TOUCH_LOVYAN) && !defined(TOUCH_XPT2046)
     bool _TC::init(void) { return; }
@@ -382,6 +400,12 @@ void screen_setBrightness(byte brightness)
 {
 
 #ifdef ARDUINO_GFX
+    #ifdef ESP32_S3TOUCHLCD7
+        if (expander) {
+            Serial.printf("Set brightness %d\n", brightness);
+            expander->digitalWrite(2, brightness? 1 : 0);
+        }
+    #endif
     return; // Not supported by this lib
 #else
     #ifdef TFT_BL
