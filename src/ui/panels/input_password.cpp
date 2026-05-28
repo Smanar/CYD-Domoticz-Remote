@@ -84,6 +84,7 @@ void password_keyboard_display(lv_obj_t* panel){
     #endif
     lv_textarea_set_max_length(pwd_text_area, sizeof(global_config.protectionPassword)-1); // Set the maximum length of the entered text
     lv_obj_set_size(pwd_text_area, lv_pct(80), lv_pct(12));          // Settings Object Size
+    lv_textarea_set_one_line(pwd_text_area, true);
     lv_obj_align_to(pwd_text_area, title_label, LV_ALIGN_OUT_BOTTOM_MID, 0, 5);
     lv_obj_clear_flag(pwd_text_area, LV_OBJ_FLAG_SCROLLABLE );      // Remove scrollbar
     lv_textarea_set_text(pwd_text_area, "");                        // Text box
@@ -123,7 +124,7 @@ void password_keyboard_display(lv_obj_t* panel){
     lv_obj_add_event_cb(confirm_btn, confirm_btn_event_callback, LV_EVENT_CLICKED, NULL); // Add Click events and event processing callback functions to the object
     //lv_obj_add_style(confirm_btn, &btn_style, 0);                 // Add button style
     lv_obj_set_size(confirm_btn, lv_pct(35), lv_pct(12));           // Set button object size
-    lv_obj_align(confirm_btn, LV_ALIGN_TOP_MID, lv_pct(-20), lv_pct(90));   // Set button object location
+    lv_obj_align(confirm_btn, LV_ALIGN_TOP_MID, lv_pct(-20), lv_pct(92));   // Set button object location
     // Create a label based on the Confirm_BTN object
     lv_obj_t *confirm_btn_label = lv_label_create(confirm_btn);
     lv_label_set_text(confirm_btn_label, "Ok");                     // Setting the text content
@@ -134,7 +135,7 @@ void password_keyboard_display(lv_obj_t* panel){
     lv_obj_add_event_cb(cancel_btn, cancel_btn_event_callback, LV_EVENT_CLICKED, NULL); // Add Click events and event processing callback functions to objects to objects
     //lv_obj_add_style(cancel_btn, &btn_style, 0);
     lv_obj_set_size(cancel_btn, lv_pct(35), lv_pct(12));            // Set button object size
-    lv_obj_align(cancel_btn, LV_ALIGN_TOP_MID, lv_pct(20), lv_pct(90));
+    lv_obj_align(cancel_btn, LV_ALIGN_TOP_MID, lv_pct(20), lv_pct(92));
     // Create a label based on the Cancel object
     lv_obj_t *cancel_btn_label = lv_label_create(cancel_btn);
     lv_label_set_text(cancel_btn_label, "Cancel");                  // Setting the text content
