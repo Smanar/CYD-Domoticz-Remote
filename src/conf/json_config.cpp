@@ -31,6 +31,7 @@ JsonDocument loadJson() {
     settings["color_scheme"] = global_config.color_scheme;
     settings["brightness"] = global_config.brightness;
     settings["screenTimeout"] = global_config.screenTimeout;
+    settings["homeTimeout"] = global_config.homeTimeout;
     settings["protectionPassword"] = global_config.protectionPassword;
     settings["protectSetting"] = global_config.protectSetting;
     settings["protectTool"] = global_config.protectTool;
@@ -142,6 +143,7 @@ bool readJsonConfig(const char* jsonFile) {
     global_config.color_scheme = settings["color_scheme"].as<unsigned char>();
     global_config.brightness = settings["brightness"].as<unsigned char>();
     global_config.screenTimeout = settings["screenTimeout"].as<unsigned char>();
+    global_config.homeTimeout = global_config.version >= 7 ? settings["homeTimeout"].as<unsigned char>() : 0;
     charPtr = settings["protectionPassword"].as<const char*>();
     if (charPtr) strncpy(global_config.protectionPassword, charPtr,sizeof(global_config.protectionPassword));
     global_config.protectSetting = settings["protectSetting"].as<bool>();

@@ -3,14 +3,14 @@
 #include "../conf/global_config.h"
 #include "../ui/main_ui.h"
 #include "lvgl.h"
-
+#include "../ui/navigation.h"
 #ifndef LV_VDB_SIZE
 #if defined(ARDUINO_ARCH_ESP8266)
 #  define LV_VDB_SIZE    (8 * 1024U)   // Minimum 8 Kb
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
 #  define LV_VDB_SIZE    (16 * 1024U)  // 16kB draw buffer
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
-#  define LV_VDB_SIZE    (48 * 1024U)  // 16kB draw buffer
+#  define LV_VDB_SIZE    (48 * 1024U)  // 48kB draw buffer
 #elif defined(ARDUINO_ARCH_ESP32)
 #  define LV_VDB_SIZE    (32 * 1024U)  // 32kB draw buffer
 #else
@@ -312,6 +312,7 @@ _TC touchscreen;
 
 bool isScreenInSleep = false;
 lv_timer_t *screenSleepTimer;
+lv_timer_t *homeSleepTimer;
 
 
 void touchscreen_calibrate(bool force)
@@ -491,6 +492,38 @@ void set_screen_timer_period()
     screen_timer_start();
 }
 
+void home_timer_sleep(lv_timer_t *timer)
+{
+    navigation_screen(HOMEPAGE_PANEL);
+}
+
+void home_timer_setup()
+{
+    homeSleepTimer = lv_timer_create(home_timer_sleep, global_config.homeTimeout * 1000 * 60, NULL);
+    lv_timer_pause(homeSleepTimer);
+}
+
+void home_timer_start()
+{
+    if (global_config.homeTimeout > 0) lv_timer_resume(homeSleepTimer);
+}
+
+void home_timer_stop()
+{
+    lv_timer_pause(homeSleepTimer);
+}
+
+void home_timer_period(uint32_t period)
+{
+    if (period > 0) lv_timer_set_period(homeSleepTimer, period);
+    else lv_timer_pause(homeSleepTimer);
+}
+
+void set_home_timer_period()
+{
+    home_timer_period((uint32_t)global_config.homeTimeout * 1000 * 60);
+    home_timer_start();
+}
 
 void screen_lv_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
 {
@@ -532,6 +565,7 @@ void screen_lv_touchRead(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
     if (touchscreen.tirqTouched() && touchscreen.touched())
     {
         lv_timer_reset(screenSleepTimer);
+        lv_timer_reset(homeSleepTimer);
         // dont pass first touch after power on
         if (isScreenInSleep)
         {
@@ -667,6 +701,8 @@ void screen_setup()
 
     screen_timer_setup();
     screen_timer_start();
+    home_timer_setup();
+    home_timer_start();
 
     /*Initialize the graphics library */
     LV_EVENT_GET_COMP_CHILD = lv_event_register_id();

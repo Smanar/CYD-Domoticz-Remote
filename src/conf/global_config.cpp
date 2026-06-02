@@ -126,6 +126,7 @@ void LoadGlobalConfig() {
     //Set defaut values
     global_config.brightness = 255;
     global_config.screenTimeout = 0;
+    global_config.homeTimeout = 0;
 
     for (uint p=0; p<PAGES; p++)
     {
