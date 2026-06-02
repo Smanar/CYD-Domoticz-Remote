@@ -141,10 +141,10 @@ void LoadGlobalConfig() {
         VerifyOldVersion();
     }
 
-    //check for version
-    if (global_config.version != CONFIG_VERSION)
+    // Check for version
+    if (global_config.version > CONFIG_VERSION)
     {
-        Serial.printf("Version missmatch: %d <> %d\n", global_config.version, CONFIG_VERSION);
+        Serial.printf("Version missmatch: %d > %d\n", global_config.version, CONFIG_VERSION);
         Updatejsonversion();
     }
 
