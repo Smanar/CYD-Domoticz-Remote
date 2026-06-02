@@ -40,10 +40,11 @@ There is different way to install the code on th device, but I think this one is
 The project is still WIP so some settings are still hard coded.   
 Somes settings depend of hardware, tell me your hardware, I will search values to edit.   
 
-There is 3 ways to configure the software settings (wifi, device id, and ect ...):   
+There are 4 ways to configure the software settings (wifi, device id, and ect ...):   
 - Can use the option FORCE_CONFIG and use hardcoded setting here https://github.com/Smanar/CYD-Domoticz-Remote/blob/main/src/main.cpp#L66
 - You can start the device and configure setting using the GUI.
 - You can use a personnal_settings.h file placed on the project with your settings.
+- You can edit data/settings.json and download it using platformIO "Upload Filesystem Image"
 
 By defaut, domoticz defaut devices displayed on Homepage will be 1,2,3,4,5,6,7,8,9 so you need to change them on the application setting panel.   
 
