@@ -116,6 +116,14 @@ static void wake_timeout_dropdown(lv_event_t * e){
     set_screen_timer_period();
 }
 
+static void home_timeout_dropdown(lv_event_t * e){
+    const lv_obj_t * dropdown = lv_event_get_target(e);
+    auto selected = lv_dropdown_get_selected(dropdown);
+    global_config.homeTimeout = wake_timeout_options_values[selected];
+    WriteGlobalConfig();
+    set_home_timer_period();
+}
+
 static void page_dropdown(lv_event_t * e){
     const lv_obj_t * dropdown = lv_event_get_target(e);
     auto selected = lv_dropdown_get_selected(dropdown);
@@ -380,6 +388,17 @@ void settings_panel_init(lv_obj_t* panel)
         }
     }
     create_settings_widget("Wake Timeout", dropdown, panel);
+
+    dropdown = lv_dropdown_create(panel);
+    lv_dropdown_set_options(dropdown, wake_timeout_options);
+    lv_obj_add_event_cb(dropdown, home_timeout_dropdown, LV_EVENT_VALUE_CHANGED, NULL);
+    for (int i = 0; i < SIZEOF(wake_timeout_options_values); i++){
+        if (wake_timeout_options_values[i] == global_config.homeTimeout){
+            lv_dropdown_set_selected(dropdown, i);
+            break;
+        }
+    }
+    create_settings_widget("Back to home Timeout", dropdown, panel);
 
     toggle = lv_switch_create(panel);
     lv_obj_add_event_cb(toggle, rotate_screen_switch, LV_EVENT_VALUE_CHANGED, NULL);

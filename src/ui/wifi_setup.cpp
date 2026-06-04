@@ -205,7 +205,7 @@ void wifi_init()
         {
             Serial.println(F("WiFi connection failed, back to config"));
             global_config.wifiConfigured = false;
-            wifi_init_inner();
+            wifi_init();
             return;
         }
         

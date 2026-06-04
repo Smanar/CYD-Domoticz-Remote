@@ -126,6 +126,7 @@ void LoadGlobalConfig() {
     //Set defaut values
     global_config.brightness = 255;
     global_config.screenTimeout = 0;
+    global_config.homeTimeout = 0;
 
     for (uint p=0; p<PAGES; p++)
     {
@@ -141,10 +142,10 @@ void LoadGlobalConfig() {
         VerifyOldVersion();
     }
 
-    //check for version
-    if (global_config.version != CONFIG_VERSION)
+    // Check for version
+    if (global_config.version > CONFIG_VERSION)
     {
-        Serial.printf("Version missmatch: %d <> %d\n", global_config.version, CONFIG_VERSION);
+        Serial.printf("Version missmatch: %d > %d\n", global_config.version, CONFIG_VERSION);
         Updatejsonversion();
     }
 

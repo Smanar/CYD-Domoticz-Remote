@@ -4,9 +4,10 @@
 #include "lvgl.h"
 
 // USED for memorised settings
-#define CONFIG_VERSION 6
+#define CONFIG_VERSION 7
+
 // USED for OTA
-#define APPLICATION_VERSION "26.5.12-1"
+#define APPLICATION_VERSION "26.6.2-1"
 
 #if PAGES < 1
     #error PAGES should be at least 1
@@ -46,6 +47,7 @@ typedef struct _GLOBAL_CONFIG {
     unsigned char color_scheme;
     unsigned char brightness;
     unsigned char screenTimeout;
+    unsigned char homeTimeout;
 
     unsigned int savedPageCount;
     unsigned int totalIconX;
