@@ -480,15 +480,11 @@ void screen_timer_stop()
     lv_timer_pause(screenSleepTimer);
 }
 
-void screen_timer_period(uint32_t period)
-{
-    if (period > 0) lv_timer_set_period(screenSleepTimer, period);
-    else lv_timer_pause(screenSleepTimer);
-}
-
 void set_screen_timer_period()
 {
-    screen_timer_period((uint32_t)global_config.screenTimeout * 1000 * 60);
+    uint32_t period = (uint32_t)global_config.screenTimeout * 1000 * 60;
+    if (period > 0) lv_timer_set_period(screenSleepTimer, period);
+    else lv_timer_pause(screenSleepTimer);
     screen_timer_start();
 }
 
@@ -513,15 +509,11 @@ void home_timer_stop()
     lv_timer_pause(homeSleepTimer);
 }
 
-void home_timer_period(uint32_t period)
-{
-    if (period > 0) lv_timer_set_period(homeSleepTimer, period);
-    else lv_timer_pause(homeSleepTimer);
-}
-
 void set_home_timer_period()
 {
-    home_timer_period((uint32_t)global_config.homeTimeout * 1000 * 60);
+    uint32_t period = (uint32_t)global_config.homeTimeout * 1000 * 60;
+    if (period > 0) lv_timer_set_period(homeSleepTimer, period);
+    else lv_timer_pause(homeSleepTimer);
     home_timer_start();
 }
 

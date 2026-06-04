@@ -21,6 +21,8 @@ const int y_element_x_padding = 30;
 const static lv_point_t line_points[] = { {0, 0}, {panel_width - y_seperator_x_padding, 0} };
 static lv_obj_t * settings_panel;
 
+// ───  helpers ───────────────────────────────────────────────────────
+
 bool isAllDigits(const char* str) {
     if (str == nullptr || str[0] == '\0') return false;
     for (int i = 0; str[i] != '\0'; i++) {
@@ -56,6 +58,34 @@ static int GetIntTok(const char* str, int t, const char c)
 
     return negative ? -v : v;
 }
+
+// ─── Keyboard helpers ───────────────────────────────────────────────────────
+
+static lv_obj_t * kb = nullptr;
+
+static void kb_show(lv_obj_t* ta) {
+    if (!kb) {
+        kb = lv_keyboard_create(lv_scr_act());
+        lv_obj_set_style_max_height(kb, LV_HOR_RES * 2 / 3, 0);
+    }
+    lv_obj_update_layout(settings_panel);
+    lv_obj_set_height(settings_panel, LV_VER_RES - lv_obj_get_height(kb));
+    lv_indev_wait_release(lv_indev_get_act());
+    lv_obj_scroll_to_view_recursive(ta, LV_ANIM_OFF);
+    lv_obj_clear_flag(kb, LV_OBJ_FLAG_HIDDEN);
+    lv_keyboard_set_textarea(kb, ta);
+}
+
+static void kb_hide(lv_obj_t* ta) {
+    lv_obj_set_height(settings_panel, LV_VER_RES);
+    lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
+    if (ta) {
+        lv_obj_clear_state(ta, LV_STATE_FOCUSED);
+        lv_indev_reset(NULL, ta); /*To forget the last clicked object to make it focusable again*/
+    }
+}
+
+//────────────────────────────────────────────────────────────────────────────────
 
 static void invert_color_switch(lv_event_t * e){
     global_config.invertColors = lv_obj_has_state(lv_event_get_target(e), LV_STATE_CHECKED);
@@ -105,7 +135,7 @@ static void brightness_dropdown(lv_event_t * e){
     WriteGlobalConfig();
 }
 
-const char* wake_timeout_options = "Disabled\n1m\n2m\n5m\n10m\n15m\n30m\n1h\n2h\n4h";
+const char* wake_timeout_options = "Off\n1m\n2m\n5m\n10m\n15m\n30m\n1h\n2h\n4h";
 const char  wake_timeout_options_values[] = { 0, 1, 2, 5, 10, 15, 30, 60, 120, 240 };
 
 static void wake_timeout_dropdown(lv_event_t * e){
@@ -166,7 +196,7 @@ static void not_used_yet_switch(lv_event_t* e){
     WriteGlobalConfig();
 }
 
-static lv_obj_t* kb;
+
 static void edit_device_list_switch(lv_event_t * e)
 {
     lv_event_code_t code = lv_event_get_code(e);
@@ -175,33 +205,14 @@ static void edit_device_list_switch(lv_event_t * e)
 
     if (code == LV_EVENT_FOCUSED)
     {
-        if (kb == NULL) {
-            kb = lv_keyboard_create(lv_scr_act());
-            lv_obj_set_style_max_height(kb, LV_HOR_RES * 2 / 3, 0);
-        }
-
-        lv_obj_update_layout(settings_panel);   /*Be sure the sizes are recalculated*/
-        lv_obj_set_height(settings_panel, LV_VER_RES - lv_obj_get_height(kb));
-        lv_indev_wait_release(lv_indev_get_act());
-        lv_obj_scroll_to_view_recursive(ta, LV_ANIM_OFF);
-
-        lv_obj_clear_flag(kb, LV_OBJ_FLAG_HIDDEN);
-        //lv_obj_move_foreground(kb); // Show the keyboard
-
-        lv_keyboard_set_textarea(kb, ta);
+        kb_show(ta);
     }
     else if (code == LV_EVENT_DEFOCUSED)
     {
-        lv_obj_set_height(settings_panel, LV_VER_RES);
-        lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
+        kb_hide(nullptr);
     }
     else if(code == LV_EVENT_READY || code == LV_EVENT_CANCEL) {
-        //lv_obj_move_background(kb); // Hide the keyboard
-        lv_obj_set_height(settings_panel, LV_VER_RES);
-        lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_clear_state(ta, LV_STATE_FOCUSED);
-        lv_indev_reset(NULL, ta);   /*To forget the last clicked object to make it focusable again*/
-        //const char * str = lv_textarea_get_text(ta);
+        kb_hide(ta);
 
         for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++)
         {
@@ -220,32 +231,14 @@ static void edit_page_name(lv_event_t * e)
 
     if (code == LV_EVENT_FOCUSED)
     {
-        if (kb == NULL) {
-            kb = lv_keyboard_create(lv_scr_act());
-            lv_obj_set_style_max_height(kb, LV_HOR_RES * 2 / 3, 0);
-        }
-
-        lv_obj_update_layout(settings_panel);   /*Be sure the sizes are recalculated*/
-        lv_obj_set_height(settings_panel, LV_VER_RES - lv_obj_get_height(kb));
-        lv_indev_wait_release(lv_indev_get_act());
-        lv_obj_scroll_to_view_recursive(ta, LV_ANIM_OFF);
-
-        lv_obj_clear_flag(kb, LV_OBJ_FLAG_HIDDEN);
-        //lv_obj_move_foreground(kb); // Show the keyboard
-
-        lv_keyboard_set_textarea(kb, ta);
+        kb_show(ta);
     }
     else if (code == LV_EVENT_DEFOCUSED)
     {
-        lv_obj_set_height(settings_panel, LV_VER_RES);
-        lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
+        kb_hide(nullptr);
     }
     else if(code == LV_EVENT_READY || code == LV_EVENT_CANCEL) {
-        //lv_obj_move_background(kb); // Hide the keyboard
-        lv_obj_set_height(settings_panel, LV_VER_RES);
-        lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_clear_state(ta, LV_STATE_FOCUSED);
-        lv_indev_reset(NULL, ta);   /*To forget the last clicked object to make it focusable again*/
+        kb_hide(ta);
 
         strncpy(global_pages[pageToChange].name, lv_textarea_get_text(ta), sizeof(global_pages[pageToChange].name));
 
@@ -261,32 +254,14 @@ static void edit_protect_password_cb(lv_event_t * e)
 
     if (code == LV_EVENT_FOCUSED)
     {
-        if (kb == NULL) {
-            kb = lv_keyboard_create(lv_scr_act());
-            lv_obj_set_style_max_height(kb, LV_HOR_RES * 2 / 3, 0);
-        }
-
-        lv_obj_update_layout(settings_panel);   /*Be sure the sizes are recalculated*/
-        lv_obj_set_height(settings_panel, LV_VER_RES - lv_obj_get_height(kb));
-        lv_indev_wait_release(lv_indev_get_act());
-        lv_obj_scroll_to_view_recursive(ta, LV_ANIM_OFF);
-
-        lv_obj_clear_flag(kb, LV_OBJ_FLAG_HIDDEN);
-        //lv_obj_move_foreground(kb); // Show the keyboard
-
-        lv_keyboard_set_textarea(kb, ta);
+        kb_show(ta);
     }
     else if (code == LV_EVENT_DEFOCUSED)
     {
-        lv_obj_set_height(settings_panel, LV_VER_RES);
-        lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
+        kb_hide(nullptr);
     }
     else if(code == LV_EVENT_READY || code == LV_EVENT_CANCEL) {
-        //lv_obj_move_background(kb); // Hide the keyboard
-        lv_obj_set_height(settings_panel, LV_VER_RES);
-        lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_clear_state(ta, LV_STATE_FOCUSED);
-        lv_indev_reset(NULL, ta);   /*To forget the last clicked object to make it focusable again*/
+        kb_hide(ta);
         if (isAllDigits(lv_textarea_get_text(ta)))
         {
             strncpy(global_config.protectionPassword, lv_textarea_get_text(ta), sizeof(global_config.protectionPassword));
@@ -387,6 +362,7 @@ void settings_panel_init(lv_obj_t* panel)
             break;
         }
     }
+    lv_obj_set_width(dropdown, lv_pct(35));
     create_settings_widget("Wake Timeout", dropdown, panel);
 
     dropdown = lv_dropdown_create(panel);
@@ -398,7 +374,8 @@ void settings_panel_init(lv_obj_t* panel)
             break;
         }
     }
-    create_settings_widget("Back to home Timeout", dropdown, panel);
+    lv_obj_set_width(dropdown, lv_pct(35));
+    create_settings_widget("Back home Timeout", dropdown, panel);
 
     toggle = lv_switch_create(panel);
     lv_obj_add_event_cb(toggle, rotate_screen_switch, LV_EVENT_VALUE_CHANGED, NULL);
