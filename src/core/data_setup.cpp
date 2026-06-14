@@ -138,9 +138,23 @@ bool HandleDomoticzData(JsonObject RJson2, Device * d)
     if (RJson2["Data"].is<const char*>()) JSondata = RJson2["Data"];
     if (RJson2["Level"].is<int>()) JSonLevel = RJson2["Level"];
 
-    if (RJson2["Rain"].is<const char*>())
+    if (d->type == TYPE_RAIN)
     {
-        data = Cleandata(d->type, RJson2["Rain"]);
+        char t[30];
+        lv_snprintf(t, sizeof(t), "%.2f mm",
+                RJson2["Rain"].as<float>() * 0.01
+            );
+        data = Cleandata(d->type, t);
+    }
+    else if (d->type == TYPE_WIND)
+    {
+        char t[30];
+        lv_snprintf(t, sizeof(t), "%s;%.1f m/s;Gust %.1f m/s",
+                RJson2["DirectionStr"].as<const char*>(),
+                RJson2["Speed"].as<float>(),
+                RJson2["Gust"].as<float>()
+            );
+        data = Cleandata(d->type, t);
     }
     else if ((d->type == TYPE_TEXT) || (d->type == TYPE_WARNING))
     {
@@ -264,7 +278,7 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
         case TYPE_VALUE_SENSOR:
             url = url + "Percentage";
             break;
-        case TYPE_METEO:
+        case TYPE_RAIN:
             url = url + "rain";
             break;
         default:
@@ -336,7 +350,7 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
                 case TYPE_WEIGHT:
                     v = i["v"];
                     break;
-                case TYPE_METEO:
+                case TYPE_RAIN:
                     v = i["mm"];
                     break;
                 default:
@@ -344,7 +358,7 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
             }
 
             // Because of decimal values
-            if (type == TYPE_TEMPERATURE || type == TYPE_METEO) v = v *10;
+            if (type == TYPE_TEMPERATURE || type == TYPE_RAIN) v = v *10;
 
             if (type == TYPE_WEIGHT) v = v *1000;
 
@@ -550,7 +564,15 @@ bool InitDeviceRequest(Device *dd, const char* c, bool isarray)
         }
         else if (strcmp(type, "Rain") == 0)
         {
-            d->type = TYPE_METEO;
+            d->type = TYPE_RAIN;
+        }
+        else if (strcmp(type, "Wind") == 0)
+        {
+            d->type = TYPE_WIND;
+        }
+        else if (strcmp(type, "UV") == 0)
+        {
+            d->type = TYPE_UV;
         }
         else if (strcmp(type, "Usage") == 0)
         {

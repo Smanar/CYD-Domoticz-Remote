@@ -200,7 +200,7 @@ static void Widget_sensor(lv_obj_t* panel, char* desc, char* value, int x, int y
     lv_obj_set_height(label, 30);
     lv_obj_set_width(label, Size_w /2);
 #else
-    lv_obj_set_height(label, 55);
+    lv_obj_set_height(label, 57);
     lv_obj_set_width(label, 2* Size_w /3);
 #endif
     lv_obj_align_to(label, img,  LV_ALIGN_OUT_RIGHT_TOP, 0, 0);
@@ -218,6 +218,42 @@ static void Widget_sensor(lv_obj_t* panel, char* desc, char* value, int x, int y
     lv_obj_align_to(label2, Button_icon,  LV_ALIGN_BOTTOM_MID, 0, 10); 
 }
 
+static void Widget_text(lv_obj_t* panel, char* desc, char* value, int x, int y, int w, int h, lv_color_t color, Device *d, const lv_img_dsc_t *icon)
+{
+
+    /*Create a container*/
+    lv_obj_t * Button_icon = lv_obj_create(panel);
+    lv_obj_set_size(Button_icon, w, h);
+    lv_obj_set_pos(Button_icon, x, y);
+    lv_obj_add_style(Button_icon, &style_shadow, LV_PART_MAIN);
+    lv_obj_clear_flag( Button_icon, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_add_event_cb(Button_icon, btn_event_cb, LV_EVENT_CLICKED, (void *)d);              /*Assign a callback to the button*/
+
+     /*Create Value*/
+    lv_obj_t * label = lv_label_create(Button_icon);
+    lv_obj_set_style_text_font(label, &big_font_bold, 0);
+    lv_obj_set_style_text_color(label, color, 0);
+    lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
+    lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP);             /*Break the long lines*/
+#if DEVICE_SIZE == 1
+    //lv_obj_set_height(label, 30);
+    lv_obj_set_width(label, Size_w);
+#else
+    //lv_obj_set_height(label, 57);
+    lv_obj_set_width(label, Size_w);
+#endif
+    lv_label_set_text(label, value);
+    lv_obj_align_to(label, Button_icon,  LV_ALIGN_TOP_MID, 0, 0); 
+
+    /*Create description*/
+    lv_obj_t * label2 = lv_label_create(Button_icon);
+    lv_label_set_long_mode(label2, LV_LABEL_LONG_WRAP);
+    lv_obj_set_style_text_align(label2, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_style_text_font(label2, &small_font, 0);
+    lv_label_set_text(label2, desc);
+    lv_obj_set_width(label2, Size_w);
+    lv_obj_align_to(label2, Button_icon,  LV_ALIGN_BOTTOM_MID, 0, 0); 
+}
 
 static void Widget_button_group(lv_obj_t* panel, char* desc, int x, int y, int w, int h, lv_color_t color, int idx, const lv_img_dsc_t* icon, bool state, bool group)
 {
@@ -293,13 +329,21 @@ void widget_panel_init(lv_obj_t* panel)
                 case TYPE_SWITCH_SENSOR:
                 case TYPE_LUX:
                 case TYPE_WEIGHT:
-                case TYPE_METEO:
+                case TYPE_RAIN:
+                case TYPE_UV:
+                case TYPE_WIND:
                 case TYPE_VALUE_SENSOR:
                 case TYPE_SETPOINT:
                 case TYPE_THERMOSTAT:
                 case TYPE_AIR_QUALITY:
+                case TYPE_PERCENT_SENSOR:
                 {
                     Widget_sensor(panel, myDevices[i].name, myDevices[i].data, cx , cy , Size_w , Size_h, device_color, &myDevices[i],icon);
+                }
+                break;
+                case TYPE_TEXT:
+                {
+                    Widget_text(panel, myDevices[i].name, myDevices[i].data, cx , cy , Size_w , Size_h, device_color, &myDevices[i],icon);
                 }
                 break;
                 case TYPE_UNKNOWN: // Unknown type
@@ -313,7 +357,6 @@ void widget_panel_init(lv_obj_t* panel)
                 case TYPE_BLINDS:
                 case TYPE_PUSH:
                 case TYPE_WARNING: // This one is a sensor, but too much text to be displayed on homepage
-                case TYPE_TEXT: // This one is a sensor, but too much text to be displayed on homepage
                 case TYPE_PAGE:
                 {
                     Widget_button(panel, myDevices[i].name, cx, cy, Size_w , Size_h, device_color, &myDevices[i], icon); 

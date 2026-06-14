@@ -211,9 +211,11 @@ lv_color_t Getcolor(int type)
         case TYPE_AIR_QUALITY:
         case TYPE_UNKNOWN:
             return LV_COLOR_MAKE(0x00, 0x7F, 0xFF);
-        case TYPE_METEO:
+        case TYPE_RAIN:
         case TYPE_TEMPERATURE:
         case TYPE_HUMIDITY:
+        case TYPE_UV:
+        case TYPE_WIND:
             return LV_COLOR_MAKE(0xFF, 0x33, 0xFF);
         case TYPE_WARNING:
         case TYPE_TEXT:
@@ -301,7 +303,9 @@ const lv_img_dsc_t *Geticon(int type)
         case TYPE_AIR_QUALITY:
         case TYPE_UNKNOWN:
             return &sensor35x35;
-        case TYPE_METEO:
+        case TYPE_RAIN:
+        case TYPE_UV:
+        case TYPE_WIND:
             return &meteo35x35;
         case TYPE_PAGE:
             return &arrow35x35;
@@ -673,7 +677,7 @@ void device_panel_init(lv_obj_t* panel)
     // Other sensors
     if ((SelectedDevice->type == TYPE_TEMPERATURE) || (SelectedDevice->type == TYPE_VALUE_SENSOR)
     || (SelectedDevice->type == TYPE_HUMIDITY) || (SelectedDevice->type == TYPE_CONSUMPTION) || (SelectedDevice->type == TYPE_POWER)
-    || (SelectedDevice->type == TYPE_LUX) || (SelectedDevice->type == TYPE_PERCENT_SENSOR) || (SelectedDevice->type == TYPE_METEO)
+    || (SelectedDevice->type == TYPE_LUX) || (SelectedDevice->type == TYPE_PERCENT_SENSOR) || (SelectedDevice->type == TYPE_RAIN)
     || (SelectedDevice->type == TYPE_WEIGHT))
     {
 
@@ -726,7 +730,7 @@ void device_panel_init(lv_obj_t* panel)
             }
 
             //For float value
-            if (SelectedDevice->type == TYPE_TEMPERATURE || SelectedDevice->type == TYPE_METEO)
+            if (SelectedDevice->type == TYPE_TEMPERATURE || SelectedDevice->type == TYPE_RAIN)
             {
                 lv_obj_add_event_cb(chart, hist_chart_event_cb, LV_EVENT_DRAW_PART_BEGIN, (void *)10);
             }
