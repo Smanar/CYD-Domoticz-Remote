@@ -24,13 +24,15 @@ enum {
     TYPE_BLINDS,
     TYPE_LUX,
     TYPE_WEIGHT,
-    TYPE_METEO,
+    TYPE_RAIN,
     TYPE_SETPOINT,
     TYPE_THERMOSTAT,
     TYPE_TEXT,
     TYPE_AIR_QUALITY,
     TYPE_PUSH,
-    TYPE_PAGE
+    TYPE_PAGE,
+    TYPE_UV,
+    TYPE_WIND
 };
 
 typedef struct _Device {
