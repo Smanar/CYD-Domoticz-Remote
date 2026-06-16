@@ -22,6 +22,8 @@ int Size_h = int(LCD_HEIGHT/TOTAL_ICONY) - TOTAL_OFFSET_Y;
 //Icon size
 //int Size_icon = 35;
 
+static const lv_font_t fonts[] = {big_font_bold, medium_font, small_font};  // Available fonts sort by decreasing size
+
 static void go_page_cb(int pagrPtr);
 
 static void btn_event_cb_group(lv_event_t * e)
@@ -234,16 +236,27 @@ static void Widget_text(lv_obj_t* panel, char* desc, char* value, int x, int y, 
     lv_obj_set_style_text_font(label, &big_font_bold, 0);
     lv_obj_set_style_text_color(label, color, 0);
     lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
-    lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP);             /*Break the long lines*/
+    lv_label_set_long_mode(label, LV_LABEL_LONG_DOT);             /*Break the long lines*/
+    lv_label_set_text(label, value);
 #if DEVICE_SIZE == 1
-    //lv_obj_set_height(label, 30);
+    lv_obj_set_height(label, 30);
     lv_obj_set_width(label, Size_w);
 #else
-    //lv_obj_set_height(label, 57);
+    lv_obj_set_height(label, 60);
     lv_obj_set_width(label, Size_w);
 #endif
+    lv_obj_align_to(label, Button_icon,  LV_ALIGN_TOP_MID, 0, -20);
+
+    // Try to reduce font size to display as much as text as possible
+    lv_point_t textSize;
+    for (uint8_t i = 0; i < sizeof(fonts) / sizeof(lv_font_t); i++) {
+        lv_txt_get_size(&textSize, value, &fonts[i], 0, 0, lv_obj_get_width(label), LV_TEXT_FLAG_NONE);
+        lv_obj_set_style_text_font(label, &fonts[i], 0);
+        if (textSize.y <= lv_obj_get_height(label)) {
+            break;
+        }
+    }
     lv_label_set_text(label, value);
-    lv_obj_align_to(label, Button_icon,  LV_ALIGN_TOP_MID, 0, 0); 
 
     /*Create description*/
     lv_obj_t * label2 = lv_label_create(Button_icon);
@@ -252,7 +265,7 @@ static void Widget_text(lv_obj_t* panel, char* desc, char* value, int x, int y, 
     lv_obj_set_style_text_font(label2, &small_font, 0);
     lv_label_set_text(label2, desc);
     lv_obj_set_width(label2, Size_w);
-    lv_obj_align_to(label2, Button_icon,  LV_ALIGN_BOTTOM_MID, 0, 0); 
+    lv_obj_align_to(label2, Button_icon,  LV_ALIGN_BOTTOM_MID, 0, 15); 
 }
 
 static void Widget_button_group(lv_obj_t* panel, char* desc, int x, int y, int w, int h, lv_color_t color, int idx, const lv_img_dsc_t* icon, bool state, bool group)
