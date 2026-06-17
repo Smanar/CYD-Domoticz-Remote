@@ -4,14 +4,8 @@
 
 #include "lvgl.h"
 #include "panel.h"
-
-#include "../../core/data_setup.h"
-#include "../../conf/global_config.h"
-#include "../../core/ip_engine.h"
-#include "../../core/ota.h"
+#include "../../core/helper.h"
 #include "../src/ui/navigation.h"
-#include "LittleFS.h"
-#include "WiFi.h"
 
 static lv_style_t style_container;
 extern lv_style_t style_shadow;
@@ -94,32 +88,8 @@ void tools_panel_init(lv_obj_t* panel)
     // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/mem_alloc.html#:%7E:text=Due%20to%20a%20technical%20limitation,allocated%20at%20runtime%20as%20heap.
     // esp_get_free_heap_size() ???
 
-    lv_mem_monitor_t mon;
-    lv_mem_monitor(&mon);
-    uint32_t used_size = mon.total_size - mon.free_size;
-
-    size_t usedBytes = LittleFS.usedBytes();
-    size_t totalBytes = LittleFS.totalBytes();
-    size_t remainingBytes = totalBytes - usedBytes;
-    IPAddress localIp = WiFi.localIP();
-
     char Text[350];
-    lv_snprintf(Text, sizeof(Text),
-        "+ HEAP Memory Usable (Kb) %d, Max %d, Total %d\n", ESP.getMaxAllocHeap()/1024, ESP.getFreeHeap()/1024, ESP.getHeapSize()/1024);
-    //lv_snprintf(Text + strlen(Text), sizeof(Text) - strlen(Text),
-    //    "+ PSRAM Memory Free (Kb) %d, Total %d\n", ESP.getFreePsram()/1024, ESP.getPsramSize()/1024); // Not used, CRASH
-    lv_snprintf(Text + strlen(Text), sizeof(Text) - strlen(Text),
-        "+ LV Heap %d kB used (%d %%) %d%% frag.\n", used_size / 1024, mon.used_pct, mon.frag_pct);
-    lv_snprintf(Text + strlen(Text), sizeof(Text) - strlen(Text),
-        "+ Application Version : %s\n", APPLICATION_VERSION);
-    lv_snprintf(Text + strlen(Text), sizeof(Text) - strlen(Text),
-        "+ Running time : %d-%02d:%02d:%02d\n", runningTime()/(3600*24), (runningTime()/3600)%24 , (runningTime()/60)%60, runningTime()%60);
-    lv_snprintf(Text + strlen(Text), sizeof(Text) - strlen(Text),
-        "+ Total data by WS : %d ko\n", total_WS_lenght());
-    lv_snprintf(Text + strlen(Text), sizeof(Text) - strlen(Text),
-        "+ LittleFS %s, %d kB free (%d%%)\n", totalBytes?"ok":"*BAD*", remainingBytes / 1024, (100 * remainingBytes) / totalBytes);
-    lv_snprintf(Text + strlen(Text), sizeof(Text) - strlen(Text),
-        "+ IP %d.%d.%d.%d\n", localIp[0], localIp[1], localIp[2], localIp[3]);
+    loadInfo(Text, sizeof(Text));
 
     label_tool = lv_label_create(cont2);
     lv_obj_set_style_text_font(label_tool, &medium_font, 0);
