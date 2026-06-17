@@ -678,7 +678,8 @@ void device_panel_init(lv_obj_t* panel)
     if ((SelectedDevice->type == TYPE_TEMPERATURE) || (SelectedDevice->type == TYPE_VALUE_SENSOR)
     || (SelectedDevice->type == TYPE_HUMIDITY) || (SelectedDevice->type == TYPE_CONSUMPTION) || (SelectedDevice->type == TYPE_POWER)
     || (SelectedDevice->type == TYPE_LUX) || (SelectedDevice->type == TYPE_PERCENT_SENSOR) || (SelectedDevice->type == TYPE_RAIN)
-    || (SelectedDevice->type == TYPE_WEIGHT))
+    || (SelectedDevice->type == TYPE_WEIGHT) || (SelectedDevice->type == TYPE_VALUE_SENSOR)
+    || (SelectedDevice->type == TYPE_WIND) || (SelectedDevice->type == TYPE_UV))    
     {
 
         label = lv_label_create(GridSmall);
@@ -739,10 +740,29 @@ void device_panel_init(lv_obj_t* panel)
         }
         else
         {
-            Serial.printf("Can't retreive graph value\n");
+            Serial.printf("Can't retreive graph value for %s\n", SelectedDevice->name);
         }
 #endif
 
+    }
+
+/*    // Wind and UV device
+    if ((SelectedDevice->type == TYPE_WIND) || (SelectedDevice->type == TYPE_UV))
+    {
+        deviceTypeFound = true;
+        //Display Text
+        label = lv_label_create(GridBig);
+        lv_obj_set_size(label, lv_pct(100), lv_pct(80)); 
+        lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP);
+        lv_obj_set_style_text_font(label, &big_font_bold, 0);
+        lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
+        lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
+        lv_obj_set_style_text_color(label, color, 0);
+        lv_label_set_text(label, SelectedDevice->data);
+    }
+*/
+   if (!deviceTypeFound) {
+        Serial.printf("Can't decode device %s, type %d\n", SelectedDevice->name, SelectedDevice->type);
     }
 
     // Back button
