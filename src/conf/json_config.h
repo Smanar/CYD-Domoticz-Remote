@@ -4,6 +4,7 @@
     #include "ArduinoJson.h"
 
     #define SETTINGS_FILE "/settings.json"
+    #define SNAPSHOT_FILE "/snapshot.bmp"
     #define TMP_FILE "/tmpFile.tmp"
 
     JsonDocument loadJson();

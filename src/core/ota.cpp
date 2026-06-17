@@ -1,6 +1,9 @@
 #include "lvgl.h"
 #include "ota.h"
 #include "ui/wifi_setup.h"
+#if LV_USE_SNAPSHOT != 0
+    #include "core/screen_snapshot.h"
+#endif
 
 //https://randomnerdtutorials.com/esp32-web-server-arduino-ide/
 //https://docs.arduino.cc/tutorials/uno-wifi-rev2/uno-wifi-r2-hosting-a-webserver/
@@ -305,7 +308,7 @@ void OTA_init(void)
     writeJsonConfig();                                              // Create file
     File file = LittleFS.open(SETTINGS_FILE, "r");                  // Open the file
     if (file) {                                                     // File opened?
-        server.streamFile(file, "APPLICATION/JSON");                // Send it to the client
+        server.streamFile(file, "application/json");                // Send it to the client
         file.close();
         server.sendHeader("Connection", "close");
         server.send(200, "text/plain", "OK");
@@ -321,7 +324,26 @@ void OTA_init(void)
         delay(1000);
         ESP.restart();
     });
-  server.begin();
+
+    #if LV_USE_SNAPSHOT != 0
+    /* Handling screen snapshot */
+    server.on("/snapshot", HTTP_GET, [&]() {
+            Serial.println("/snapshot received");
+            takeSnapshot();
+            File file = LittleFS.open(SNAPSHOT_FILE, "r");                  // Open the file
+            if (file) {                                                     // File opened?
+                server.streamFile(file, "image/bmp");                       // Send it to the client
+                file.close();
+                server.sendHeader("Connection", "close");
+                server.send(200, "text/plain", "OK");
+            } else {                                                        // Error opening file
+                server.sendHeader("Connection", "close");
+                server.send(404, "text/plain", "File not found");
+            }
+        });
+    #endif
+
+    server.begin();
 }
 
 void OTA_loop(void)
