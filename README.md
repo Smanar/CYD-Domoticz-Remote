@@ -65,6 +65,9 @@ For the hardware part (according to your device) mains settings are in the file 
 	-DPUSHOTA # To enable PUSH OTA (Don't enable both OTA)
 	#-DPULLOTA # To enable PULL OTA (Don't enable both OTA)
 	#-DCORE_DEBUG_LEVEL=5 # To enable debug on serial for librairies and core
+	-DLV_USE_SNAPSHOT=1 # Enable to take screen snapshots (will fail on non PSRAM devices)
+	-DDIM_OFF_ICONS # Change Off/Closed devices icons to grey
+
 ``` 
 
 ## Page protection

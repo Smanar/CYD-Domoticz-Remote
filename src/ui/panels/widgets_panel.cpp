@@ -121,17 +121,32 @@ static void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int 
     lv_obj_align(img, LV_ALIGN_TOP_MID , 0, -10);
     //lv_obj_set_size(img, Size_icon, Size_icon);
     lv_obj_set_style_img_recolor_opa(img, 50, 0);
-    lv_obj_set_style_img_recolor(img, color, 0);
 
     // Display a "on" icon
-    if (d->type < TYPE_SWITCH && strcmp(d->data, "On") == 0)
-    {
-        lv_obj_t * label = lv_label_create(Button_icon);
-        lv_obj_set_style_text_color(label, color, 0);
-        lv_obj_align_to(label, img,  LV_ALIGN_OUT_RIGHT_BOTTOM, 0, 0);
-        //lv_obj_set_style_border_width(label, 5, 0); // To make it visible
-        lv_label_set_text(label, " On");
+    if (d->type < TYPE_SWITCH)
+    {   
+        if ((strcmp(d->data, "On") == 0) || strcmp(d->data, "Open") == 0)
+        {
+            lv_obj_set_style_img_recolor(img, color, 0);
+            lv_obj_t * label = lv_label_create(Button_icon);
+            lv_obj_set_style_text_color(label, color, 0);
+            lv_obj_align_to(label, img,  LV_ALIGN_OUT_RIGHT_BOTTOM, 10, 0);
+            //lv_obj_set_style_border_width(label, 5, 0); // To make it visible
+            lv_label_set_text(label, d->data);
+            lv_obj_set_style_img_recolor(img, color, 0);    // Use given color
+        } else {
+            #ifdef DIM_OFF_ICONS
+                lv_obj_set_style_img_recolor(img, ICON_GREYED_COLOR, 0);  // Set color to grey
+            #else
+                lv_obj_set_style_img_recolor(img, color, 0);    // Use given color
+            #endif
+        }
     }
+    else
+    {
+        lv_obj_set_style_img_recolor(img, color, 0);    // Use given color
+    }
+
 #if 0
     // Display a open/clode state for covering
     if (d->type == TYPE_BLINDS)
@@ -196,7 +211,18 @@ static void Widget_sensor(lv_obj_t* panel, char* desc, char* value, int x, int y
      // Does _local_ is working here ?
     lv_obj_t * label = lv_label_create(Button_icon);
     lv_obj_set_style_text_font(label, &big_font_bold, 0);
-    lv_obj_set_style_text_color(label, color, 0);
+    #ifdef DIM_OFF_ICONS
+        if ((strcmp("Off", d->data) == 0) || (strcmp("Closed", d->data) == 0))
+        {
+            lv_obj_set_style_text_color(label, ICON_GREYED_COLOR, 0);  // Set color to grey
+        }
+        else
+        {
+            lv_obj_set_style_text_color(label, color, 0);
+        }
+    #else
+        lv_obj_set_style_text_color(label, color, 0);
+    #endif
     lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_RIGHT, 0);
 #if DEVICE_SIZE == 1
     lv_obj_set_height(label, 30);
