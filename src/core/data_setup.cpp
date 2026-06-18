@@ -472,7 +472,7 @@ bool InitDeviceRequest(Device *dd, const char* c, bool isarray)
 
         if (!SetNewString(&d->name, i["Name"])) return false;
 
-        Serial.printf("Initialize Domoticz devices id: %d, name %s\n", d->idx, d->name);
+        //Serial.printf("Initialize Domoticz devices id: %d, name %s\n", d->idx, d->name);
 
         const char* JSondata = NULL;
         const char* type = NULL;

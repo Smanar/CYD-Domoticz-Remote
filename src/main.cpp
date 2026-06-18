@@ -162,7 +162,7 @@ analogSetAttenuation(ADC_0db); // 0dB(1.0x) 0~800mV
 #endif
 
     //make_sound(500,500);
-    dumpConfig();
+    //dumpConfig();
 
     Serial.println(F("Application ready"));
 
