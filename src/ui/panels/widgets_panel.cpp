@@ -260,7 +260,7 @@ static void Widget_text(lv_obj_t* panel, char* desc, char* value, int x, int y, 
 #if DEVICE_SIZE == 1
     desc_height = 14;
 #else
-    desc_height = 16
+    desc_height = 16;
 #endif
 
     //No description for short text (eg time)
