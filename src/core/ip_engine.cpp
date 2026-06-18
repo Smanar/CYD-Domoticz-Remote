@@ -8,8 +8,6 @@ static WebSocketsClient WSclient;
 static bool connect_ok = false;
 unsigned long total_data_lengh;
 
-extern char TmpBuffer[];
-
 void Update_device_data(JsonObject RJson2);
 void Update_scene_data(void);
 
@@ -45,16 +43,17 @@ bool HTTPGETRequestWithReturn(const char * url2, JsonDocument *doc, bool NeedFil
 {
 
     HTTPClient client;
-    lv_snprintf(TmpBuffer, 150, "http://%s:%d%s",global_config.ServerHost, global_config.ServerPort, url2);
+    int httpCode;
+    static char tmpBuffer[180];    // As routine is asynchronous, use only local data
+
+    lv_snprintf(tmpBuffer, sizeof(tmpBuffer), "http://%s:%d%s",global_config.ServerHost, global_config.ServerPort, url2);
     //String url = "http://" + String(global_config.ServerHost) + ":" + String(global_config.ServerPort) + url2;
 
-    int httpCode;
-
     try {
-        Serial.println(TmpBuffer);
+        Serial.println(tmpBuffer);
         client.useHTTP10(true); // Unfortunately, by using the underlying Stream, we bypass the code that handles chunked transfer encoding, so we must switch to HTTP version 1.0.
         client.setTimeout(1000);
-        client.begin(TmpBuffer);
+        client.begin(tmpBuffer);
         httpCode = client.GET();
         if (httpCode != 200)
         {
