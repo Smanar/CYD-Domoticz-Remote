@@ -181,7 +181,7 @@ static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
             connect_ok = true;
 
 			// send message to server when Connected
-			WSclient.sendTXT("Connected");
+			//WSclient.sendTXT("Connected");
 
 			break;
 		case WStype_TEXT:
