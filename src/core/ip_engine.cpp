@@ -104,7 +104,7 @@ bool HTTPGETRequestWithReturn(const char * url2, JsonDocument *doc, bool NeedFil
 
         // Some debug
         //char buffer2[4096];
-        //serializeJsonPretty(doc, buffer2);
+        //serializeJsonPretty(doc, buffer2, sizeof(buffer2));
         //Serial.println(buffer2);
 
         //Some debug
@@ -222,7 +222,7 @@ static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
                             //JsonObject RJson = doc2.as<JsonObject>();
 
                             //char buffer[4096];
-                            //serializeJsonPretty(doc2, buffer);
+                            //serializeJsonPretty(doc2, buffer, sizeof(buffer));
                             //Serial.println(buffer);
 
                            //for (JsonPair keyValue : RJson) {

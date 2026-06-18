@@ -63,6 +63,11 @@ void Init_data_widget_page()
 
         myDevices[i].type = TYPE_UNUSED;
         myDevices[i].idx = idx;
+        myDevices[i].ID = 0;
+        myDevices[i].lenData = 0;
+        myDevices[i].level = 0;
+        myDevices[i].levelname = NULL;
+        myDevices[i].maxlevel = 0;
 
         if (idx < 0) //Sub page or buggy
         {
@@ -209,7 +214,7 @@ bool HandleDomoticzData(JsonObject RJson2, Device * d)
 void Update_device_data(JsonObject RJson2)
 {
     //char buffer[4096];
-    //serializeJsonPretty(RJson2, buffer);
+    //serializeJsonPretty(RJson2, buffer, sizeof(buffer));
     //Serial.println(buffer);
 
     int JSonidx = 0;
@@ -272,17 +277,24 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
         case TYPE_LUX:
         case TYPE_AIR_QUALITY:
         case TYPE_WEIGHT:
+        case TYPE_VALUE_SENSOR:
             url = url + "counter";
             break;
         case TYPE_PERCENT_SENSOR:
-        case TYPE_VALUE_SENSOR:
             url = url + "Percentage";
             break;
         case TYPE_RAIN:
             url = url + "rain";
             break;
+        case TYPE_WIND:
+            url = url + "wind";
+            break;
+        case TYPE_UV:
+            url = url + "uv";
+            break;
         default:
             //not supported
+            Serial.printf("Graph not supported on device idx %d, type %d\n", idx, type);
             return nullptr;
     }
 
@@ -295,9 +307,14 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
 
         if (JS.isNull())
         {
-            Serial.println(F("Json not available\n"));
+            Serial.printf("Json not available for type %d, url %s\n", type, url.c_str());
             return nullptr;
         }
+
+        // Some debug
+        //char buffer2[4096];
+        //serializeJsonPretty(doc, buffer2, sizeof(buffer2));
+        //Serial.println(buffer2);
 
         std::fill_n(tab, 24, 0);
 
@@ -353,6 +370,12 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
                 case TYPE_RAIN:
                     v = i["mm"];
                     break;
+                case TYPE_WIND:
+                    v = i["sp"];
+                    break;
+                case TYPE_UV:
+                    v = i["uvi"];
+                    break;
                 default:
                     v = 0;
             }
@@ -389,7 +412,6 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
 
 	return nullptr;
 }
-
 
 bool InitDeviceRequest(Device *dd, const char* c, bool isarray)
 {
@@ -599,6 +621,7 @@ bool InitDeviceRequest(Device *dd, const char* c, bool isarray)
             else if (strcmp(subtype,"Text") == 0) d->type = TYPE_TEXT;
             else if (strcmp(subtype,"kWh") == 0) d->type = TYPE_CONSUMPTION;
             else if (strcmp(subtype,"Custom Sensor") == 0) d->type = TYPE_VALUE_SENSOR;
+            else if (strcmp(subtype,"Visibility") == 0) d->type = TYPE_VALUE_SENSOR;
         }
         else if (strcmp(type, "Lux") == 0)
         {

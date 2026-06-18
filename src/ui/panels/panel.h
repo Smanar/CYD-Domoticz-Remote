@@ -4,8 +4,6 @@
 
 #define SIZEOF(arr) (sizeof(arr) / sizeof(*arr))
 
-unsigned long runningTime(void);
-
 void settings_panel_init(lv_obj_t* panel);
 void widget_panel_init(lv_obj_t* panel);
 void info_panel_init(lv_obj_t* panel);

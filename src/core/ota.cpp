@@ -1,6 +1,10 @@
 #include "lvgl.h"
 #include "ota.h"
 #include "ui/wifi_setup.h"
+#include "helper.h"
+#include "data_setup.h"
+#include "../ui/navigation.h"
+
 #if LV_USE_SNAPSHOT != 0
     #include "core/screen_snapshot.h"
 #endif
@@ -8,6 +12,8 @@
 //https://randomnerdtutorials.com/esp32-web-server-arduino-ide/
 //https://docs.arduino.cc/tutorials/uno-wifi-rev2/uno-wifi-r2-hosting-a-webserver/
 //https://gist.github.com/elktros/a39d167e55625396ad6df57b89b00ca7
+
+extern Device myDevices[];
 
 #ifdef PULLOTA
 // USE PULL OTA
@@ -216,10 +222,18 @@ const char* indexHtml =
 
 void OTA_init(void)
 {
-    /* SETUP YOR WEB OWN ENTRY POINTS */
+    /* SETUP FOR WEB OWN ENTRY POINTS */
     server.on("/", HTTP_GET, []() {
         server.sendHeader("Connection", "close");
-        server.send(200, "text/plain", "Use /update for OTA!");
+        server.send(200, "text/plain", 
+            "Use /update for OTA\n"
+            "    /readConfig to get configuration\n"
+            "    /restart to reboot\n"
+            "    /debug to get information\n"
+        #if LV_USE_SNAPSHOT != 0
+            "    /snapshot to get a screen copy\n"
+        #endif
+        );
     });
 
   //Returns index.html page
@@ -324,6 +338,43 @@ void OTA_init(void)
         delay(1000);
         ESP.restart();
     });
+
+    server.on("/debug", HTTP_GET, [&]() {
+        Serial.println("/debug received");
+        server.sendHeader("Connection", "close");
+        JsonDocument debugInfo;
+
+        char text[350];
+        loadInfo(text, sizeof(text));
+        char* oneLine = strtok(text, "\n");
+        int i = 0;
+        while (oneLine != NULL) {
+            debugInfo["state"][i++] = oneLine;
+            oneLine = strtok(NULL, "\n");
+        }
+        debugInfo["page"]["panel"] = GetActivePanel();
+        getPanelName(GetActivePanel(), text, sizeof(text));
+        debugInfo["page"]["name"] = text;
+        if (isActivePanel(GetActivePanel())) {
+            debugInfo["page"]["page"] = GetActiveWidgetPage();
+            for (i=0; i < TOTAL_ICONX*TOTAL_ICONY; i++) {
+                getType(myDevices[i].type, text, sizeof(text));
+                debugInfo["page"]["device"][i]["idx"] = myDevices[i].idx;
+                debugInfo["page"]["device"][i]["ID"] = myDevices[i].ID;
+                debugInfo["page"]["device"][i]["name"] = myDevices[i].name;
+                debugInfo["page"]["device"][i]["type"] = myDevices[i].type;
+                debugInfo["page"]["device"][i]["typeName"] = text;
+                debugInfo["page"]["device"][i]["data"] = myDevices[i].data;
+                debugInfo["page"]["device"][i]["lenData"] = myDevices[i].lenData;
+                debugInfo["page"]["device"][i]["level"] = myDevices[i].level;
+                debugInfo["page"]["device"][i]["levelname"] = myDevices[i].levelname;
+                debugInfo["page"]["device"][i]["maxlevel"] = myDevices[i].maxlevel;
+            }
+        }
+        String buffer;
+        serializeJsonPretty(debugInfo, buffer);
+        server.send(200, "application/json", buffer);
+        });
 
     #if LV_USE_SNAPSHOT != 0
     /* Handling screen snapshot */

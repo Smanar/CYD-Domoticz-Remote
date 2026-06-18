@@ -60,7 +60,7 @@ static void TV_btn_event_handler(lv_event_t * e) {
     {
         if (j < MAXDEVICE)
         {
-            lv_table_set_cell_value(table, j, 0, i["Name"]); // Fisr column 
+            lv_table_set_cell_value(table, j, 0, i["Name"]); // First column 
             lv_table_set_cell_value(table, j, 1, i["Data"]); // Second column
             //lv_table_set_cell_user_data() // Not used in this LVLG version so need to use a table
             MemIDX[j] = atoi(i["idx"]);
