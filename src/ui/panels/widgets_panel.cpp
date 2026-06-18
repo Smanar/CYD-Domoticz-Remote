@@ -347,13 +347,13 @@ static void Widget_button_group(lv_obj_t* panel, char* desc, int x, int y, int w
 
 }
 
-void widget_panel_init(lv_obj_t* panel)
+void widget_panel_init(lv_obj_t* panel, bool dont_load_data)
 {
     short x,y;
     short cx,cy;
     short i = 0;
 
-    Init_data_widget_page();
+     if (!dont_load_data) Init_data_widget_page();
 
     for (y=0; y<TOTAL_ICONY; y=y+1)
     {

@@ -1,11 +1,11 @@
 
-void navigation_screen(unsigned char active_panel);
+void navigation_screen(unsigned char active_panel, bool dontLoadData = false);
 void ReturnPreviouspage(void);
 void nav_style_setup();
 int GetActiveWidgetPage(void);
 int GetActivePanel(void);
 void SetActivePanel(int);
-void RefreshWidgetsPanel(void);
+void RefreshWidgetsPanel(bool dontLoadData = false);
 void RefreshScenePanel(void);
 void RefreshDevicePanel(void);
 
