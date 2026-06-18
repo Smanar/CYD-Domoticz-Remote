@@ -181,12 +181,12 @@ bool HandleDomoticzData(JsonObject RJson2, Device * d)
     {
         //Use dynamic array, but only 1 time
         size_t dataLen = strlen(data);
-        if (dataLen >= d->lenData)
+        if (dataLen > d->lenData)
         {
             if (d->data) free(d->data);
             d->data = (char*)malloc(dataLen + 1);
             if (!d->data) return false; // malloc failed
-            d->lenData = dataLen;
+            d->lenData = dataLen + 1;
         }
 
         strncpy(d->data, data, d->lenData + 1);
@@ -388,11 +388,8 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
             //swift the table
             for (j = 0; j < diff; j++)
             {
-                for (k = 0; k < 23; k++)
-                {
-                    tab[k] = tab[k+1];
-                }
-                tab[23] = v;
+                memmove(tab, tab + 1, 23 * sizeof(int));
+                tab[23] = (int)v;
             }
 
         }
