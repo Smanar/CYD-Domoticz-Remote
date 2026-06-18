@@ -111,14 +111,20 @@ static void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int 
     {   
         if ((strcmp(d->data, "On") == 0) || strcmp(d->data, "Open") == 0)
         {
-            lv_obj_set_style_img_recolor(img, color, 0);
+            //lv_obj_set_style_img_recolor(img, color, 0);
             lv_obj_t * label = lv_label_create(Button_icon);
             lv_obj_set_style_text_color(label, color, 0);
+#if DEVICE_SIZE == 1
+            lv_obj_align_to(label, img,  LV_ALIGN_OUT_RIGHT_BOTTOM, 4, 0);
+#else
             lv_obj_align_to(label, img,  LV_ALIGN_OUT_RIGHT_BOTTOM, 10, 0);
+#endif
+
             //lv_obj_set_style_border_width(label, 5, 0); // To make it visible
             lv_label_set_text(label, d->data);
             lv_obj_set_style_img_recolor(img, color, 0);    // Use given color
-        } else {
+        }
+        else {
             #ifdef DIM_OFF_ICONS
                 lv_obj_set_style_img_recolor(img, ICON_GREYED_COLOR, 0);  // Set color to grey
             #else
@@ -283,14 +289,17 @@ static void Widget_text(lv_obj_t* panel, char* desc, char* value, int x, int y, 
 
     lv_label_set_text(label, value);
 
-    /*Create description*/
-    lv_obj_t * label2 = lv_label_create(Button_icon);
-    lv_label_set_long_mode(label2, LV_LABEL_LONG_WRAP);
-    lv_obj_set_style_text_align(label2, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_set_style_text_font(label2, &small_font, 0);
-    lv_label_set_text(label2, desc);
-    lv_obj_set_width(label2, Size_w);
-    lv_obj_align_to(label2, Button_icon,  LV_ALIGN_BOTTOM_MID, 0, 10); 
+    if (desc_height)
+    {
+        /*Create description*/
+        lv_obj_t * label2 = lv_label_create(Button_icon);
+        lv_label_set_long_mode(label2, LV_LABEL_LONG_WRAP);
+        lv_obj_set_style_text_align(label2, LV_TEXT_ALIGN_CENTER, 0);
+        lv_obj_set_style_text_font(label2, &small_font, 0);
+        lv_label_set_text(label2, desc);
+        lv_obj_set_width(label2, Size_w);
+        lv_obj_align_to(label2, Button_icon,  LV_ALIGN_BOTTOM_MID, 0, 10);
+    }
 }
 
 static void Widget_button_group(lv_obj_t* panel, char* desc, int x, int y, int w, int h, lv_color_t color, int idx, const lv_img_dsc_t* icon, bool state, bool group)
