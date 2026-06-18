@@ -12,7 +12,6 @@
 static lv_obj_t * slider_label; // Label for slider
 static lv_obj_t * arc_TH; // Arc for thermostat
 
-//static Device SelectedDevice; // The selected one
 static Device SpecialDevice; // structure for an actual one that is not on HP
 static Device *SelectedDevice = nullptr; // The selected one
 
@@ -97,10 +96,12 @@ static void TH_btn_event_handler(lv_event_t * e)
             lv_arc_set_value(arc_TH, v);
         break;
         case 3:
-            char buff[256] = {};
-            lv_snprintf(buff, 256, "/json.htm?type=command&param=setsetpoint&idx=%d&setpoint=%.1f", SelectedDevice->idx, v * step);
-            HTTPGETRequest(buff);
-        break;
+            {
+                char buff[256] = {};
+                lv_snprintf(buff, 256, "/json.htm?type=command&param=setsetpoint&idx=%d&setpoint=%.1f", SelectedDevice->idx, v * step);
+                HTTPGETRequest(buff);
+                break;
+            }
     }
 
     if (slider_label)
@@ -649,7 +650,7 @@ void device_panel_init(lv_obj_t* panel)
         //lv_obj_remove_style(arc_TH, NULL, LV_PART_INDICATOR);
 
         /*Create a label below the slider*/
-        slider_label = lv_label_create(lv_scr_act());
+        slider_label = lv_label_create(GridBig);
         lv_label_set_text_fmt(slider_label, "%.1f °C",setpoint * step);
         lv_obj_align_to(slider_label, arc_TH, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
 
