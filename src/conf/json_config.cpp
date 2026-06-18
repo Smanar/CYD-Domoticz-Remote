@@ -143,7 +143,7 @@ bool readJsonConfig(const char* jsonFile) {
     global_config.color_scheme = settings["color_scheme"].as<unsigned char>();
     global_config.brightness = settings["brightness"].as<unsigned char>();
     global_config.screenTimeout = settings["screenTimeout"].as<unsigned char>();
-    global_config.homeTimeout = global_config.version >= 7 ? settings["homeTimeout"].as<unsigned char>() : 0;
+    global_config.homeTimeout = settings["homeTimeout"].as<unsigned char>();
     charPtr = settings["protectionPassword"].as<const char*>();
     if (charPtr) strncpy(global_config.protectionPassword, charPtr,sizeof(global_config.protectionPassword));
     global_config.protectSetting = settings["protectSetting"].as<bool>();
