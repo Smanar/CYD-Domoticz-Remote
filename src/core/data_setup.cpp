@@ -13,7 +13,7 @@ Device myDevices[TOTAL_ICONX*TOTAL_ICONY];
 char TmpBuffer[255]; // To prevent multiple re-alloc
 static int tab[24]; // Tab for graph
 
-void RefreshWidgetsPanel(void);
+extern void RefreshWidgetsPanel(bool);
 
 static bool SetNewString(char **dst, const char *src)
 {
@@ -247,7 +247,7 @@ void Update_device_data(JsonObject RJson2)
             }
             else
             {
-                RefreshWidgetsPanel();
+                RefreshWidgetsPanel(true);
             }
         }
     }
@@ -472,7 +472,7 @@ bool InitDeviceRequest(Device *dd, const char* c, bool isarray)
 
         if (!SetNewString(&d->name, i["Name"])) return false;
 
-        Serial.printf("Initialize Domoticz devices id: %d, name %s\n", d->idx, d->name);
+        //Serial.printf("Initialize Domoticz devices id: %d, name %s\n", d->idx, d->name);
 
         const char* JSondata = NULL;
         const char* type = NULL;

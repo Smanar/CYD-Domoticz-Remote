@@ -4,6 +4,8 @@
 #include "../ui/main_ui.h"
 #include "lvgl.h"
 #include "../ui/navigation.h"
+#include "ip_engine.h"
+
 #ifndef LV_VDB_SIZE
 #if defined(ARDUINO_ARCH_ESP8266)
 #  define LV_VDB_SIZE    (8 * 1024U)   // Minimum 8 Kb
@@ -490,7 +492,7 @@ void set_screen_timer_period()
 
 void home_timer_sleep(lv_timer_t *timer)
 {
-    navigation_screen(HOMEPAGE_PANEL);
+    if (WS_Running()) navigation_screen(HOMEPAGE_PANEL);
 }
 
 void home_timer_setup()

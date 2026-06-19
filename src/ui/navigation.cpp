@@ -31,11 +31,11 @@ void ReturnPreviouspage(void)
     navigation_screen(master_panel);
 }
 
-void RefreshWidgetsPanel(void)
+void RefreshWidgetsPanel(bool dontLoadData)
 {
     if (actived_panel >= HOMEPAGE_PANEL && actived_panel <= LAST_PAGE_PANEL)
     {                           
-        navigation_screen(actived_panel);
+        navigation_screen(actived_panel, dontLoadData);
     }
 }
 
@@ -57,7 +57,7 @@ void RefreshScenePanel(void)
 }
 #endif
 
-void navigation_screen(unsigned char active_panel)
+void navigation_screen(unsigned char active_panel, bool dontLoadData)
 {
     actived_panel = active_panel;
 
@@ -82,7 +82,7 @@ void navigation_screen(unsigned char active_panel)
             break;
         case HOMEPAGE_PANEL ... (LAST_PAGE_PANEL): // Widget pages
             master_panel = active_panel;
-            widget_panel_init(panel);
+            widget_panel_init(panel, dontLoadData);
             break;
 #ifndef NO_GROUP_PAGE
         case GROUP_PANEL: //Group/Scene panel
