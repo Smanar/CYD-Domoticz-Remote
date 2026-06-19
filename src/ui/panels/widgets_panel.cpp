@@ -251,46 +251,16 @@ static void Widget_text(lv_obj_t* panel, char* desc, char* value, int x, int y, 
     lv_obj_t * label = lv_label_create(Button_icon);
     lv_obj_set_style_text_font(label, &big_font_bold, 0);
     lv_obj_set_style_text_color(label, color, 0);
-    lv_label_set_long_mode(label, LV_LABEL_LONG_DOT);             /*Break the long lines*/
+    lv_label_set_long_mode(label, LV_LABEL_LONG_DOT);             /*Add dot at end of long lines*/
     //lv_label_set_text(label, value);
 
-    int _height = 0;
+    int value_height = 0;
     int desc_height = 0;
     lv_point_t textSize;
-#if DEVICE_SIZE == 1
-    desc_height = 14;
-#else
-    desc_height = 16;
-#endif
 
     //No description for short text (eg time)
-    if (strlen(d->data) < 6) desc_height = 0;
-
-    _height = Size_h - desc_height; // Total size - 1 line small police for device name (Yeah i know, not good if the device name need 2 lines .....)
-
-    lv_obj_set_height(label, _height);
-    lv_obj_set_width(label, Size_w);
-
-    // Try to reduce font size to display as much as text as possible
-    for (uint8_t i = 0; i < sizeof(fonts) / sizeof(lv_font_t); i++) {
-        // Use lv_obj_get_width(label) don't work on my side, forced to use Size_w
-        lv_txt_get_size(&textSize, value, &fonts[i], 0, 0, Size_w, LV_TEXT_FLAG_NONE);
-        lv_obj_set_style_text_font(label, &fonts[i], 0);
-        if (textSize.y <= _height) {
-            break;
-        }
-    }
-
-    lv_obj_set_height(label, textSize.y);
-
-    //lv_obj_align_to(label, Button_icon,  LV_ALIGN_TOP_MID, 0, -20);
-    lv_obj_align_to(label, Button_icon,  LV_ALIGN_CENTER, 0, -(desc_height/2)); // Horizontal align for widget
-    lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0); // Horizontal align for text inside the widget
-
-    lv_label_set_text(label, value);
-
-    if (desc_height)
-    {
+    //if (strlen(d->data) >= 6)
+    //{
         /*Create description*/
         lv_obj_t * label2 = lv_label_create(Button_icon);
         lv_label_set_long_mode(label2, LV_LABEL_LONG_WRAP);
@@ -299,7 +269,35 @@ static void Widget_text(lv_obj_t* panel, char* desc, char* value, int x, int y, 
         lv_label_set_text(label2, desc);
         lv_obj_set_width(label2, Size_w);
         lv_obj_align_to(label2, Button_icon,  LV_ALIGN_BOTTOM_MID, 0, 10);
+        lv_obj_update_layout(label2);   // Recompute all label2 parameters
+        value_height = lv_obj_get_y(label2) - 1; // Space before description
+        desc_height = h - value_height;  // Height of descriptor
+        ////lv_obj_set_style_outline_width(label2, 1, 0);
+        ////lv_obj_set_style_outline_color(label2, LV_COLOR_MAKE(0xFF, 0x00, 0x00), 0); ////
+    //} else {
+    //    value_height = Size_h;
+    //}
+
+    lv_obj_set_size(label, w, value_height);
+
+    // Try to reduce font size to display as much as text as possible
+    for (uint8_t i = 0; i < sizeof(fonts) / sizeof(lv_font_t); i++) {
+        lv_txt_get_size(&textSize, value, &fonts[i], 0, 0, w, LV_TEXT_FLAG_NONE); // Get text size
+        lv_obj_set_style_text_font(label, &fonts[i], 0);    // Set current font
+        if (textSize.y <= value_height) {    // Does text fit in label?
+            break;  // Don't try other fonts
+        }
     }
+
+    if (textSize.y > value_height) { // Dont oversize label if too long
+        textSize.y = value_height;
+    }
+    lv_obj_set_height(label, textSize.y);
+    lv_obj_align_to(label, Button_icon,  LV_ALIGN_TOP_MID, 0, -10 + (value_height - textSize.y)/2); // Horizontal align for widget
+    lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0); // Horizontal align for text inside the widget
+    lv_label_set_text(label, value);
+    ////lv_obj_set_style_outline_width(label, 1, 0);
+    ////lv_obj_set_style_outline_color(label, LV_COLOR_MAKE(0x00, 0xFF, 0x00), 0);
 }
 
 static void Widget_button_group(lv_obj_t* panel, char* desc, int x, int y, int w, int h, lv_color_t color, int idx, const lv_img_dsc_t* icon, bool state, bool group)
