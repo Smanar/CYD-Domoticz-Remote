@@ -20,13 +20,13 @@ void loadInfo(char* textChar, size_t textSize) {
     IPAddress localIp = WiFi.localIP();
 
     lv_snprintf(textChar, textSize,
-    "HEAP Memory Usable (Kb) %d, Max %d, Total %d\n", ESP.getMaxAllocHeap()/1024, ESP.getFreeHeap()/1024, ESP.getHeapSize()/1024);
+    "HEAP memory usable %d kB, max %d kB, total %d kB\n", ESP.getMaxAllocHeap()/1024, ESP.getFreeHeap()/1024, ESP.getHeapSize()/1024);
     #ifdef BOARD_HAS_PSRAM
     lv_snprintf(textChar + strlen(textChar), textSize - strlen(textChar),
-        "PSRAM Memory Free (Kb) %d, Total %d\n", ESP.getFreePsram()/1024, ESP.getPsramSize()/1024);
+        "PSRAM memory free %d kB, total %d kB\n", ESP.getFreePsram()/1024, ESP.getPsramSize()/1024);
     #endif
     lv_snprintf(textChar + strlen(textChar), textSize - strlen(textChar),
-    "LV Heap %d kB used (%d %%) %d%% frag.\n", used_size / 1024, mon.used_pct, mon.frag_pct);
+    "LV Heap %d kB used (%d %%), %d%% frag, largest %d kB, max %d kB, total %d kB\n", used_size / 1024, mon.used_pct, mon.frag_pct, mon.free_biggest_size / 1024, mon.max_used / 1024, mon.total_size / 1024);
     lv_snprintf(textChar + strlen(textChar), textSize - strlen(textChar),
     "Application Version : %s\n", APPLICATION_VERSION);
     lv_snprintf(textChar + strlen(textChar), textSize - strlen(textChar),
