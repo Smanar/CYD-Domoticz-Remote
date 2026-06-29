@@ -277,6 +277,7 @@ void OTA_init(void)
     server.send(200, "text/plain", downloadError ? "FAIL" : "OK");
     if (!downloadError) {
         delay(1000);
+        LittleFS.end();
         ESP.restart();
     }
     }, [&]()
@@ -303,6 +304,7 @@ void OTA_init(void)
             if (checkJsonConfig((char *) TMP_FILE)) {               // Is received file a correct one?
                 Serial.print("Upload ok\nRebooting...\n");
                 LittleFS.remove(SETTINGS_FILE);                     // Delete existing settings file
+                LittleFS.rename(TMP_FILE, SETTINGS_FILE);           // Rename tmp file to settings
             } else {
                 downloadError = true;                               // File is bad
                 LittleFS.remove(TMP_FILE);                          // Delete it
