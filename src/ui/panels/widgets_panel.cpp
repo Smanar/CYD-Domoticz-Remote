@@ -7,6 +7,7 @@
 #include "../../core/ip_engine.h"
 #include "../navigation.h"
 #include "../../conf/global_config.h"
+#include "../../debug/lvgl_debug.h"
 
 extern lv_style_t style_shadow;
 extern lv_style_t style_pressed;
@@ -298,6 +299,11 @@ static void Widget_text(lv_obj_t* panel, char* desc, char* value, int x, int y, 
     lv_label_set_text(label, value);
     ////lv_obj_set_style_outline_width(label, 1, 0);
     ////lv_obj_set_style_outline_color(label, LV_COLOR_MAKE(0x00, 0xFF, 0x00), 0);
+    #ifdef DEBUG_LVGL
+        char name[50];
+        snprintf(name, sizeof(name), "Button_icon %d-%d", x, y);
+        dumpTreeObject(Button_icon, name, 0, true);
+    #endif
 }
 
 static void Widget_button_group(lv_obj_t* panel, char* desc, int x, int y, int w, int h, lv_color_t color, int idx, const lv_img_dsc_t* icon, bool state, bool group)
