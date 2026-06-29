@@ -259,25 +259,19 @@ static void Widget_text(lv_obj_t* panel, char* desc, char* value, int x, int y, 
     int desc_height = 0;
     lv_point_t textSize;
 
-    //No description for short text (eg time)
-    //if (strlen(d->data) >= 6)
-    //{
-        /*Create description*/
-        lv_obj_t * label2 = lv_label_create(Button_icon);
-        lv_label_set_long_mode(label2, LV_LABEL_LONG_WRAP);
-        lv_obj_set_style_text_align(label2, LV_TEXT_ALIGN_CENTER, 0);
-        lv_obj_set_style_text_font(label2, &small_font, 0);
-        lv_label_set_text(label2, desc);
-        lv_obj_set_width(label2, Size_w);
-        lv_obj_align_to(label2, Button_icon,  LV_ALIGN_BOTTOM_MID, 0, 10);
-        lv_obj_update_layout(label2);   // Recompute all label2 parameters
-        value_height = lv_obj_get_y(label2) - 1; // Space before description
-        desc_height = h - value_height;  // Height of descriptor
-        ////lv_obj_set_style_outline_width(label2, 1, 0);
-        ////lv_obj_set_style_outline_color(label2, LV_COLOR_MAKE(0xFF, 0x00, 0x00), 0); ////
-    //} else {
-    //    value_height = Size_h;
-    //}
+    /*Create description*/
+    lv_obj_t * label2 = lv_label_create(Button_icon);
+    lv_label_set_long_mode(label2, LV_LABEL_LONG_WRAP);
+    lv_obj_set_style_text_align(label2, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_style_text_font(label2, &small_font, 0);
+    lv_label_set_text(label2, desc);
+    lv_obj_set_width(label2, Size_w);
+    lv_obj_align_to(label2, Button_icon,  LV_ALIGN_BOTTOM_MID, 0, lv_obj_get_style_pad_top(Button_icon, LV_PART_MAIN) / 2);
+    lv_obj_update_layout(label2);   // Recompute all label2 parameters
+    value_height = lv_obj_get_y(label2) - 1; // Space before description
+    desc_height = h - value_height;  // Height of descriptor
+    ////lv_obj_set_style_outline_width(label2, 1, 0);
+    ////lv_obj_set_style_outline_color(label2, LV_COLOR_MAKE(0xFF, 0x00, 0x00), 0); ////
 
     lv_obj_set_size(label, w, value_height);
 
@@ -294,7 +288,7 @@ static void Widget_text(lv_obj_t* panel, char* desc, char* value, int x, int y, 
         textSize.y = value_height;
     }
     lv_obj_set_height(label, textSize.y);
-    lv_obj_align_to(label, Button_icon,  LV_ALIGN_TOP_MID, 0, -10 + (value_height - textSize.y)/2); // Horizontal align for widget
+    lv_obj_align_to(label, Button_icon,  LV_ALIGN_TOP_MID, 0, (value_height - (textSize.y + lv_obj_get_style_pad_top(Button_icon, LV_PART_MAIN)))/2); // Horizontal align for widget
     lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0); // Horizontal align for text inside the widget
     lv_label_set_text(label, value);
     ////lv_obj_set_style_outline_width(label, 1, 0);
@@ -357,7 +351,7 @@ void widget_panel_init(lv_obj_t* panel, bool dont_load_data)
     short cx,cy;
     short i = 0;
 
-     if (!dont_load_data) Init_data_widget_page();
+    if (!dont_load_data) Init_data_widget_page();
 
     for (y=0; y<TOTAL_ICONY; y=y+1)
     {
