@@ -37,18 +37,18 @@ static void btn_event_cb_group(lv_event_t * e)
     char buff[256] = {};
 
     if(code == LV_EVENT_CLICKED) {
-        lv_snprintf(buff, 256, "/json.htm?type=command&param=switchscene&idx=%d&switchcmd=%s", idx, "On");
+        snprintf(buff, 256, "/json.htm?type=command&param=switchscene&idx=%d&switchcmd=%s", idx, "On");
     }
     else if(code == LV_EVENT_VALUE_CHANGED) {
         if (lv_obj_has_state(btn, LV_STATE_CHECKED))
         {
             lv_obj_set_style_opa(btn, LV_OPA_50, 0);
-            lv_snprintf(buff, 256, "/json.htm?type=command&param=switchscene&idx=%d&switchcmd=%s", idx, "Off");
+            snprintf(buff, 256, "/json.htm?type=command&param=switchscene&idx=%d&switchcmd=%s", idx, "Off");
         }
         else
         {
             lv_obj_set_style_opa(btn, LV_OPA_100, 0);
-            lv_snprintf(buff, 256, "/json.htm?type=command&param=switchscene&idx=%d&switchcmd=%s", idx, "On");
+            snprintf(buff, 256, "/json.htm?type=command&param=switchscene&idx=%d&switchcmd=%s", idx, "On");
         }
     }
 
@@ -66,7 +66,7 @@ static void btn_event_cb(lv_event_t * e)
         if ((d2->type == TYPE_PUSH) || (d2->type == TYPE_LIGHT) || (d2->type == TYPE_SWITCH) || (d2->type == TYPE_PLUG))
         {
             char buff[256] = {};
-            lv_snprintf(buff, 256, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=%s", d2->idx, "Toggle");
+            snprintf(buff, 256, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=%s", d2->idx, "Toggle");
             HTTPGETRequest(buff);
             return;
         }

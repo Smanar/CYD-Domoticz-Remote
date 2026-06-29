@@ -37,7 +37,7 @@ static void colorwheel_event_cb(lv_event_t * e)
         lv_color_t c = lv_colorwheel_get_rgb(cw);
 
         char buff[256] = {};
-        lv_snprintf(buff, 256, "/json.htm?type=command&param=setcolbrightnessvalue&idx=%d&color={\"m\":3,\"t\":0,\"r\":%d,\"g\":%d,\"b\":%d,\"cw\":0,\"ww\":0}&brightness=%d",
+        snprintf(buff, 256, "/json.htm?type=command&param=setcolbrightnessvalue&idx=%d&color={\"m\":3,\"t\":0,\"r\":%d,\"g\":%d,\"b\":%d,\"cw\":0,\"ww\":0}&brightness=%d",
                         SelectedDevice->idx, c.ch.red, c.ch.green, c.ch.blue, SelectedDevice->level);
         HTTPGETRequest(buff);
     }
@@ -62,7 +62,7 @@ static void slider_released_event_cb(lv_event_t * e)
     unsigned short lev = (int)lv_slider_get_value(slider) * SelectedDevice->maxlevel / 100;
 
     char buff[256] = {};
-    lv_snprintf(buff, 256, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=Set%%20Level&level=%d", SelectedDevice->idx, lev);
+    snprintf(buff, 256, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=Set%%20Level&level=%d", SelectedDevice->idx, lev);
     HTTPGETRequest(buff);
 
 }
@@ -98,7 +98,7 @@ static void TH_btn_event_handler(lv_event_t * e)
         case 3:
             {
                 char buff[256] = {};
-                lv_snprintf(buff, 256, "/json.htm?type=command&param=setsetpoint&idx=%d&setpoint=%.1f", SelectedDevice->idx, v * step);
+                snprintf(buff, 256, "/json.htm?type=command&param=setsetpoint&idx=%d&setpoint=%.1f", SelectedDevice->idx, v * step);
                 HTTPGETRequest(buff);
                 break;
             }
@@ -117,7 +117,7 @@ static void switch_event_handler(lv_event_t * e)
 
     if (code == LV_EVENT_VALUE_CHANGED) {
         char buff[256] = {};
-        lv_snprintf(buff, 256, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=%s", SelectedDevice->idx, lv_obj_has_state(obj, LV_STATE_CHECKED) ? "On" : "Off");
+        snprintf(buff, 256, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=%s", SelectedDevice->idx, lv_obj_has_state(obj, LV_STATE_CHECKED) ? "On" : "Off");
         HTTPGETRequest(buff);
     }
 }
@@ -129,7 +129,7 @@ static void btn_event_handler(lv_event_t * e)
 
     if (code == LV_EVENT_CLICKED) {
         char buff[256] = {};
-        lv_snprintf(buff, 256, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=%s", SelectedDevice->idx, s);
+        snprintf(buff, 256, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=%s", SelectedDevice->idx, s);
         HTTPGETRequest(buff);
     }
 }
@@ -145,7 +145,7 @@ static void dd_event_handler(lv_event_t * e)
         int index = lv_dropdown_get_selected(obj);
 
         char buff[256] = {};
-        lv_snprintf(buff, 256, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=Set%%20Level&level=%d", SelectedDevice->idx, index * 10);
+        snprintf(buff, 256, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=Set%%20Level&level=%d", SelectedDevice->idx, index * 10);
         HTTPGETRequest(buff);
     }
 }
@@ -170,7 +170,7 @@ static void hist_chart_event_cb(lv_event_t * e)
     if (dsc->id == LV_CHART_AXIS_PRIMARY_Y)
     {
         //update the label with the modified multiplier
-        lv_snprintf(dsc->text, dsc->text_length, "%.1f", (float)dsc->value / coef);
+        snprintf(dsc->text, dsc->text_length, "%.1f", (float)dsc->value / coef);
     }
 }
 
