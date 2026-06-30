@@ -8,6 +8,7 @@
 
 extern unsigned long runningTime(void);
 
+//  Load system and memory information into a char*
 void loadInfo(char* textChar, size_t textSize) {
 
     lv_mem_monitor_t mon;
@@ -19,26 +20,27 @@ void loadInfo(char* textChar, size_t textSize) {
     size_t remainingBytes = totalBytes - usedBytes;
     IPAddress localIp = WiFi.localIP();
 
-    lv_snprintf(textChar, textSize,
+    snprintf(textChar, textSize,
     "HEAP memory usable %d kB, max %d kB, total %d kB\n", ESP.getMaxAllocHeap()/1024, ESP.getFreeHeap()/1024, ESP.getHeapSize()/1024);
     #ifdef BOARD_HAS_PSRAM
-    lv_snprintf(textChar + strlen(textChar), textSize - strlen(textChar),
+    snprintf(textChar + strlen(textChar), textSize - strlen(textChar),
         "PSRAM memory free %d kB, total %d kB\n", ESP.getFreePsram()/1024, ESP.getPsramSize()/1024);
     #endif
-    lv_snprintf(textChar + strlen(textChar), textSize - strlen(textChar),
+    snprintf(textChar + strlen(textChar), textSize - strlen(textChar),
     "LV Heap %d kB used (%d %%), %d%% frag, largest %d kB, max %d kB, total %d kB\n", used_size / 1024, mon.used_pct, mon.frag_pct, mon.free_biggest_size / 1024, mon.max_used / 1024, mon.total_size / 1024);
-    lv_snprintf(textChar + strlen(textChar), textSize - strlen(textChar),
+    snprintf(textChar + strlen(textChar), textSize - strlen(textChar),
     "Application Version : %s\n", APPLICATION_VERSION);
-    lv_snprintf(textChar + strlen(textChar), textSize - strlen(textChar),
+    snprintf(textChar + strlen(textChar), textSize - strlen(textChar),
     "Running time : %d-%02d:%02d:%02d\n", runningTime()/(3600*24), (runningTime()/3600)%24 , (runningTime()/60)%60, runningTime()%60);
-    lv_snprintf(textChar + strlen(textChar), textSize - strlen(textChar),
+    snprintf(textChar + strlen(textChar), textSize - strlen(textChar),
     "Total data by WS : %d ko\n", total_WS_lenght());
-    lv_snprintf(textChar + strlen(textChar), textSize - strlen(textChar),
+    snprintf(textChar + strlen(textChar), textSize - strlen(textChar),
     "LittleFS %s, %d kB free (%d%%)\n", totalBytes?"ok":"*BAD*", remainingBytes / 1024, (100 * remainingBytes) / totalBytes);
-    lv_snprintf(textChar + strlen(textChar), textSize - strlen(textChar),
+    snprintf(textChar + strlen(textChar), textSize - strlen(textChar),
     "IP %d.%d.%d.%d\n", localIp[0], localIp[1], localIp[2], localIp[3]);
 }
 
+//  Load a char* with text corresponding to a given internal type
 void getType(unsigned short type, char* typeText, size_t textLen) {
     switch (type)
     {
@@ -75,6 +77,7 @@ void getType(unsigned short type, char* typeText, size_t textLen) {
     }
 }
 
+//  Load a char* with panel name of a widget page index
 void getPanelName(int widgetPageIndex, char* pageText, size_t textLen) {
     switch (widgetPageIndex)
     {
@@ -93,6 +96,7 @@ void getPanelName(int widgetPageIndex, char* pageText, size_t textLen) {
     }
 }
 
+//  Returns true if given widget page index corresponds to a widget page
 bool isActivePanel(int widgetPageIndex) {
     return (widgetPageIndex >= HOMEPAGE_PANEL) && (widgetPageIndex <= LAST_PAGE_PANEL);
 }

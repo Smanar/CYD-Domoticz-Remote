@@ -191,7 +191,12 @@ static void cancel_btn_event_callback(lv_event_t* event){
         lv_obj_del(pwd_main_cont);                                  // Delete me
 
         refuseAccess();                                             // Refuse callback
-        navigation_screen(checkAdminPagePrevious);
+        // To avoid a crash when clicking on "Cancel" after sliding on password page
+        if (checkAdminPagePrevious >= HOMEPAGE_PANEL && checkAdminPagePrevious <= LAST_PAGE_PANEL) {
+            navigation_screen(checkAdminPagePrevious);
+        } else {
+            navigation_screen(HOMEPAGE_PANEL);
+        }
     }
 }
 

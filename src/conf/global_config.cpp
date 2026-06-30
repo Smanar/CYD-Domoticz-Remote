@@ -80,7 +80,7 @@ void VerifyOldVersion(){
         }
         
         for (uint p=0; p < PAGES; p++) {                            // Set default names
-            lv_snprintf(global_pages[p].name, sizeof(global_pages[p].name), "Page %d", p+1);
+            snprintf(global_pages[p].name, sizeof(global_pages[p].name), "Page %d", p+1);
             global_pages[p].isProtected = false;
         }
         global_config.color_scheme = configV3.color_scheme;
@@ -130,7 +130,7 @@ void LoadGlobalConfig() {
 
     for (uint p=0; p<PAGES; p++)
     {
-        if (p > 0) snprintf(global_pages[p].name, sizeof(global_pages[p].name), "Page %d", p+1); // No name for Homepage ?
+        snprintf(global_pages[p].name, sizeof(global_pages[p].name), "Page %d", p+1);
         global_pages[p].isProtected = false;
     }
 

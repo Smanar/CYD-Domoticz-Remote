@@ -46,7 +46,7 @@ bool HTTPGETRequestWithReturn(const char * url2, JsonDocument *doc, bool NeedFil
     int httpCode;
     static char tmpBuffer[180];    // As routine is asynchronous, use only local data
 
-    lv_snprintf(tmpBuffer, sizeof(tmpBuffer), "http://%s:%d%s",global_config.ServerHost, global_config.ServerPort, url2);
+    snprintf(tmpBuffer, sizeof(tmpBuffer), "http://%s:%d%s",global_config.ServerHost, global_config.ServerPort, url2);
     //String url = "http://" + String(global_config.ServerHost) + ":" + String(global_config.ServerPort) + url2;
 
     try {
@@ -151,11 +151,11 @@ void subscribedeviceWS(short r, const char *c)
 
         if (r == 0)
         {
-            lv_snprintf(localBuffer, sizeof(localBuffer),"{\"event\":\"request\",\"query\":\"type=command&param=getdevices&rid=%s\"}", c);
+            snprintf(localBuffer, sizeof(localBuffer),"{\"event\":\"request\",\"query\":\"type=command&param=getdevices&rid=%s\"}", c);
         }
         else
         {
-            lv_snprintf(localBuffer, sizeof(localBuffer), "{\"event\":\"request\",\"query\":\"type=command&param=%s\"}", c);
+            snprintf(localBuffer, sizeof(localBuffer), "{\"event\":\"request\",\"query\":\"type=command&param=%s\"}", c);
         }
 
         if (strlen(localBuffer) >= sizeof(localBuffer) - 1)

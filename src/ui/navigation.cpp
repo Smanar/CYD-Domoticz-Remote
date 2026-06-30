@@ -4,6 +4,7 @@
 #include "../core/data_setup.h"
 #include "../core/ip_engine.h"
 #include "../conf/global_config.h"
+#include "../core/helper.h"
 
 static lv_obj_t * tv;
 static int actived_panel = 0;
@@ -72,7 +73,9 @@ void navigation_screen(unsigned char active_panel, bool dontLoadData)
     lv_obj_set_style_pad_all(panel, 0, 0);
     //lv_obj_clear_flag(panel, LV_OBJ_FLAG_SCROLLABLE);
 
-    Serial.printf("Showing page %d\n", active_panel);
+    char pageName[30];
+    getPanelName(active_panel, pageName, sizeof(pageName));
+    Serial.printf("Showing page %d (%s)\n", active_panel, pageName);
 
     switch (active_panel)
     {

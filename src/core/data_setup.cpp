@@ -10,14 +10,14 @@
 #define SIZEOF(arr) (sizeof(arr) / sizeof(*arr))
 
 Device myDevices[TOTAL_ICONX*TOTAL_ICONY];
-char TmpBuffer[255]; // To prevent multiple re-alloc
+static char TmpBuffer[255]; // To prevent multiple re-alloc
 static int tab[24]; // Tab for graph
 
 extern void RefreshWidgetsPanel(bool);
 
 static bool SetNewString(char **dst, const char *src)
 {
-    free(*dst);
+    if (*dst) free(*dst);
     *dst = (char*)malloc(strlen(src) + 1);
     if (!*dst) return false;
     strcpy(*dst, src);
@@ -32,11 +32,11 @@ char * Cleandata(unsigned short t, const char *origin, const char *bonus = nullp
 
     if (bonus)
     {
-        lv_snprintf(TmpBuffer, sizeof(TmpBuffer), "%s;%s", origin, bonus);
+        snprintf(TmpBuffer, sizeof(TmpBuffer), "%s;%s", origin, bonus);
     }
     else
     {
-        lv_snprintf(TmpBuffer, sizeof(TmpBuffer), "%s", origin);
+        snprintf(TmpBuffer, sizeof(TmpBuffer), "%s", origin);
     }
 
     if (t == TYPE_SETPOINT || t == TYPE_THERMOSTAT) {
@@ -96,7 +96,7 @@ void Init_data_widget_page()
 void FillDeviceData(Device *d, int idx)
 {
     char tmp8[6];					// 5 chars + null
-    lv_snprintf(tmp8, sizeof(tmp8), "%d" , idx);
+    snprintf(tmp8, sizeof(tmp8), "%d" , idx);
     InitDeviceRequest(d, tmp8, false);
 }
 
@@ -126,7 +126,7 @@ const char * loadDeviceList(int page, bool displayAll)
     {
         idx = global_pages[page].ListDevices[i];
         if (displayAll || idx > 0) {
-            offset += lv_snprintf(tmp7 + offset, sizeof(tmp7) - offset, (offset == 0) ? "%d" : ",%d", global_pages[page].ListDevices[i]);
+            offset += snprintf(tmp7 + offset, sizeof(tmp7) - offset, (offset == 0) ? "%d" : ",%d", global_pages[page].ListDevices[i]);
         }
     }
     return tmp7;
@@ -146,7 +146,7 @@ bool HandleDomoticzData(JsonObject RJson2, Device * d)
     if (d->type == TYPE_RAIN)
     {
         char t[30];
-        lv_snprintf(t, sizeof(t), "%.2f mm",
+        snprintf(t, sizeof(t), "%.2f mm",
                 RJson2["Rain"].as<float>() * 0.01
             );
         data = Cleandata(d->type, t);
@@ -154,7 +154,7 @@ bool HandleDomoticzData(JsonObject RJson2, Device * d)
     else if (d->type == TYPE_WIND)
     {
         char t[30];
-        lv_snprintf(t, sizeof(t), "%s;%.1f m/s;Gust %.1f m/s",
+        snprintf(t, sizeof(t), "%s;%.1f m/s;Gust %.1f m/s",
                 RJson2["DirectionStr"].as<const char*>(),
                 RJson2["Speed"].as<float>(),
                 RJson2["Gust"].as<float>()
@@ -169,7 +169,7 @@ bool HandleDomoticzData(JsonObject RJson2, Device * d)
     else if (d->type == TYPE_THERMOSTAT)
     {
         char t[10];
-        lv_snprintf(t, 10, "%.1f", RJson2["Temp"].as<float>());
+        snprintf(t, 10, "%.1f", RJson2["Temp"].as<float>());
         data = Cleandata(d->type, t);
     }
     else
@@ -184,9 +184,11 @@ bool HandleDomoticzData(JsonObject RJson2, Device * d)
         if (dataLen > d->lenData)
         {
             if (d->data) free(d->data);
-            d->data = (char*)malloc(dataLen + 1);
+            d->lenData = 0;
+            d->data = (char*)malloc(dataLen + 1);   // Allocate space for data plus one (zero) byte
+            d->data[dataLen] = 0;   // Force last char to zero (never ovrwritten if sntncpy used with d->lenData)
             if (!d->data) return false; // malloc failed
-            d->lenData = dataLen + 1;
+            d->lenData = dataLen;   // Don't put +1 here to avoid heap corruption!
         }
 
         strncpy(d->data, data, d->lenData + 1);
@@ -198,7 +200,8 @@ bool HandleDomoticzData(JsonObject RJson2, Device * d)
         d->data = (char*)malloc(strlen(data) + 1);
         if (!d->data) return false; // malloc failed
         d->lenData = strlen(data);
-        strncpy(d->data, data, d->lenData + 1);
+        d->data[d->lenData] = 0;   // Force last char to zero (never ovrwritten if sntncpy used with d->lenData)
+        strncpy(d->data, data, d->lenData); // Don't put +1 here !
         NeedUpdate = true;
     }
 
@@ -649,7 +652,7 @@ bool InitDeviceRequest(Device *dd, const char* c, bool isarray)
         HandleDomoticzData(i, d);
 
     }
-    
+
     return true;
 
 }

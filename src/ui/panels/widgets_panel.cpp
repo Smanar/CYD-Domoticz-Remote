@@ -7,6 +7,7 @@
 #include "../../core/ip_engine.h"
 #include "../navigation.h"
 #include "../../conf/global_config.h"
+#include "../../debug/lvgl_debug.h"
 
 extern lv_style_t style_shadow;
 extern lv_style_t style_pressed;
@@ -37,18 +38,18 @@ static void btn_event_cb_group(lv_event_t * e)
     char buff[256] = {};
 
     if(code == LV_EVENT_CLICKED) {
-        lv_snprintf(buff, 256, "/json.htm?type=command&param=switchscene&idx=%d&switchcmd=%s", idx, "On");
+        snprintf(buff, 256, "/json.htm?type=command&param=switchscene&idx=%d&switchcmd=%s", idx, "On");
     }
     else if(code == LV_EVENT_VALUE_CHANGED) {
         if (lv_obj_has_state(btn, LV_STATE_CHECKED))
         {
             lv_obj_set_style_opa(btn, LV_OPA_50, 0);
-            lv_snprintf(buff, 256, "/json.htm?type=command&param=switchscene&idx=%d&switchcmd=%s", idx, "Off");
+            snprintf(buff, 256, "/json.htm?type=command&param=switchscene&idx=%d&switchcmd=%s", idx, "Off");
         }
         else
         {
             lv_obj_set_style_opa(btn, LV_OPA_100, 0);
-            lv_snprintf(buff, 256, "/json.htm?type=command&param=switchscene&idx=%d&switchcmd=%s", idx, "On");
+            snprintf(buff, 256, "/json.htm?type=command&param=switchscene&idx=%d&switchcmd=%s", idx, "On");
         }
     }
 
@@ -66,7 +67,7 @@ static void btn_event_cb(lv_event_t * e)
         if ((d2->type == TYPE_PUSH) || (d2->type == TYPE_LIGHT) || (d2->type == TYPE_SWITCH) || (d2->type == TYPE_PLUG))
         {
             char buff[256] = {};
-            lv_snprintf(buff, 256, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=%s", d2->idx, "Toggle");
+            snprintf(buff, 256, "/json.htm?type=command&param=switchlight&idx=%d&switchcmd=%s", d2->idx, "Toggle");
             HTTPGETRequest(buff);
             return;
         }
@@ -258,25 +259,19 @@ static void Widget_text(lv_obj_t* panel, char* desc, char* value, int x, int y, 
     int desc_height = 0;
     lv_point_t textSize;
 
-    //No description for short text (eg time)
-    //if (strlen(d->data) >= 6)
-    //{
-        /*Create description*/
-        lv_obj_t * label2 = lv_label_create(Button_icon);
-        lv_label_set_long_mode(label2, LV_LABEL_LONG_WRAP);
-        lv_obj_set_style_text_align(label2, LV_TEXT_ALIGN_CENTER, 0);
-        lv_obj_set_style_text_font(label2, &small_font, 0);
-        lv_label_set_text(label2, desc);
-        lv_obj_set_width(label2, Size_w);
-        lv_obj_align_to(label2, Button_icon,  LV_ALIGN_BOTTOM_MID, 0, 10);
-        lv_obj_update_layout(label2);   // Recompute all label2 parameters
-        value_height = lv_obj_get_y(label2) - 1; // Space before description
-        desc_height = h - value_height;  // Height of descriptor
-        ////lv_obj_set_style_outline_width(label2, 1, 0);
-        ////lv_obj_set_style_outline_color(label2, LV_COLOR_MAKE(0xFF, 0x00, 0x00), 0); ////
-    //} else {
-    //    value_height = Size_h;
-    //}
+    /*Create description*/
+    lv_obj_t * label2 = lv_label_create(Button_icon);
+    lv_label_set_long_mode(label2, LV_LABEL_LONG_WRAP);
+    lv_obj_set_style_text_align(label2, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_style_text_font(label2, &small_font, 0);
+    lv_label_set_text(label2, desc);
+    lv_obj_set_width(label2, Size_w);
+    lv_obj_align_to(label2, Button_icon,  LV_ALIGN_BOTTOM_MID, 0, lv_obj_get_style_pad_top(Button_icon, LV_PART_MAIN) / 2);
+    lv_obj_update_layout(label2);   // Recompute all label2 parameters
+    value_height = lv_obj_get_y(label2) - 1; // Space before description
+    desc_height = h - value_height;  // Height of descriptor
+    ////lv_obj_set_style_outline_width(label2, 1, 0);
+    ////lv_obj_set_style_outline_color(label2, LV_COLOR_MAKE(0xFF, 0x00, 0x00), 0); ////
 
     lv_obj_set_size(label, w, value_height);
 
@@ -293,11 +288,16 @@ static void Widget_text(lv_obj_t* panel, char* desc, char* value, int x, int y, 
         textSize.y = value_height;
     }
     lv_obj_set_height(label, textSize.y);
-    lv_obj_align_to(label, Button_icon,  LV_ALIGN_TOP_MID, 0, -10 + (value_height - textSize.y)/2); // Horizontal align for widget
+    lv_obj_align_to(label, Button_icon,  LV_ALIGN_TOP_MID, 0, (value_height - (textSize.y + lv_obj_get_style_pad_top(Button_icon, LV_PART_MAIN)))/2); // Horizontal align for widget
     lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0); // Horizontal align for text inside the widget
     lv_label_set_text(label, value);
     ////lv_obj_set_style_outline_width(label, 1, 0);
     ////lv_obj_set_style_outline_color(label, LV_COLOR_MAKE(0x00, 0xFF, 0x00), 0);
+    #ifdef DEBUG_LVGL
+        char name[50];
+        snprintf(name, sizeof(name), "Button_icon %d-%d", x, y);
+        dumpTreeObject(Button_icon, name, 0, true);
+    #endif
 }
 
 static void Widget_button_group(lv_obj_t* panel, char* desc, int x, int y, int w, int h, lv_color_t color, int idx, const lv_img_dsc_t* icon, bool state, bool group)
@@ -351,7 +351,7 @@ void widget_panel_init(lv_obj_t* panel, bool dont_load_data)
     short cx,cy;
     short i = 0;
 
-     if (!dont_load_data) Init_data_widget_page();
+    if (!dont_load_data) Init_data_widget_page();
 
     for (y=0; y<TOTAL_ICONY; y=y+1)
     {
