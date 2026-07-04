@@ -280,7 +280,7 @@ static void Widget_text(lv_obj_t* panel, char* desc, char* value, int x, int y, 
         lv_txt_get_size(&textSize, desc, &small_font, 0, 0, w, LV_TEXT_FLAG_NONE); // Get text size
         desc_height = textSize.y;
 
-        value_height = h - 16;
+        value_height = h - desc_height;
 
         ////lv_obj_set_style_outline_width(label2, 1, 0);
         ////lv_obj_set_style_outline_color(label2, LV_COLOR_MAKE(0xFF, 0x00, 0x00), 0); ////
