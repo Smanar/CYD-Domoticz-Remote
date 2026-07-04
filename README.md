@@ -40,10 +40,11 @@ There is different way to install the code on th device, but I think this one is
 The project is still WIP so some settings are still hard coded.   
 Somes settings depend of hardware, tell me your hardware, I will search values to edit.   
 
-There is 3 ways to configure the software settings (wifi, device id, and ect ...):   
+There are 4 ways to configure the software settings (wifi, device id, and ect ...):   
 - Can use the option FORCE_CONFIG and use hardcoded setting here https://github.com/Smanar/CYD-Domoticz-Remote/blob/main/src/main.cpp#L66
 - You can start the device and configure setting using the GUI.
 - You can use a personnal_settings.h file placed on the project with your settings.
+- You can edit data/settings.json and download it using platformIO "Upload Filesystem Image"
 
 By defaut, domoticz defaut devices displayed on Homepage will be 1,2,3,4,5,6,7,8,9 so you need to change them on the application setting panel.   
 
@@ -53,16 +54,24 @@ For the hardware part (according to your device) mains settings are in the file 
 	#-DFORCE_CONFIG # Enable or disable the forced network configuration.
 	-DFORCECALIBRATE=false # Reset the calibration at every restart, used to reset it after a config change.
 	#-DOLD_DOMOTICZ # If you are using older Domoticz version < 2023.2
-	-DBONUSPAGE=0 # Special page to add, similar to Homepage but not updated, from 1 to 3
+	-DPAGES=1 # Count of home pages
 	-DFASTCLIC # Enable 1 clic action for some widget
 	#-DNO_INFO_PAGE # Disable the Info panel
 	#-DNO_GROUP_PAGE # Disable the Group/scene panel
 	#-DFONT_TO_USE=1 # 1=Standard 2=Custom 3=French, See fonts paragraph
+	-DHIDE_PASSWORD # Hide password input (else show it)
 	#-DAUTO_BRIGHTNESS
-	#-DLIGHTWS # Only possible for version > 16088, decrease WS requests.
-	#-DPUSHOTA # To enable PUSH OTA (Don't enable both OTA)
+	-DDIM_OFF_ICONS # Change Off/Closed devices icons to grey
+	-DLIGHTWS # Only possible for version > 16088, decrease WS requests.
+	-DPUSHOTA # To enable PUSH OTA (Don't enable both OTA)
 	#-DPULLOTA # To enable PULL OTA (Don't enable both OTA)
+	#-DCORE_DEBUG_LEVEL=5 # To enable debug on serial for librairies and core
+	#-DLV_USE_SNAPSHOT=1 # Enable to take screen snapshots (will fail on non PSRAM devices)
+	#-DDEBUG_LVGL # Used to internaly debug LGVL
 ``` 
+
+## Page protection
+You can protect any page from unauthorized access. When a protection password is defined in settngs, user will have to provide this password to be allowed accessing the page. Page validation or rejection is kept for 30 seconds.
 
 ## OTA
 There is 2 options for OTA, PUSHOTA and PULLOTA you can enable one of them or nothing (not both ofc).

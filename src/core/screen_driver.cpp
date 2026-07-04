@@ -3,6 +3,8 @@
 #include "../conf/global_config.h"
 #include "../ui/main_ui.h"
 #include "lvgl.h"
+#include "../ui/navigation.h"
+#include "ip_engine.h"
 
 #ifndef LV_VDB_SIZE
 #if defined(ARDUINO_ARCH_ESP8266)
@@ -10,7 +12,7 @@
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
 #  define LV_VDB_SIZE    (16 * 1024U)  // 16kB draw buffer
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
-#  define LV_VDB_SIZE    (48 * 1024U)  // 16kB draw buffer
+#  define LV_VDB_SIZE    (48 * 1024U)  // 48kB draw buffer
 #elif defined(ARDUINO_ARCH_ESP32)
 #  define LV_VDB_SIZE    (32 * 1024U)  // 32kB draw buffer
 #else
@@ -99,6 +101,24 @@ static lv_disp_draw_buf_t draw_buf;
     #ifdef ESP32_S3TOUCHLCD7
     #include "../drivers/esp32-S3TOUCHLCD7.h"
     #endif
+
+#endif
+
+// IO expander (CH422G for ESP32_S3TOUCHLCD7)
+#ifdef ESP32_S3TOUCHLCD7
+    #include <Arduino.h>
+    #include <esp_io_expander.hpp>
+
+    esp_expander::CH422G *expander = NULL;
+
+    // IO expander initialization
+    void ioExpanderInit(void) {
+        // Create expander as master without I2C init
+        expander = new esp_expander::CH422G(0, ESP_IO_EXPANDER_I2C_CH422G_ADDRESS);
+        expander->init();
+        expander->begin();
+        expander->enableAllIO_Output();
+    }
 
 #endif
 
@@ -294,6 +314,7 @@ _TC touchscreen;
 
 bool isScreenInSleep = false;
 lv_timer_t *screenSleepTimer;
+lv_timer_t *homeSleepTimer;
 
 
 void touchscreen_calibrate(bool force)
@@ -382,6 +403,12 @@ void screen_setBrightness(byte brightness)
 {
 
 #ifdef ARDUINO_GFX
+    #ifdef ESP32_S3TOUCHLCD7
+        if (expander) {
+            Serial.printf("Set brightness %d\n", brightness);
+            expander->digitalWrite(2, brightness? 1 : 0);
+        }
+    #endif
     return; // Not supported by this lib
 #else
     #ifdef TFT_BL
@@ -455,18 +482,42 @@ void screen_timer_stop()
     lv_timer_pause(screenSleepTimer);
 }
 
-void screen_timer_period(uint32_t period)
-{
-    if (period > 0) lv_timer_set_period(screenSleepTimer, period);
-    else lv_timer_pause(screenSleepTimer);
-}
-
 void set_screen_timer_period()
 {
-    screen_timer_period((uint32_t)global_config.screenTimeout * 1000 * 60);
+    uint32_t period = (uint32_t)global_config.screenTimeout * 1000 * 60;
+    if (period > 0) lv_timer_set_period(screenSleepTimer, period);
+    else lv_timer_pause(screenSleepTimer);
     screen_timer_start();
 }
 
+void home_timer_sleep(lv_timer_t *timer)
+{
+    if (WS_Running()) navigation_screen(HOMEPAGE_PANEL);
+}
+
+void home_timer_setup()
+{
+    homeSleepTimer = lv_timer_create(home_timer_sleep, global_config.homeTimeout * 1000 * 60, NULL);
+    lv_timer_pause(homeSleepTimer);
+}
+
+void home_timer_start()
+{
+    if (global_config.homeTimeout > 0) lv_timer_resume(homeSleepTimer);
+}
+
+void home_timer_stop()
+{
+    lv_timer_pause(homeSleepTimer);
+}
+
+void set_home_timer_period()
+{
+    uint32_t period = (uint32_t)global_config.homeTimeout * 1000 * 60;
+    if (period > 0) lv_timer_set_period(homeSleepTimer, period);
+    else lv_timer_pause(homeSleepTimer);
+    home_timer_start();
+}
 
 void screen_lv_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
 {
@@ -508,6 +559,7 @@ void screen_lv_touchRead(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
     if (touchscreen.tirqTouched() && touchscreen.touched())
     {
         lv_timer_reset(screenSleepTimer);
+        lv_timer_reset(homeSleepTimer);
         // dont pass first touch after power on
         if (isScreenInSleep)
         {
@@ -643,6 +695,8 @@ void screen_setup()
 
     screen_timer_setup();
     screen_timer_start();
+    home_timer_setup();
+    home_timer_start();
 
     /*Initialize the graphics library */
     LV_EVENT_GET_COMP_CHILD = lv_event_register_id();

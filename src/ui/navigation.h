@@ -1,12 +1,17 @@
 
-void navigation_screen(unsigned char active_panel);
+void navigation_screen(unsigned char active_panel, bool dontLoadData = false);
 void ReturnPreviouspage(void);
 void nav_style_setup();
+int GetActiveWidgetPage(void);
 int GetActivePanel(void);
 void SetActivePanel(int);
-void RefreshHomePage(void);
-void RefreshScenePage(void);
+void RefreshWidgetsPanel(bool dontLoadData = false);
+void RefreshScenePanel(void);
 void RefreshDevicePanel(void);
+
+int checkAdminRights(const int, const int);
+bool isPageProtected(int page);
+void password_keyboard_display(lv_obj_t* panel);
 
 #define DATA_REMOTE_STATE 1
 #define DATA_REMOTE_DATA 2
@@ -15,15 +20,7 @@ void RefreshDevicePanel(void);
 enum {
     TOOL_PANEL,
     HOMEPAGE_PANEL,
-#if BONUSPAGE > 0
-    BONUSPAGE_PANEL1,
-#endif
-#if BONUSPAGE > 1
-    BONUSPAGE_PANEL2,
-#endif
-#if BONUSPAGE > 2
-    BONUSPAGE_PANEL3,
-#endif
+    LAST_PAGE_PANEL = (HOMEPAGE_PANEL + PAGES - 1),
 #ifndef NO_GROUP_PAGE
     GROUP_PANEL,
 #endif
@@ -32,5 +29,6 @@ enum {
 #endif
     MAX_PANEL_SCROLL,
     DEVICE_PANEL,
-    SETTING_PANEL
+    SETTING_PANEL,
+    PASS_PANEL
 };

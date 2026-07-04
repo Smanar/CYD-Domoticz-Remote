@@ -104,7 +104,7 @@ void wifi_init_inner(){
     lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
 
     lv_timer_handler();
-    lv_task_handler();
+    //lv_task_handler();
     lv_refr_now(NULL);
 
     lv_obj_clean(lv_scr_act());
@@ -128,25 +128,8 @@ void wifi_init_inner(){
     int n = WiFi.scanNetworks();
 
     for (int i = 0; i < n; ++i) {
-        String ssid = WiFi.SSID(i);
-        char* ssid_copy = (char*)malloc(ssid.length() + 1);
-        int j = 0;
-
-        /*
-        for (; j < ssid.length(); ++j)
-        {
-            if (ssid[j] == '\0')
-                continue;
-
-            ssid_copy[j] = ssid[j];
-        }*/
-        strcpy(ssid_copy, ssid.c_str());
-
-        ssid_copy[j] = '\0';
-
-        lv_obj_t * btn = lv_list_add_btn(list, LV_SYMBOL_WIFI, ssid_copy);
+        lv_obj_t * btn = lv_list_add_btn(list, LV_SYMBOL_WIFI, WiFi.SSID(i).c_str());
         lv_obj_add_event_cb(btn, wifi_btn_event_handler, LV_EVENT_ALL, (void*)btn);
-        free(ssid_copy);
     }
 }
 
@@ -172,14 +155,13 @@ void wifi_init()
         while (!global_config.wifiConfigured)
         {
             lv_timer_handler();
-            lv_task_handler();
+            //lv_task_handler();
         }
     }
 
     WiFi.mode(WIFI_STA);
     WiFi.disconnect();
     wifi_Connecting_screen();
-
 
     // Special config ?
     #if __has_include("../personal_settings.h")
@@ -223,12 +205,12 @@ void wifi_init()
         {
             Serial.println(F("WiFi connection failed, back to config"));
             global_config.wifiConfigured = false;
-            wifi_init_inner();
+            wifi_init();
             return;
         }
         
         lv_timer_handler();
-        lv_task_handler();
+        //lv_task_handler();
     }
     Serial.println(F("Wifi connected"));
 }

@@ -4,11 +4,7 @@
 
 #include "lvgl.h"
 #include "panel.h"
-
-#include "../../core/data_setup.h"
-#include "../../conf/global_config.h"
-#include "../../core/ip_engine.h"
-#include "../../core/ota.h"
+#include "../../core/helper.h"
 #include "../src/ui/navigation.h"
 
 static lv_style_t style_container;
@@ -16,13 +12,20 @@ extern lv_style_t style_shadow;
 
 lv_obj_t * label_tool;
 
+static void go_setting_panel_cb(int unused) {
+    navigation_screen(SETTING_PANEL);
+}
+
 static void tools_btn_event_handler(lv_event_t * e)
 {
     //const lv_obj_t * ta = lv_event_get_target(e);
     //const lv_obj_t *label = lv_obj_get_child(ta, 0);
     int b = (int)lv_event_get_user_data(e);
 
-    if (b == 1) navigation_screen(SETTING_PANEL);
+    if (b == 1)
+    {
+        navigation_screen(checkAdminRights(SETTING_PANEL, TOOL_PANEL));
+    }
     if (b == 2) ESP.restart();
 #ifdef PULLOTA
     if (b == 3) OTAUpdate();
@@ -45,7 +48,7 @@ void tools_panel_init(lv_obj_t* panel)
     lv_obj_clear_flag( cont1, LV_OBJ_FLAG_SCROLLABLE );
 
     // Setting button
-    obj= lv_btn_create(cont1);
+    obj = lv_btn_create(cont1);
     lv_obj_set_size(obj, LV_PCT(30), 40);
     lv_obj_align(obj, LV_ALIGN_RIGHT_MID, 0, 0);
     label = lv_label_create(obj);
@@ -53,7 +56,7 @@ void tools_panel_init(lv_obj_t* panel)
     lv_obj_center(label);
     lv_obj_add_event_cb(obj, tools_btn_event_handler, LV_EVENT_CLICKED, (void *)1);
     // Reboot button
-    obj= lv_btn_create(cont1);
+    obj = lv_btn_create(cont1);
     lv_obj_set_size(obj, LV_PCT(30), 40);
     lv_obj_align(obj, LV_ALIGN_LEFT_MID, 0, 0);
     label = lv_label_create(obj);
@@ -85,18 +88,8 @@ void tools_panel_init(lv_obj_t* panel)
     // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/mem_alloc.html#:%7E:text=Due%20to%20a%20technical%20limitation,allocated%20at%20runtime%20as%20heap.
     // esp_get_free_heap_size() ???
 
-    lv_mem_monitor_t mon;
-    lv_mem_monitor(&mon);
-    uint32_t used_size = mon.total_size - mon.free_size;
-
-    char Text[181];
-    lv_snprintf(Text, 180, "+ HEAP Memory Usable (Kb) %d, Max %d, Total %d\n", ESP.getMaxAllocHeap()/1024, ESP.getFreeHeap()/1024, ESP.getHeapSize()/1024);
-    //lv_snprintf(Text + strlen(Text),180, "+ PSRAM Memory Free (Kb) %d, Total %d\n", ESP.getFreePsram()/1024, ESP.getPsramSize()/1024); // Not used, CRASH
-    lv_snprintf(Text + strlen(Text), 180, "+ LV Heap %d kB used (%d %%) %d%% frag.\n", used_size / 1024, mon.used_pct, mon.frag_pct);
-    //lv_snprintf(Text + strlen(Text), 180, "Spiram size (Kb) %d , himem free %d\n", esp_spiram_get_size()/1000, esp_himem_get_free_size()/1000); // Not used, CRASH
-    lv_snprintf(Text + strlen(Text), 180, "+ Application Version : %d\n", APPLICATION_VERSION);
-    lv_snprintf(Text + strlen(Text), 180, "+ Running time : %d:%d:%d:%d\n", runningTime()/(3600*24), (runningTime()/3600)%24 , (runningTime()/60)%60, runningTime()%60);
-    lv_snprintf(Text + strlen(Text), 180, "+ Total data by WS : %d ko", total_WS_lenght());
+    char Text[350];
+    loadInfo(Text, sizeof(Text));
 
     label_tool = lv_label_create(cont2);
     lv_obj_set_style_text_font(label_tool, &medium_font, 0);

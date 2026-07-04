@@ -3,15 +3,19 @@
 #include "panels/panel.h"
 #include "../core/data_setup.h"
 #include "../core/ip_engine.h"
+#include "../conf/global_config.h"
+#include "../core/helper.h"
 
 static lv_obj_t * tv;
 static int actived_panel = 0;
 static int master_panel = 0;
 
 extern Device myDevices[];
-#if BONUSPAGE > 0
-extern Device myDevicesP2[];
-#endif
+
+int GetActiveWidgetPage(void)
+{
+    return actived_panel - HOMEPAGE_PANEL;
+}
 
 int GetActivePanel(void)
 {
@@ -28,11 +32,11 @@ void ReturnPreviouspage(void)
     navigation_screen(master_panel);
 }
 
-void RefreshHomePage(void)
+void RefreshWidgetsPanel(bool dontLoadData)
 {
-    if (actived_panel == HOMEPAGE_PANEL)
+    if (actived_panel >= HOMEPAGE_PANEL && actived_panel <= LAST_PAGE_PANEL)
     {                           
-        navigation_screen(HOMEPAGE_PANEL);
+        navigation_screen(actived_panel, dontLoadData);
     }
 }
 
@@ -45,7 +49,7 @@ void RefreshDevicePanel(void)
 }
 
 #ifndef NO_GROUP_PAGE
-void RefreshScenePage(void)
+void RefreshScenePanel(void)
 {
     if (actived_panel == GROUP_PANEL)
     {                           
@@ -54,9 +58,7 @@ void RefreshScenePage(void)
 }
 #endif
 
-
-
-void navigation_screen(unsigned char active_panel)
+void navigation_screen(unsigned char active_panel, bool dontLoadData)
 {
     actived_panel = active_panel;
 
@@ -71,25 +73,23 @@ void navigation_screen(unsigned char active_panel)
     lv_obj_set_style_pad_all(panel, 0, 0);
     //lv_obj_clear_flag(panel, LV_OBJ_FLAG_SCROLLABLE);
 
+    char pageName[30];
+    getPanelName(active_panel, pageName, sizeof(pageName));
+    Serial.printf("Showing page %d (%s)\n", active_panel, pageName);
+
     switch (active_panel)
     {
         case TOOL_PANEL: // Tools
             master_panel = active_panel;
             tools_panel_init(panel);
             break;
-        case HOMEPAGE_PANEL: // Homepage
+        case HOMEPAGE_PANEL ... (LAST_PAGE_PANEL): // Widget pages
             master_panel = active_panel;
-//#if (BONUSPAGE == 0) && defined(LIGHTWS)
-//            subscribedeviceWS(0, GetListdevice());
-//#endif
-            home_panel_init(panel, myDevices);
+            widget_panel_init(panel, dontLoadData);
             break;
 #ifndef NO_GROUP_PAGE
         case GROUP_PANEL: //Group/Scene panel
             master_panel = active_panel;
-//#if (BONUSPAGE == 0) && defined(LIGHTWS)
-//            subscribedeviceWS(1, "getscenes");
-//#endif
             group_panel_init(panel);
             break;
 #endif
@@ -99,39 +99,43 @@ void navigation_screen(unsigned char active_panel)
             info_panel_init(panel);
             break;
 #endif
-#if BONUSPAGE > 0
-        case BONUSPAGE_PANEL1:// Second Device list page
-            master_panel = active_panel;
-            home_panel_init(panel, myDevicesP2);
-            break;
-#endif
-#if BONUSPAGE > 1
-        case BONUSPAGE_PANEL2:// third  Device list page
-            master_panel = active_panel;
-            home_panel_init(panel, myDevicesP2,1);
-            break;
-#endif
-#if BONUSPAGE > 2
-        case BONUSPAGE_PANEL3:// fourth Device list page
-            master_panel = active_panel;
-            home_panel_init(panel, myDevicesP2,2);
-            break;
-#endif
         case DEVICE_PANEL: // Device panel
             device_panel_init(panel);
             break;
         case SETTING_PANEL:// Settings
             settings_panel_init(panel);
             break;
+        case PASS_PANEL://Password entry
+            password_keyboard_display(panel);
+            break;
 
         default:
-            settings_panel_init(panel);
+            tools_panel_init(panel);
             break;
     }
-
 }
 
 void nav_style_setup()
 {
 
+}
+
+// Check if a given page is protected
+bool isPageProtected(int page) {
+    if (page == TOOL_PANEL) {                                       // Tools
+        return global_config.protectTool;
+    } else if (page >= HOMEPAGE_PANEL && page <= LAST_PAGE_PANEL) { // Homepage
+        return global_pages[page - HOMEPAGE_PANEL].isProtected;
+    #ifndef NO_GROUP_PAGE
+    } else if (page == GROUP_PANEL) {                               //Group/Scene panel
+        return global_config.protectGroup;
+    #endif
+    #ifndef NO_INFO_PAGE
+    } else if (page == INFO_PANEL) {                                //Info panel
+        return global_config.protectInfo;
+    #endif
+    } else if (page == SETTING_PANEL) {                             // Settings
+        return global_config.protectSetting;
+    }
+    return false;                                                   // By default (including DEVICE_PANEL)
 }

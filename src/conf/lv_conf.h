@@ -48,17 +48,30 @@
 /*1: use custom malloc/free, 0: use the built-in `lv_mem_alloc()` and `lv_mem_free()`*/
 #define LV_MEM_CUSTOM 0
 #if LV_MEM_CUSTOM == 0
-    /*Size of the memory available for `lv_mem_alloc()` in bytes (>= 2kB)*/
-    #define LV_MEM_SIZE (32U * 1024U)          /*[bytes]*/
+    #ifdef BOARD_HAS_PSRAM
+        /* Use 4 Mb of PSRAM if available */
+        #define LV_MEM_SIZE (4096U * 1024U)          /*[bytes]*/
 
-    /*Set an address for the memory pool instead of allocating it as a normal array. Can be in external SRAM too.*/
-    #define LV_MEM_ADR 0     /*0: unused*/
-    /*Instead of an address give a memory allocator that will be called to get a memory pool for LVGL. E.g. my_malloc*/
-    #if LV_MEM_ADR == 0
-        //#define LV_MEM_POOL_INCLUDE your_alloc_library  /* Uncomment if using an external allocator*/
-        //#define LV_MEM_POOL_ALLOC   your_alloc          /* Uncomment if using an external allocator*/
+        /*Set an address for the memory pool instead of allocating it as a normal array. Can be in external SRAM too.*/
+        #define LV_MEM_ADR 0     /*0: unused*/
+        /*Instead of an address give a memory allocator that will be called to get a memory pool for LVGL. E.g. my_malloc*/
+        #if LV_MEM_ADR == 0
+            /* Change memory allocator to use PSRAM */
+            #define LV_MEM_POOL_INCLUDE     "esp_heap_caps.h"
+            #define LV_MEM_POOL_ALLOC(size) heap_caps_malloc(size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT)
+        #endif
+    #else
+        /*Size of the memory available for `lv_mem_alloc()` in bytes (>= 2kB)*/
+        #define LV_MEM_SIZE (32U * 1024U)          /*[bytes]*/
+
+        /*Set an address for the memory pool instead of allocating it as a normal array. Can be in external SRAM too.*/
+        #define LV_MEM_ADR 0     /*0: unused*/
+        /*Instead of an address give a memory allocator that will be called to get a memory pool for LVGL. E.g. my_malloc*/
+        #if LV_MEM_ADR == 0
+            //#define LV_MEM_POOL_INCLUDE your_alloc_library  /* Uncomment if using an external allocator*/
+            //#define LV_MEM_POOL_ALLOC   your_alloc          /* Uncomment if using an external allocator*/
+        #endif
     #endif
-
 #else       /*LV_MEM_CUSTOM*/
     #define LV_MEM_CUSTOM_INCLUDE <stdlib.h>   /*Header for the dynamic memory function*/
     #define LV_MEM_CUSTOM_ALLOC   malloc
@@ -204,7 +217,7 @@
     *LV_LOG_LEVEL_ERROR       Only critical issue, when the system may fail
     *LV_LOG_LEVEL_USER        Only logs added by the user
     *LV_LOG_LEVEL_NONE        Do not log anything*/
-    #define LV_LOG_LEVEL LV_LOG_LEVEL_USER
+    #define LV_LOG_LEVEL LV_LOG_LEVEL_WARN
 
     /*1: Print the log with 'printf';
     *0: User need to register a callback with `lv_log_register_print_cb()`*/
@@ -327,14 +340,14 @@
  *https://fonts.google.com/specimen/Montserrat*/
 
 #define LV_FONT_MONTSERRAT_8  0
-//#define LV_FONT_MONTSERRAT_10 0
-//#define LV_FONT_MONTSERRAT_12 0
-//#define LV_FONT_MONTSERRAT_14 0
-//#define LV_FONT_MONTSERRAT_16 0
-//#define LV_FONT_MONTSERRAT_18 0
-#define LV_FONT_MONTSERRAT_20 1
-#define LV_FONT_MONTSERRAT_22 1
-#define LV_FONT_MONTSERRAT_24 1
+#define LV_FONT_MONTSERRAT_10 0
+#define LV_FONT_MONTSERRAT_12 0
+#define LV_FONT_MONTSERRAT_14 0
+#define LV_FONT_MONTSERRAT_16 0
+#define LV_FONT_MONTSERRAT_18 0
+#define LV_FONT_MONTSERRAT_20 0
+#define LV_FONT_MONTSERRAT_22 0
+#define LV_FONT_MONTSERRAT_24 0
 #define LV_FONT_MONTSERRAT_26 0
 #define LV_FONT_MONTSERRAT_28 0
 #define LV_FONT_MONTSERRAT_30 0
@@ -358,6 +371,22 @@
 #define LV_FONT_UNSCII_8  0
 #define LV_FONT_UNSCII_16 0
 
+/* Don't compile user fonts */
+#define MONTSERRAT_10_CUSTOM 0
+#define MONTSERRAT_12_CUSTOM 0
+#define MONTSERRAT_14_CUSTOM 0
+#define MONTSERRAT_16_CUSTOM 0
+#define MONTSERRAT_BOLD_14_CUSTOM 0
+#define MONTSERRAT_BOLD_18_CUSTOM 0
+
+/* Don't compile custom fonts */
+#define MONTSERRAT_10_CUSTOM 0
+#define MONTSERRAT_12_CUSTOM 0
+#define MONTSERRAT_14_CUSTOM 0
+#define MONTSERRAT_16_CUSTOM 0
+#define MONTSERRAT_BOLD_14_CUSTOM 0
+#define MONTSERRAT_BOLD_18_CUSTOM 0
+
 /*Optionally declare custom fonts here.
  *You can use these fonts as default font too and they will be available globally.
  *E.g. #define LV_FONT_CUSTOM_DECLARE   LV_FONT_DECLARE(my_font_1) LV_FONT_DECLARE(my_font_2)*/
@@ -365,43 +394,54 @@
  /*Always set a default font*/
 
 #if FONT_TO_USE == 2
-    #define LV_FONT_CUSTOM_DECLARE LV_FONT_DECLARE(Montserrat_14_user)
-
     #if DEVICE_SIZE == 1
-        #define LV_FONT_DEFAULT &Montserrat_14_user
+        #define LV_FONT_CUSTOM_DECLARE LV_FONT_DECLARE(Montserrat_10_user) LV_FONT_DECLARE(Montserrat_12_user) LV_FONT_DECLARE(Montserrat_Bold_14_user)
+        #undef MONTSERRAT_10_USER
+        #undef MONTSERRAT_12_USER
+        #undef MONTSERRAT_14_USER
+        #define LV_FONT_DEFAULT &Montserrat_Bold_14_user
     #else
-        #define LV_FONT_DEFAULT &Montserrat_18_user
+        #define LV_FONT_CUSTOM_DECLARE LV_FONT_DECLARE(Montserrat_14_user) LV_FONT_DECLARE(Montserrat_16_user) LV_FONT_DECLARE(Montserrat_Bold_18_user)
+        #undef MONTSERRAT_14_USER
+        #undef MONTSERRAT_16_USER
+        #undef MONTSERRAT_BOLD_18_USER
+        #define LV_FONT_DEFAULT &Montserrat_Bold_18_user
     #endif
 #elif FONT_TO_USE == 3
-    #define LV_FONT_CUSTOM_DECLARE LV_FONT_DECLARE(Montserrat_14_custom)
-
     #if DEVICE_SIZE == 1
-        #define LV_FONT_DEFAULT &Montserrat_14_custom
+        #define LV_FONT_CUSTOM_DECLARE LV_FONT_DECLARE(Montserrat_10_custom) LV_FONT_DECLARE(Montserrat_12_custom) LV_FONT_DECLARE(Montserrat_Bold_14_custom)
+        #undef MONTSERRAT_10_CUSTOM
+        #undef MONTSERRAT_12_CUSTOM
+        #undef MONTSERRAT_BOLD_14_CUSTOM
+        #define LV_FONT_DEFAULT &Montserrat_Bold_14_custom
     #else
-        #define LV_FONT_DEFAULT &Montserrat_18_custom
+        #define LV_FONT_CUSTOM_DECLARE LV_FONT_DECLARE(Montserrat_14_custom) LV_FONT_DECLARE(Montserrat_16_custom) LV_FONT_DECLARE(Montserrat_Bold_18_custom)
+        #undef MONTSERRAT_14_CUSTOM
+        #undef MONTSERRAT_16_CUSTOM
+        #undef MONTSERRAT_BOLD_18_CUSTOM
+        #define LV_FONT_DEFAULT &Montserrat_Bold_18_custom
     #endif
-#else
-
-    #define LV_FONT_CUSTOM_DECLARE
-
+#else /* FONT_TO_USE == 1 */
     // For small device 10, 12, 14 bold
     #if DEVICE_SIZE == 1
+        #define LV_FONT_CUSTOM_DECLARE LV_FONT_DECLARE(Montserrat_12) LV_FONT_DECLARE(Montserrat_Bold_14)
+        #undef LV_FONT_MONTSERRAT_10
         #define LV_FONT_MONTSERRAT_10 1
-        #define LV_FONT_MONTSERRAT_12 1
+        #undef MONTSERRAT_12
+        #undef MONTSERRAT_BOLD_14
 
-        #define LV_FONT_DEFAULT &lv_font_montserrat_14
+        #define LV_FONT_DEFAULT &Montserrat_Bold_14
     // For bigger device 14, 16, 18 bold
     #else
+        #define LV_FONT_CUSTOM_DECLARE LV_FONT_DECLARE(Montserrat_16) LV_FONT_DECLARE(Montserrat_Bold_18)
+        #undef LV_FONT_MONTSERRAT_14
         #define LV_FONT_MONTSERRAT_14 1
-        #define LV_FONT_MONTSERRAT_16 1
+        #undef MONTSERRAT_16
+        #undef MONTSERRAT_BOLD_18
 
-        #define LV_FONT_MONTSERRAT_18 1
-        #define LV_FONT_DEFAULT &lv_font_montserrat_18
+        #define LV_FONT_DEFAULT &Montserrat_Bold_18
     #endif
 #endif
-
-
-
 
 /*Enable handling large font and/or fonts with a lot of characters.
  *The limit depends on the font size, font face and bpp.
@@ -507,7 +547,7 @@
 
 #define LV_USE_TEXTAREA   1   /*Requires: lv_label*/
 #if LV_USE_TEXTAREA != 0
-    #define LV_TEXTAREA_DEF_PWD_SHOW_TIME 1500    /*ms*/
+    #define LV_TEXTAREA_DEF_PWD_SHOW_TIME 0    /*ms*/
 #endif
 
 #define LV_USE_TABLE      1
@@ -689,7 +729,9 @@
  *----------*/
 
 /*1: Enable API to take snapshot for object*/
-#define LV_USE_SNAPSHOT 0
+#ifndef LV_USE_SNAPSHOT
+    #define LV_USE_SNAPSHOT 0
+#endif
 
 /*1: Enable Monkey test*/
 #define LV_USE_MONKEY   0

@@ -5,31 +5,90 @@
 #include "../main_ui.h"
 #include "../../ui/navigation.h"
 
-void Init_data(void);
+void Init_data_widget_page();
 
-static int GetIntTok(const char * str, int t, const char c)
-{
-    int i, str_length = strlen(str);
-    int v = 0, tot = 0;
- 
-    for (i = 0; i<str_length; i++) {
-        if ((str[i] == c) || (str[i] == '\0'))
-        {
-            tot +=1;
-            if (tot > t) break;
-        }
-        else if (tot == t)
-        {
-            v = v * 10 + (str[i]-48);
-        }
+int y_offset = 0;
+int pageToChange = 0;
+lv_obj_t * pageName;
+lv_obj_t * pageIsProtected;
+lv_obj_t * pageDeviceList;
+
+const int y_element_size = 50;
+const int y_seperator_size = 1;
+const int y_seperator_x_padding = 50;
+const int panel_width = LCD_WIDTH - 40;
+const int y_element_x_padding = 30;
+const static lv_point_t line_points[] = { {0, 0}, {panel_width - y_seperator_x_padding, 0} };
+static lv_obj_t * settings_panel;
+
+// ───  helpers ───────────────────────────────────────────────────────
+
+bool isAllDigits(const char* str) {
+    if (str == nullptr || str[0] == '\0') return false;
+    for (int i = 0; str[i] != '\0'; i++) {
+        if (!std::isdigit(str[i])) return false;
     }
-    return v;
+    return true;
 }
 
+static int GetIntTok(const char* str, int t, const char c)
+{
+    if (!str) return 0;
+
+    int v = 0, tot = 0;
+    bool negative = false;
+    bool in_token = (t == 0);
+
+    for (int i = 0; str[i] != '\0'; i++)
+    {
+        if (str[i] == c)
+        {
+            if (tot == t) break;
+            tot++;
+            negative = false;
+            v = 0;
+            in_token = (tot == t);
+        }
+        else if (in_token)
+        {
+            if (str[i] == '-' && v == 0 && !negative) negative = true;
+            else if (str[i] >= '0' && str[i] <= '9') v = v * 10 + (str[i] - '0');
+        }
+    }
+
+    return negative ? -v : v;
+}
+
+// ─── Keyboard helpers ───────────────────────────────────────────────────────
+
+static lv_obj_t * kb = nullptr;
+
+static void kb_show(lv_obj_t* ta) {
+    if (!kb) {
+        kb = lv_keyboard_create(lv_scr_act());
+        lv_obj_set_style_max_height(kb, LV_HOR_RES * 2 / 3, 0);
+    }
+    lv_obj_update_layout(settings_panel);
+    lv_obj_set_height(settings_panel, LV_VER_RES - lv_obj_get_height(kb));
+    lv_indev_wait_release(lv_indev_get_act());
+    lv_obj_scroll_to_view_recursive(ta, LV_ANIM_OFF);
+    lv_obj_clear_flag(kb, LV_OBJ_FLAG_HIDDEN);
+    lv_keyboard_set_textarea(kb, ta);
+}
+
+static void kb_hide(lv_obj_t* ta) {
+    lv_obj_set_height(settings_panel, LV_VER_RES);
+    lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
+    if (ta) {
+        lv_obj_clear_state(ta, LV_STATE_FOCUSED);
+        lv_indev_reset(NULL, ta); /*To forget the last clicked object to make it focusable again*/
+    }
+}
+
+//────────────────────────────────────────────────────────────────────────────────
+
 static void invert_color_switch(lv_event_t * e){
-    auto state = lv_obj_get_state(lv_event_get_target(e));
-    bool checked = (state & LV_STATE_CHECKED == LV_STATE_CHECKED);
-    global_config.invertColors = checked;
+    global_config.invertColors = lv_obj_has_state(lv_event_get_target(e), LV_STATE_CHECKED);
     WriteGlobalConfig();
     set_invert_display();
 }
@@ -52,9 +111,7 @@ static void exit_click(lv_event_t * e){
 }
 
 static void light_mode_switch(lv_event_t * e){
-    auto state = lv_obj_get_state(lv_event_get_target(e));
-    bool checked = (state & LV_STATE_CHECKED == LV_STATE_CHECKED);
-    global_config.lightMode = checked;
+    global_config.lightMode = lv_obj_has_state(lv_event_get_target(e), LV_STATE_CHECKED);
     WriteGlobalConfig();
     set_color_scheme();
 }
@@ -78,7 +135,7 @@ static void brightness_dropdown(lv_event_t * e){
     WriteGlobalConfig();
 }
 
-const char* wake_timeout_options = "Disabled\n1m\n2m\n5m\n10m\n15m\n30m\n1h\n2h\n4h";
+const char* wake_timeout_options = "Off\n1m\n2m\n5m\n10m\n15m\n30m\n1h\n2h\n4h";
 const char  wake_timeout_options_values[] = { 0, 1, 2, 5, 10, 15, 30, 60, 120, 240 };
 
 static void wake_timeout_dropdown(lv_event_t * e){
@@ -89,78 +146,135 @@ static void wake_timeout_dropdown(lv_event_t * e){
     set_screen_timer_period();
 }
 
+static void home_timeout_dropdown(lv_event_t * e){
+    const lv_obj_t * dropdown = lv_event_get_target(e);
+    auto selected = lv_dropdown_get_selected(dropdown);
+    global_config.homeTimeout = wake_timeout_options_values[selected];
+    WriteGlobalConfig();
+    set_home_timer_period();
+}
+
+static void page_dropdown(lv_event_t * e){
+    const lv_obj_t * dropdown = lv_event_get_target(e);
+    auto selected = lv_dropdown_get_selected(dropdown);
+
+    if (selected >= 0 && selected < PAGES) {
+        pageToChange = selected;
+        if (global_pages[pageToChange].isProtected) {
+            lv_obj_add_state(pageIsProtected, LV_STATE_CHECKED);
+        } else {
+            lv_obj_clear_state(pageIsProtected, LV_STATE_CHECKED);
+        }
+        lv_textarea_set_text(pageName, global_pages[pageToChange].name);
+        lv_textarea_set_text(pageDeviceList, loadDeviceList(pageToChange, true));
+    }
+}
+
 static void rotate_screen_switch(lv_event_t* e){
     auto state = lv_obj_get_state(lv_event_get_target(e));
-    bool checked = (state & LV_STATE_CHECKED == LV_STATE_CHECKED);
-    global_config.rotateScreen = checked;
+    global_config.rotateScreen = (state & LV_STATE_CHECKED == LV_STATE_CHECKED);;
     global_config.screenCalibrated = false;
     WriteGlobalConfig();
     ESP.restart();
 }
 
+static void protect_xxx_cb(lv_event_t* e){
+    bool checked = lv_obj_has_state(lv_event_get_target(e), LV_STATE_CHECKED);
+    int ptr =  (int) lv_event_get_user_data(e);
+    switch (ptr) {
+        case 1: global_config.protectTool = checked; break;
+        case 2: global_config.protectSetting = checked; break;
+        case 3: global_config.protectGroup = checked; break;
+        case 4: global_config.protectInfo = checked; break;
+    };
+    WriteGlobalConfig();
+}
+
 static void not_used_yet_switch(lv_event_t* e){
-    auto state = lv_obj_get_state(lv_event_get_target(e));
-    bool checked = (state & LV_STATE_CHECKED == LV_STATE_CHECKED);
-    global_config.notused = checked;
+    global_config.notused = lv_obj_has_state(lv_event_get_target(e), LV_STATE_CHECKED);
     check_if_screen_needs_to_be_disabled();
     WriteGlobalConfig();
 }
 
-static lv_obj_t* kb;
+
 static void edit_device_list_switch(lv_event_t * e)
 {
     lv_event_code_t code = lv_event_get_code(e);
     lv_obj_t * ta = lv_event_get_target(e);
-    lv_obj_t * display = (lv_obj_t *)lv_event_get_user_data(e);
+    //int pagePtr =  (int) lv_event_get_user_data(e);
 
     if (code == LV_EVENT_FOCUSED)
     {
-        if (kb == NULL) {
-            kb = lv_keyboard_create(lv_scr_act());
-            lv_obj_set_style_max_height(kb, LV_HOR_RES * 2 / 3, 0);
-        }
-
-        lv_obj_update_layout(display);   /*Be sure the sizes are recalculated*/
-        lv_obj_set_height(display, LV_VER_RES - lv_obj_get_height(kb));
-        lv_indev_wait_release(lv_indev_get_act());
-        lv_obj_scroll_to_view_recursive(ta, LV_ANIM_OFF);
-
-        lv_obj_clear_flag(kb, LV_OBJ_FLAG_HIDDEN);
-        //lv_obj_move_foreground(kb); // Show the keyboard
-
-        lv_keyboard_set_textarea(kb, ta);
+        kb_show(ta);
     }
     else if (code == LV_EVENT_DEFOCUSED)
     {
-        lv_obj_set_height(display, LV_VER_RES);
-        lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
+        kb_hide(nullptr);
     }
     else if(code == LV_EVENT_READY || code == LV_EVENT_CANCEL) {
-        //lv_obj_move_background(kb); // Hide the keyboard
-        lv_obj_set_height(display, LV_VER_RES);
-        lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_clear_state(ta, LV_STATE_FOCUSED);
-        lv_indev_reset(NULL, ta);   /*To forget the last clicked object to make it focusable again*/
-        const char * str = lv_textarea_get_text(ta);
+        kb_hide(ta);
 
         for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++)
         {
-            global_config.ListDevices[i] = GetIntTok(lv_textarea_get_text(ta), i,',');
+            global_pages[pageToChange].ListDevices[i] = GetIntTok(lv_textarea_get_text(ta), i,',');
         }
         WriteGlobalConfig();
-        Init_data();
-        navigation_screen(HOMEPAGE_PANEL);
- 
+        Init_data_widget_page();
     }
- }
+}
 
-int y_offset = 0;
-const int y_element_size = 50;
-const int y_seperator_size = 1;
-const int y_seperator_x_padding = 50;
-const int panel_width = LCD_WIDTH - 40;
-const int y_element_x_padding = 30;
-const static lv_point_t line_points[] = { {0, 0}, {panel_width - y_seperator_x_padding, 0} };
+static void edit_page_name(lv_event_t * e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    lv_obj_t * ta = lv_event_get_target(e);
+    //int pagePtr =  (int) lv_event_get_user_data(e);
+
+    if (code == LV_EVENT_FOCUSED)
+    {
+        kb_show(ta);
+    }
+    else if (code == LV_EVENT_DEFOCUSED)
+    {
+        kb_hide(nullptr);
+    }
+    else if(code == LV_EVENT_READY || code == LV_EVENT_CANCEL) {
+        kb_hide(ta);
+
+        strncpy(global_pages[pageToChange].name, lv_textarea_get_text(ta), sizeof(global_pages[pageToChange].name));
+
+        WriteGlobalConfig();
+        Init_data_widget_page();
+     }
+}
+
+static void edit_protect_password_cb(lv_event_t * e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    lv_obj_t * ta = lv_event_get_target(e);
+
+    if (code == LV_EVENT_FOCUSED)
+    {
+        kb_show(ta);
+    }
+    else if (code == LV_EVENT_DEFOCUSED)
+    {
+        kb_hide(nullptr);
+    }
+    else if(code == LV_EVENT_READY || code == LV_EVENT_CANCEL) {
+        kb_hide(ta);
+        if (isAllDigits(lv_textarea_get_text(ta)))
+        {
+            strncpy(global_config.protectionPassword, lv_textarea_get_text(ta), sizeof(global_config.protectionPassword));
+            WriteGlobalConfig();
+        }
+     }
+}
+
+static void invert_page_isProtected(lv_event_t * e){
+    //int pagePtr =  (int) lv_event_get_user_data(e);
+    global_pages[pageToChange].isProtected = lv_obj_has_state(lv_event_get_target(e), LV_STATE_CHECKED);
+    WriteGlobalConfig();
+}
 
 void create_settings_widget(const char* label_text, lv_obj_t* object, lv_obj_t* root_panel){
     lv_obj_t * panel = lv_obj_create(root_panel);
@@ -180,8 +294,11 @@ void create_settings_widget(const char* label_text, lv_obj_t* object, lv_obj_t* 
     lv_label_set_text(label, label_text);
     lv_obj_align(label, LV_ALIGN_LEFT_MID, 0, 0);
 
-    lv_obj_set_parent(object, panel);
-    lv_obj_align(object, LV_ALIGN_RIGHT_MID, 0, 0);
+    if (object)
+    {
+        lv_obj_set_parent(object, panel);
+        lv_obj_align(object, LV_ALIGN_RIGHT_MID, 0, 0);
+    }
     y_offset += y_element_size;
 }
 
@@ -189,6 +306,7 @@ void settings_panel_init(lv_obj_t* panel)
 {
     y_offset = 0;
     kb = nullptr;
+    settings_panel = panel;
 
     lv_obj_add_flag(panel, LV_OBJ_FLAG_SCROLLABLE);
 
@@ -209,13 +327,13 @@ void settings_panel_init(lv_obj_t* panel)
     lv_obj_t * toggle = lv_switch_create(panel);
     lv_obj_add_event_cb(toggle, invert_color_switch, LV_EVENT_VALUE_CHANGED, NULL);
     if (global_config.invertColors)
-        lv_obj_add_state(toggle, LV_STATE_CHECKED);
+    lv_obj_add_state(toggle, LV_STATE_CHECKED);
     create_settings_widget("Invert Colors", toggle, panel);
 
     toggle = lv_switch_create(panel);
     lv_obj_add_event_cb(toggle, light_mode_switch, LV_EVENT_VALUE_CHANGED, NULL);
     if (global_config.lightMode)
-        lv_obj_add_state(toggle, LV_STATE_CHECKED);
+    lv_obj_add_state(toggle, LV_STATE_CHECKED);
     create_settings_widget("Light Mode", toggle, panel);
 
     lv_obj_t * dropdown = lv_dropdown_create(panel);
@@ -244,32 +362,99 @@ void settings_panel_init(lv_obj_t* panel)
             break;
         }
     }
+    lv_obj_set_width(dropdown, lv_pct(35));
     create_settings_widget("Wake Timeout", dropdown, panel);
+
+    dropdown = lv_dropdown_create(panel);
+    lv_dropdown_set_options(dropdown, wake_timeout_options);
+    lv_obj_add_event_cb(dropdown, home_timeout_dropdown, LV_EVENT_VALUE_CHANGED, NULL);
+    for (int i = 0; i < SIZEOF(wake_timeout_options_values); i++){
+        if (wake_timeout_options_values[i] == global_config.homeTimeout){
+            lv_dropdown_set_selected(dropdown, i);
+            break;
+        }
+    }
+    lv_obj_set_width(dropdown, lv_pct(35));
+    create_settings_widget("Back home Timeout", dropdown, panel);
 
     toggle = lv_switch_create(panel);
     lv_obj_add_event_cb(toggle, rotate_screen_switch, LV_EVENT_VALUE_CHANGED, NULL);
     if (global_config.rotateScreen)
-        lv_obj_add_state(toggle, LV_STATE_CHECKED);
+    lv_obj_add_state(toggle, LV_STATE_CHECKED);
     create_settings_widget("Rotate Screen", toggle, panel);
 
     toggle = lv_switch_create(panel);
     lv_obj_add_event_cb(toggle, not_used_yet_switch, LV_EVENT_VALUE_CHANGED, NULL);
     if (global_config.notused)
-        lv_obj_add_state(toggle, LV_STATE_CHECKED);
+    lv_obj_add_state(toggle, LV_STATE_CHECKED);
     create_settings_widget("Not used yet", toggle, panel);
 
-    lv_obj_t * textarea = lv_textarea_create(panel);
-    lv_obj_add_event_cb(textarea, edit_device_list_switch, LV_EVENT_ALL, panel);
-    lv_textarea_add_text(textarea, GetListdevice());
-    lv_textarea_set_one_line(textarea, true);
-    lv_obj_set_width(textarea, lv_pct(60));
-    create_settings_widget("Dft devices", textarea, panel);
+    dropdown = lv_dropdown_create(panel);
+    String pageList = "";
+    for (int p=0; p<PAGES; p++) {
+        pageList += "\nPage " + String(p+1);
+    }
+    lv_dropdown_set_options(dropdown, pageList.substring(1).c_str());
+    lv_dropdown_set_selected(dropdown, pageToChange);
+    lv_obj_set_width(dropdown, lv_pct(40));
+    lv_obj_add_event_cb(dropdown, page_dropdown, LV_EVENT_VALUE_CHANGED, NULL);
+    create_settings_widget("Page to change", dropdown, panel);
 
+    pageName = lv_textarea_create(panel);
+    lv_obj_add_event_cb(pageName, edit_page_name, LV_EVENT_ALL, NULL);
+    lv_textarea_add_text(pageName, global_pages[pageToChange].name);
+    lv_textarea_set_one_line(pageName, true);
+    lv_obj_set_width(pageName, lv_pct(70));
+    create_settings_widget("... name", pageName, panel);
+
+    pageIsProtected = lv_switch_create(panel);
+    lv_obj_add_event_cb(pageIsProtected, invert_page_isProtected, LV_EVENT_VALUE_CHANGED, NULL);
+    if (global_pages[pageToChange].isProtected) lv_obj_add_state(pageIsProtected, LV_STATE_CHECKED);
+    create_settings_widget("... protected", pageIsProtected, panel);
+
+    pageDeviceList = lv_textarea_create(panel);
+    lv_obj_add_event_cb(pageDeviceList, edit_device_list_switch, LV_EVENT_ALL, NULL);
+    lv_textarea_add_text(pageDeviceList, loadDeviceList(pageToChange, true));
+    lv_textarea_set_one_line(pageDeviceList, true);
+    lv_obj_set_width(pageDeviceList, lv_pct(70));
+    create_settings_widget("... devices", pageDeviceList, panel);
+
+    lv_obj_t * text = lv_textarea_create(panel);
+    lv_obj_add_event_cb(text, edit_protect_password_cb, LV_EVENT_ALL, NULL);
+    lv_textarea_add_text(text, global_config.protectionPassword);
+    lv_textarea_set_one_line(text, true);
+    lv_obj_set_width(text, lv_pct(60));
+    create_settings_widget("Password", text, panel);
+
+    toggle = lv_switch_create(panel);
+    lv_obj_add_event_cb(toggle, protect_xxx_cb, LV_EVENT_VALUE_CHANGED, (void*) 1);
+    if (global_config.protectTool)
+    lv_obj_add_state(toggle, LV_STATE_CHECKED);
+    create_settings_widget("Protect tool page", toggle, panel);
+
+    toggle = lv_switch_create(panel);
+    lv_obj_add_event_cb(toggle, protect_xxx_cb, LV_EVENT_VALUE_CHANGED, (void*) 2);
+    if (global_config.protectSetting)
+    lv_obj_add_state(toggle, LV_STATE_CHECKED);
+    create_settings_widget("Protect setting page", toggle, panel);
+
+    toggle = lv_switch_create(panel);
+    lv_obj_add_event_cb(toggle, protect_xxx_cb, LV_EVENT_VALUE_CHANGED, (void*) 3);
+    if (global_config.protectGroup)
+    lv_obj_add_state(toggle, LV_STATE_CHECKED);
+    create_settings_widget("Protect group page", toggle, panel);
+
+    toggle = lv_switch_create(panel);
+    lv_obj_add_event_cb(toggle, protect_xxx_cb, LV_EVENT_VALUE_CHANGED, (void*) 4);
+    if (global_config.protectInfo)
+    lv_obj_add_state(toggle, LV_STATE_CHECKED);
+    create_settings_widget("Protect info page", toggle, panel);
+
+    create_settings_widget("", NULL, panel);
     btn = lv_btn_create(panel);
     lv_obj_add_event_cb(btn, exit_click, LV_EVENT_CLICKED, NULL);
     label = lv_label_create(btn);
     lv_label_set_text_static(label, "Quit");
     lv_obj_center(label);
     create_settings_widget("Exit Option", btn, panel);
-
 }

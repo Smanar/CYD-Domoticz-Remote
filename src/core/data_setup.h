@@ -1,3 +1,5 @@
+#include "Arduino.h"
+
 #ifndef DATA_SETUP_H
 #define DATA_SETUP_H
 
@@ -22,12 +24,15 @@ enum {
     TYPE_BLINDS,
     TYPE_LUX,
     TYPE_WEIGHT,
-    TYPE_METEO,
+    TYPE_RAIN,
     TYPE_SETPOINT,
     TYPE_THERMOSTAT,
     TYPE_TEXT,
     TYPE_AIR_QUALITY,
-    TYPE_PUSH
+    TYPE_PUSH,
+    TYPE_PAGE,
+    TYPE_UV,
+    TYPE_WIND
 };
 
 typedef struct _Device {
@@ -36,7 +41,7 @@ typedef struct _Device {
     char* data = nullptr;
     char* levelname = nullptr;
     unsigned short level = 0;
-    unsigned short idx = 0;
+    short idx = 0;
     unsigned short type = TYPE_UNUSED;
     unsigned short lenData = 0;
     unsigned short maxlevel = 100;
@@ -45,11 +50,11 @@ typedef struct _Device {
 
 } Device;
 
-void Init_data();
+void Init_data_widget_page();
 void FillDeviceData(Device *d, int idx);
-bool HttpInitDevice(Device *d, int id);
-int * GetGraphValue(int type, int idx, int *, int *);
-const char *GetListdevice(void);
+bool InitDeviceRequest(Device *dd, const char* c, bool isarray = true);
+int * GetGraphValue(int type, int idx, int *, int *, int *);
+const char * loadDeviceList(int page, bool displayAll = false);
 void GetThermostatValue(int idx, int *min, int *max, float *step, float *setpoint);
 
 #endif

@@ -43,6 +43,7 @@ static void ta_event_cb(lv_event_t * e) {
 
 static void reset_btn_event_handler(lv_event_t * e){
     global_config.ipConfigured = false;
+    WriteGlobalConfig();
     ESP.restart();
 }
 
@@ -105,7 +106,7 @@ void WS_init(void)
         while (!global_config.ipConfigured)
         {
             lv_timer_handler();
-            lv_task_handler();
+            //lv_task_handler();
         }
     }
 
@@ -115,7 +116,7 @@ void WS_init(void)
     while (!WS_Running())
     {
         lv_timer_handler();
-        lv_task_handler();
+        //lv_task_handler();
     
         if (!WS_Running() && ((millis() - last_data_update_ip) > DATA_UPDATE_INTERVAL_IP))
         {

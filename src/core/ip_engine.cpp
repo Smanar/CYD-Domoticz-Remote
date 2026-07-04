@@ -8,8 +8,6 @@ static WebSocketsClient WSclient;
 static bool connect_ok = false;
 unsigned long total_data_lengh;
 
-extern char TmpBuffer[];
-
 void Update_device_data(JsonObject RJson2);
 void Update_scene_data(void);
 
@@ -45,16 +43,17 @@ bool HTTPGETRequestWithReturn(const char * url2, JsonDocument *doc, bool NeedFil
 {
 
     HTTPClient client;
-    lv_snprintf(TmpBuffer, 150, "http://%s:%d%s",global_config.ServerHost, global_config.ServerPort, url2);
+    int httpCode;
+    static char tmpBuffer[180];    // As routine is asynchronous, use only local data
+
+    lv_snprintf(tmpBuffer, sizeof(tmpBuffer), "http://%s:%d%s",global_config.ServerHost, global_config.ServerPort, url2);
     //String url = "http://" + String(global_config.ServerHost) + ":" + String(global_config.ServerPort) + url2;
 
-    int httpCode;
-
     try {
-        Serial.println(TmpBuffer);
+        Serial.println(tmpBuffer);
         client.useHTTP10(true); // Unfortunately, by using the underlying Stream, we bypass the code that handles chunked transfer encoding, so we must switch to HTTP version 1.0.
         client.setTimeout(1000);
-        client.begin(TmpBuffer);
+        client.begin(tmpBuffer);
         httpCode = client.GET();
         if (httpCode != 200)
         {
@@ -104,7 +103,7 @@ bool HTTPGETRequestWithReturn(const char * url2, JsonDocument *doc, bool NeedFil
 
         // Some debug
         //char buffer2[4096];
-        //serializeJsonPretty(doc, buffer2);
+        //serializeJsonPretty(doc, buffer2, sizeof(buffer2));
         //Serial.println(buffer2);
 
         //Some debug
@@ -147,24 +146,27 @@ static void hexdump(const void *mem, uint32_t len, uint8_t cols = 16) {
 //
 void subscribedeviceWS(short r, const char *c)
 {
-    char localBuffer[512];
+    if (*c) {
+        char localBuffer[512];
 
-    if (r == 0)
-    {
-        lv_snprintf(localBuffer, sizeof(localBuffer),"{\"event\":\"request\",\"query\":\"type=command&param=getdevices&rid=%s\"}", c);
-    }
-    else
-    {
-        lv_snprintf(localBuffer, sizeof(localBuffer), "{\"event\":\"request\",\"query\":\"type=command&param=%s\"}", c);
-    }
+        if (r == 0)
+        {
+            lv_snprintf(localBuffer, sizeof(localBuffer),"{\"event\":\"request\",\"query\":\"type=command&param=getdevices&rid=%s\"}", c);
+        }
+        else
+        {
+            lv_snprintf(localBuffer, sizeof(localBuffer), "{\"event\":\"request\",\"query\":\"type=command&param=%s\"}", c);
+        }
 
-    if (strlen(localBuffer) >= sizeof(localBuffer) - 1)
-    {
-        Serial.println(F("[WS] subscribedeviceWS: buffer too small !"));
-    }
+        if (strlen(localBuffer) >= sizeof(localBuffer) - 1)
+        {
+            Serial.println(F("[WS] subscribedeviceWS: buffer too small !"));
+        }
 
-    Serial.printf("Special Setting to WS: %s\n", localBuffer);
-    WSclient.sendTXT(localBuffer);
+        Serial.printf("Special Setting to WS: %s\n", localBuffer);
+        WSclient.sendTXT(localBuffer);
+
+    }
 }
 
 static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
@@ -179,14 +181,19 @@ static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
             connect_ok = true;
 
 			// send message to server when Connected
-			WSclient.sendTXT("Connected");
+			//WSclient.sendTXT("Connected");
 
 			break;
 		case WStype_TEXT:
 			//Serial.printf("[WSc] get text: %s\n", payload);
             if (length > 0)
             {
-
+                #if (0)
+                // Print just received message (debug)
+                char payloadText[length+1];
+                strncpy(payloadText, (const char*) payload, sizeof(payloadText));
+                Serial.printf("WS text %s\n", payloadText);
+                #endif
                 total_data_lengh += length;
 
                 JsonDocument doc;
@@ -214,7 +221,7 @@ static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
                             //JsonObject RJson = doc2.as<JsonObject>();
 
                             //char buffer[4096];
-                            //serializeJsonPretty(doc2, buffer);
+                            //serializeJsonPretty(doc2, buffer, sizeof(buffer));
                             //Serial.println(buffer);
 
                            //for (JsonPair keyValue : RJson) {
@@ -270,7 +277,6 @@ static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
 			break;
 	}
 }
-
 
 
 bool WS_Running(void)

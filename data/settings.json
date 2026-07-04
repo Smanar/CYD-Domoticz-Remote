@@ -1,0 +1,44 @@
+{
+  "version": 7,
+  "screenCalibrated": false,
+  "wifiConfigured": false,
+  "ipConfigured": false,
+  "lightMode": false,
+  "invertColors": false,
+  "rotateScreen": false,
+  "notused": false,
+  "screenCalXOffset": 0,
+  "screenCalXMult": 0,
+  "screenCalYOffset": 0,
+  "screenCalYMult": 0,
+  "wifiSSID": "",
+  "wifiPassword": "",
+  "ServerHost": "",
+  "ServerPort": 8080,
+  "color_scheme": 0,
+  "brightness": 255,
+  "screenTimeout": 0,
+  "protectionPassword": "0000",
+  "protectSetting": true,
+  "protectTool": false,
+  "protectGroup": false,
+  "protectInfo": false,
+  "pages": [
+    {
+      "name": "Retour",
+      "isProtected": false,
+      "number": 1,
+      "idx": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ]
+    }
+  ]
+}

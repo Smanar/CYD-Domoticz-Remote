@@ -7,29 +7,28 @@
 #include "base64.hpp"
 #include "data_setup.h"
 
-
 #define SIZEOF(arr) (sizeof(arr) / sizeof(*arr))
 
 Device myDevices[TOTAL_ICONX*TOTAL_ICONY];
-char TmpBuffer[255]; // To prevent multiple re-alloc
+static char TmpBuffer[255]; // To prevent multiple re-alloc
 static int tab[24]; // Tab for graph
-String _ListDevice; // Use string here but allocated only at start 
 
-#if BONUSPAGE > 0
-Device myDevicesP2[TOTAL_ICONX*TOTAL_ICONY*BONUSPAGE];
-const static unsigned short TabP2[] = {72, 80, 34, // Page 1, 3* 3 icons
-                                       36, 28, 35, 
-                                       57, 89, 45,
-                                       28, 80, 45, // Page 2, 3* 3 icons
-                                       36, 89, 35,
-                                       57, 89, 45 };
-#endif
+extern void RefreshWidgetsPanel(bool);
 
-void RefreshHomePage(void);
+static bool SetNewString(char **dst, const char *src)
+{
+    if (!src) return false;
 
+    char *tmp = (char*)malloc(strlen(src) + 1);
+    if (!tmp) return false;
 
+    if (*dst) free(*dst);
+    *dst = tmp;
+    strcpy(*dst, src);
+    return true;
+}
 
-char * Cleandata(unsigned short t, const char *origin, const char *bonus = nullptr) 
+char * Cleandata(unsigned short t, const char *origin, const char *bonus = nullptr)
 {
     if (!origin) return TmpBuffer;
     
@@ -37,11 +36,11 @@ char * Cleandata(unsigned short t, const char *origin, const char *bonus = nullp
 
     if (bonus)
     {
-        snprintf(TmpBuffer, sizeof(TmpBuffer), "%s;%s", origin, bonus);
+        lv_snprintf(TmpBuffer, sizeof(TmpBuffer), "%s;%s", origin, bonus);
     }
     else
     {
-        snprintf(TmpBuffer, sizeof(TmpBuffer), "%s", origin);
+        lv_snprintf(TmpBuffer, sizeof(TmpBuffer), "%s", origin);
     }
 
     if (t == TYPE_SETPOINT || t == TYPE_THERMOSTAT) {
@@ -56,53 +55,53 @@ char * Cleandata(unsigned short t, const char *origin, const char *bonus = nullp
     return TmpBuffer;
 }
 
-void Init_data(void)
+void Init_data_widget_page()
 {
-    _ListDevice.clear();
+
+    int idx;
+    int page = GetActiveWidgetPage();
 
     for (int i = 0; i < (TOTAL_ICONX*TOTAL_ICONY); i = i + 1)
     {
-        if (i < SIZEOF(global_config.ListDevices))
-        {
-            if (i > 0) _ListDevice += ",";
-            _ListDevice += String(global_config.ListDevices[i]);
+        idx = global_pages[page].ListDevices[i];
 
-            myDevices[i].type = TYPE_UNUSED;
-            if (HttpInitDevice(&myDevices[i], global_config.ListDevices[i]))
-            {
-                Serial.printf("Initialise Domoticz device id: %d , Name : %s\n", global_config.ListDevices[i], myDevices[i].name);
-                delay(50);
+        myDevices[i].type = TYPE_UNUSED;
+        myDevices[i].idx = idx;
+        myDevices[i].ID = 0;
+        myDevices[i].lenData = 0;
+        myDevices[i].level = 0;
+        myDevices[i].levelname = NULL;
+        myDevices[i].maxlevel = 0;
+
+        if (idx < 0) //Sub page or buggy
+        {
+            if (-idx <= PAGES)                                           // Ok, page index
+            {                                                            // Check if given page is within range
+                int pagePtr = -idx - 1;                                  // Page pointer (0 to PAGES - 1)
+                SetNewString(&myDevices[i].name, global_pages[pagePtr].name);
+
+                myDevices[i].type = TYPE_PAGE;
             }
-        }
+        } 
+
     }
 
-#if (BONUSPAGE == 0) && defined(LIGHTWS)
-    subscribedeviceWS(0, GetListdevice());
-#endif
+    //Ask for data, only real widget
+    InitDeviceRequest(myDevices, loadDeviceList(page, false));
+    delay(50); // During tests, the device spam Domoticz to get data too fast, and Domoticz "skip" some answers, 50ms is not a big delay.
 
-#if BONUSPAGE > 0
-    for (int i = 0; i < (TOTAL_ICONX*TOTAL_ICONY*BONUSPAGE); i = i + 1)
-    {
-        if (i < SIZEOF(TabP2))
-        {
-            myDevicesP2[i].type = TYPE_UNUSED;
-            if (HttpInitDevice(&myDevicesP2[i], TabP2[i]))
-            {
-                Serial.printf("Initialise Domoticz device id: %d , Name : %s\n", TabP2[i], myDevicesP2[i].name);
-                delay(50);
-            }
-        }
-    }
+    //Subscribe Websocket, only for real widget
+#if defined(LIGHTWS)
+    subscribedeviceWS(0, loadDeviceList(page, false));
 #endif
 
 }
 
 void FillDeviceData(Device *d, int idx)
 {
-    if (HttpInitDevice(d, idx))
-    {
-        Serial.printf("Initialise Domoticz device id: %d , Name : %s\n", idx, d->name);
-    }
+    char tmp8[6];					// 5 chars + null
+    lv_snprintf(tmp8, sizeof(tmp8), "%d" , idx);
+    InitDeviceRequest(d, tmp8, false);
 }
 
 int Get_ID_Device(int JSonidx)
@@ -117,15 +116,112 @@ int Get_ID_Device(int JSonidx)
     return -1;
 }
 
-const char *GetListdevice(void)
+// Load list of device associated to a page
+//      deviceList = char to load
+//      displayAll = false to get only Domoticz devices
+char tmp7[TOTAL_ICONX*TOTAL_ICONY * 6] = ""; // 5 digits + comma
+const char * loadDeviceList(int page, bool displayAll)
 {
-    return _ListDevice.c_str();
+    int idx;
+    int offset = 0;
+    tmp7[0] = '\0';
+
+    for (int i = 0; i < (TOTAL_ICONX*TOTAL_ICONY); i++)
+    {
+        idx = global_pages[page].ListDevices[i];
+        if (displayAll || idx > 0) {
+            offset += lv_snprintf(tmp7 + offset, sizeof(tmp7) - offset, (offset == 0) ? "%d" : ",%d", global_pages[page].ListDevices[i]);
+        }
+    }
+    return tmp7;
+}
+
+bool HandleDomoticzData(JsonObject RJson2, Device * d)
+{
+    char * data;
+    bool NeedUpdate = false;
+
+    const char* JSondata = "";
+    int JSonLevel = 0;
+
+    if (RJson2["Data"].is<const char*>()) JSondata = RJson2["Data"];
+    if (RJson2["Level"].is<int>()) JSonLevel = RJson2["Level"];
+
+    if (d->type == TYPE_RAIN)
+    {
+        char t[30];
+        lv_snprintf(t, sizeof(t), "%.2f mm",
+                RJson2["Rain"].as<float>() * 0.01
+            );
+        data = Cleandata(d->type, t);
+    }
+    else if (d->type == TYPE_WIND)
+    {
+        char t[30];
+        lv_snprintf(t, sizeof(t), "%s;%.1f m/s;Gust %.1f m/s",
+                RJson2["DirectionStr"].as<const char*>(),
+                RJson2["Speed"].as<float>(),
+                RJson2["Gust"].as<float>()
+            );
+        data = Cleandata(d->type, t);
+    }
+    else if ((d->type == TYPE_TEXT) || (d->type == TYPE_WARNING))
+    {
+        //Keep it unchanged
+        data = (char *)JSondata;
+    }
+    else if (d->type == TYPE_THERMOSTAT)
+    {
+        char t[10];
+        lv_snprintf(t, 10, "%.1f", RJson2["Temp"].as<float>());
+        data = Cleandata(d->type, t);
+    }
+    else
+    {
+        data = Cleandata(d->type, JSondata);
+    }
+
+    if (d->data && strcmp(data, d->data) != 0)
+    {
+        //Use dynamic array, but only 1 time
+        size_t dataLen = strlen(data);
+        if (dataLen > d->lenData)
+        {
+            if (d->data) free(d->data);
+            d->lenData = 0;
+            d->data = (char*)malloc(dataLen + 1);   // Allocate space for data plus one (zero) byte
+            if (!d->data) return false; // malloc failed
+            d->data[dataLen] = 0;   // Force last char to zero (never ovrwritten if sntncpy used with d->lenData)
+            d->lenData = dataLen;   // Don't put +1 here to avoid heap corruption!
+        }
+
+        strncpy(d->data, data, d->lenData + 1);
+        NeedUpdate = true;
+    }
+    else if (!d->data)
+    {
+        // First update: allocate and store initial data
+        d->data = (char*)malloc(strlen(data) + 1);
+        if (!d->data) return false; // malloc failed
+        d->lenData = strlen(data);
+        d->data[d->lenData] = 0;   // Force last char to zero (never ovrwritten if sntncpy used with d->lenData)
+        strncpy(d->data, data, d->lenData); // Don't put +1 here !
+        NeedUpdate = true;
+    }
+
+    if (d->level != JSonLevel)
+    {
+        d->level = JSonLevel;
+        NeedUpdate = true;
+    }
+
+    return NeedUpdate;
 }
 
 void Update_device_data(JsonObject RJson2)
 {
     //char buffer[4096];
-    //serializeJsonPretty(RJson2, buffer);
+    //serializeJsonPretty(RJson2, buffer, sizeof(buffer));
     //Serial.println(buffer);
 
     int JSonidx = 0;
@@ -137,70 +233,9 @@ void Update_device_data(JsonObject RJson2)
     int ID = Get_ID_Device(JSonidx);
     if (ID < 0) return ; // Not in list
 
-    const char* JSondata = NULL;
-    int JSonLevel = 0;
+    Serial.printf("Update device Id: %d, Domo Idx: %d\n", ID, JSonidx);
 
-    //if (RJson2.containsKey("Data")) JSondata = RJson2["Data"];
-    //if (RJson2.containsKey("Level")) JSonLevel = RJson2["Level"];
-    if (RJson2["Data"].is<const char*>()) JSondata = RJson2["Data"];
-    if (RJson2["Level"].is<int>()) JSonLevel = RJson2["Level"];
-
-    Serial.printf("Update HP device Id: %d, Domo Idx: %d\n", ID, JSonidx);
-
-    bool NeedUpdate = false;
-
-    //Special device
-    char * data;
-
-    if (RJson2["Rain"].is<const char*>())
-    {
-        data = Cleandata(myDevices[ID].type, RJson2["Rain"]);
-    }
-    else if ((myDevices[ID].type == TYPE_TEXT) || (myDevices[ID].type == TYPE_WARNING))
-    {
-        //Keep it unchanged
-        data = (char *)JSondata;
-    }
-    else if (myDevices[ID].type == TYPE_THERMOSTAT)
-    {
-        char t[10];
-        lv_snprintf(t, 10, "%.1f", RJson2["Temp"].as<float>());
-        data = Cleandata(myDevices[ID].type, t);
-    }
-    else
-    {
-        data = Cleandata(myDevices[ID].type, JSondata);
-    }
-
-    if (myDevices[ID].data && strcmp(data, myDevices[ID].data) != 0)
-    {
-        //Use dynamic array, but only 1 time
-        if (strlen(data) >= myDevices[ID].lenData)
-        {
-            if (myDevices[ID].data) free(myDevices[ID].data);
-            myDevices[ID].data = (char*)malloc(strlen(data) + 1);
-            if (!myDevices[ID].data) return; // malloc failed
-            myDevices[ID].lenData = strlen(data);
-        }
-
-        strncpy(myDevices[ID].data, data, myDevices[ID].lenData + 1);
-        NeedUpdate = true;
-    }
-    else if (!myDevices[ID].data)
-    {
-        // First update: allocate and store initial data
-        myDevices[ID].data = (char*)malloc(strlen(data) + 1);
-        if (!myDevices[ID].data) return; // malloc failed
-        myDevices[ID].lenData = strlen(data);
-        strncpy(myDevices[ID].data, data, myDevices[ID].lenData + 1);
-        NeedUpdate = true;
-    }
-
-    if (myDevices[ID].level != JSonLevel)
-    {
-        myDevices[ID].level = JSonLevel;
-        NeedUpdate = true;
-    }
+    bool NeedUpdate = HandleDomoticzData(RJson2, &myDevices[ID]);
 
     if (NeedUpdate)
     {
@@ -219,18 +254,15 @@ void Update_device_data(JsonObject RJson2)
             }
             else
             {
-                RefreshHomePage();
+                RefreshWidgetsPanel(true);
             }
         }
     }
 
 }
 
-int * GetGraphValue(int type, int idx, int *min, int *max)
+int * GetGraphValue(int type, int idx, int *min, int *max, int *scale)
 {
-
-    *min = 0xFFFF;
-    *max = 0;
 
 #ifdef OLD_DOMOTICZ
     String url = "/json.htm?type=graph&sensor=";
@@ -249,17 +281,24 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
         case TYPE_LUX:
         case TYPE_AIR_QUALITY:
         case TYPE_WEIGHT:
+        case TYPE_VALUE_SENSOR:
             url = url + "counter";
             break;
         case TYPE_PERCENT_SENSOR:
-        case TYPE_VALUE_SENSOR:
             url = url + "Percentage";
             break;
-        case TYPE_METEO:
+        case TYPE_RAIN:
             url = url + "rain";
+            break;
+        case TYPE_WIND:
+            url = url + "wind";
+            break;
+        case TYPE_UV:
+            url = url + "uv";
             break;
         default:
             //not supported
+            Serial.printf("Graph not supported on device idx %d, type %d\n", idx, type);
             return nullptr;
     }
 
@@ -272,9 +311,19 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
 
         if (JS.isNull())
         {
-            Serial.println(F("Json not available\n"));
+            Serial.printf("Json not available for type %d, url %s\n", type, url.c_str());
             return nullptr;
         }
+
+        // Some debug
+        //char buffer2[4096];
+        //serializeJsonPretty(doc, buffer2, sizeof(buffer2));
+        //Serial.println(buffer2);
+
+        static double tab_origin[24];
+        double min_origin = 0;
+        double max_origin = 0;
+        std::fill_n(tab_origin, 24, 0.0);
 
         std::fill_n(tab, 24, 0);
 
@@ -327,39 +376,57 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
                 case TYPE_WEIGHT:
                     v = i["v"];
                     break;
-                case TYPE_METEO:
+                case TYPE_RAIN:
                     v = i["mm"];
+                    break;
+                case TYPE_WIND:
+                    v = i["sp"];
+                    break;
+                case TYPE_UV:
+                    v = i["uvi"];
                     break;
                 default:
                     v = 0;
             }
 
-            // Because of decimal values
-            if (type == TYPE_TEMPERATURE || type == TYPE_METEO) v = v *10;
-
-            if (type == TYPE_WEIGHT) v = v *1000;
-
             //swift the table
             for (j = 0; j < diff; j++)
             {
-                for (k = 0; k < 23; k++)
-                {
-                    tab[k] = tab[k+1];
-                }
-                tab[23] = v;
+                memmove(tab_origin, tab_origin + 1, 23 * sizeof(double));
+                tab_origin[23] = v;
             }
 
         }
 
-        // Scale calcul
+        min_origin = max_origin = tab_origin[0];
+
+        // Range calcul
         for (k = 0; k < 24; k++)
         {
-            if (tab[k] > *max) *max = tab[k];
-            if (tab[k] < *min) *min = tab[k];
+            if (tab_origin[k] > max_origin) max_origin = tab_origin[k];
+            if (tab_origin[k] < min_origin) min_origin = tab_origin[k];
         }
-        v = (*max - *min) / 10;
-        if (*min != 0) *min = *min - v;
-        *max = *max + v;
+        v = (max_origin - min_origin) / 10;
+        if (min_origin != 0) min_origin = min_origin - v;
+        max_origin = max_origin + v;
+
+        // Scale calcul
+        *scale = 1;
+        Serial.println(max_origin - min_origin);
+
+        if (((max_origin - min_origin) < 5) && (max_origin - min_origin > 0.0001f))
+        {
+            *scale = (int)(5.00f / (max_origin - min_origin));
+            Serial.println(*scale);
+        }
+
+        //Finish table
+        for (k = 0; k < 24; k++)
+        {
+            tab[k] = (int)(*scale * tab_origin[k]);
+        }
+        *max = (int)(*scale * max_origin);
+        *min = (int)(*scale * min_origin);
 
         return tab;
     }
@@ -367,15 +434,18 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
 	return nullptr;
 }
 
-
-bool HttpInitDevice(Device *d, int id)
+bool InitDeviceRequest(Device *dd, const char* c, bool isarray)
 {
+
+    if (!*c) return false;                                          // Don't send empty request (will else send all devices)
     JsonDocument doc;
-#ifdef OLD_DOMOTICZ
-    String url = "/json.htm?type=devices&rid=" + String(id);
-#else
-    String url = "/json.htm?type=command&param=getdevices&rid=" + String(id);
-#endif
+    int idx = 0;
+
+    #ifdef OLD_DOMOTICZ
+        String url = "/json.htm?type=devices&rid=" + String(c);
+    #else
+        String url = "/json.htm?type=command&param=getdevices&rid=" + String(c);
+    #endif
 
     if (!HTTPGETRequestWithReturn((char *)url.c_str(), &doc)) return false;
 
@@ -388,12 +458,45 @@ bool HttpInitDevice(Device *d, int id)
         return false;
     }
 
-    for (auto i : JS)  // Scan the array (only 1)
+    Device *d = nullptr;
+
+    for (auto i : JS)
     {
-        if (d->name) free(d->name);
-        d->name = (char*)malloc(strlen(i["Name"]) + 1);
-        if (!d->name) return false; // malloc failed
-        strncpy(d->name, i["Name"],strlen(i["Name"]) + 1);
+
+        //First need the idx
+        if (i["idx"].is<int>())
+        {
+            idx = i["idx"].as<int>();
+        }
+        else if (i["idx"].is<const char*>())
+        {
+            idx = atoi(i["idx"].as<const char*>());
+        }
+
+        if (isarray)
+        {
+            //Check the array
+            d = nullptr;
+            for (int j = 0; j < (TOTAL_ICONX*TOTAL_ICONY); j +=1 )
+            {
+                if (dd[j].idx == idx)
+                {
+                    d = &dd[j];
+                }
+            }
+            // Not present ? Something is wrong in the request, skip it
+            if (!d) continue;
+        }
+        else
+        {
+            d = dd;
+            d->idx = idx;
+        }
+
+
+        if (!SetNewString(&d->name, i["Name"])) return false;
+
+        //Serial.printf("Initialize Domoticz devices id: %d, name %s\n", d->idx, d->name);
 
         const char* JSondata = NULL;
         const char* type = NULL;
@@ -411,19 +514,7 @@ bool HttpInitDevice(Device *d, int id)
             return false;
         }
 
-        if (d->ID) free(d->ID);
-        d->ID = (char*)malloc(strlen(i["ID"]) + 1);
-        if (!d->ID) return false; // malloc failed
-        strncpy(d->ID, i["ID"],strlen(i["ID"]) + 1);
-
-        if (i["idx"].is<int>())
-        {
-            d->idx = i["idx"].as<int>();
-        }
-        else if (i["idx"].is<const char*>())
-        {
-            d->idx = atoi(i["idx"].as<const char*>());
-        }
+        if (!SetNewString(&d->ID, i["ID"])) return false;
 
         d->level = i["Level"];
 
@@ -477,7 +568,7 @@ bool HttpInitDevice(Device *d, int id)
                     d->type = TYPE_PUSH;
                 }
                 else if ((strcmp(switchtype,"Venetian Blinds EU") == 0) || (strcmp(switchtype,"Venetian Blinds US") == 0)
-                 || (strcmp(switchtype,"Blinds Percentage") == 0) || (strcmp(switchtype,"Blinds % + Stop") == 0))
+                || (strcmp(switchtype,"Blinds Percentage") == 0) || (strcmp(switchtype,"Blinds % + Stop") == 0))
                 {
                     d->type = TYPE_BLINDS;
                 }
@@ -516,7 +607,15 @@ bool HttpInitDevice(Device *d, int id)
         }
         else if (strcmp(type, "Rain") == 0)
         {
-            d->type = TYPE_METEO;
+            d->type = TYPE_RAIN;
+        }
+        else if (strcmp(type, "Wind") == 0)
+        {
+            d->type = TYPE_WIND;
+        }
+        else if (strcmp(type, "UV") == 0)
+        {
+            d->type = TYPE_UV;
         }
         else if (strcmp(type, "Usage") == 0)
         {
@@ -543,6 +642,7 @@ bool HttpInitDevice(Device *d, int id)
             else if (strcmp(subtype,"Text") == 0) d->type = TYPE_TEXT;
             else if (strcmp(subtype,"kWh") == 0) d->type = TYPE_CONSUMPTION;
             else if (strcmp(subtype,"Custom Sensor") == 0) d->type = TYPE_VALUE_SENSOR;
+            else if (strcmp(subtype,"Visibility") == 0) d->type = TYPE_VALUE_SENSOR;
         }
         else if (strcmp(type, "Lux") == 0)
         {
@@ -569,40 +669,9 @@ bool HttpInitDevice(Device *d, int id)
             }
         }
 
-        //Special device
-        char * data;
+        //If not already updated
+        HandleDomoticzData(i, d);
 
-        if (i["Rain"].is<const char*>())
-        {
-           data = Cleandata(d->type, i["Rain"]);
-        }
-        else if ((d->type == TYPE_TEXT) || (d->type == TYPE_WARNING))
-        {
-            //Keep it unchanged
-            data = (char *)JSondata;
-        }
-        else if (d->type == TYPE_THERMOSTAT)
-        {
-            char t[10];
-            lv_snprintf(t, 10, "%.1f", i["Temp"].as<float>());
-            data = Cleandata(d->type, t);
-        }
-        else
-        {
-            data = Cleandata(d->type, JSondata);
-        }
-
-        //Use dynamic array if needed, but only 1 time if needed to prevent fragmentation
-        if (strlen(data) > d->lenData)
-        {
-            if (d->data) free(d->data);
-            d->data = (char*)malloc(strlen(data) + 1);
-            if (!d->data) return false; // malloc failed
-            Serial.printf("Re-alloc from %d to %d\n", d->lenData, strlen(data));
-            d->lenData = strlen(data);
-        }
-
-        if (d->data) strncpy(d->data, data, d->lenData + 1);
     }
 
     return true;

@@ -1,6 +1,7 @@
 #include <Esp.h>
 
 #include "conf/global_config.h"
+#include "conf/json_config.h"
 #include "core/screen_driver.h"
 #include "core/ota.h"
 #include "ui/wifi_setup.h"
@@ -11,32 +12,56 @@
 #include "ui/main_ui.h"
 #include "ui/navigation.h"
 #include "ui/panels/panel.h"
+
 //#include "core/sound.h"
 
 unsigned long now;
-void Websocket_loop(void);
 
 static void scr_event_cb(lv_event_t * e)
 {
     int p = GetActivePanel();
+    int default_page = p;
 
-    if (p < MAX_PANEL_SCROLL)
+    lv_dir_t dir = lv_indev_get_gesture_dir(lv_indev_get_act());
+
+    if (dir == LV_DIR_LEFT)
     {
+        Serial.printf("Starting left gesture at page %d\n", p);
+        if (p < MAX_PANEL_SCROLL - 1) p += 1;
 
-        lv_dir_t dir = lv_indev_get_gesture_dir(lv_indev_get_act());
-        if (dir == LV_DIR_LEFT) p +=1;
-        if (dir == LV_DIR_RIGHT) p -=1;
-
-        if (p < 0) p = 0;
-        if (p >= MAX_PANEL_SCROLL) p = MAX_PANEL_SCROLL - 1;
-
-        lv_indev_wait_release(lv_indev_get_act());
-
-        //Serial.printf("Dir: %d\n", dir);
-        //Serial.printf("Page: %d\n", p);
-        
-        navigation_screen(p);
+        int i = default_page;
+        while (i < MAX_PANEL_SCROLL - 1)
+        {
+            i += 1;
+            if (!isPageProtected(i))
+            {
+                default_page = i;
+                break;
+            }
+        }
     }
+    else if (dir == LV_DIR_RIGHT)
+    {
+        Serial.printf("Starting right gesture at page %d\n", p);
+        if (p > 0) p -=1;
+
+        int i = default_page;
+        while (i > 0)
+        {
+            i -= 1;
+            if (!isPageProtected(i))
+            {
+                default_page = i;
+                break;
+            }
+        }
+
+    }
+
+    lv_indev_wait_release(lv_indev_get_act()); // Needed after a slide
+
+    navigation_screen(checkAdminRights(p, default_page));
+
 }
 
 void setup() {
@@ -46,9 +71,9 @@ void setup() {
     Serial.begin(115200);
     delay(500);    // add a delay to be sure the serial is ready, while(!Serial) has, to my knowledge. no effect on a nodeMcu
     Serial.println(F("Starting application"));
-    LoadGlobalConfig(); // Loading setting
-    screen_setup(); // Set display
-    Serial.println(F("Screen init done"));
+
+    JsonSetting_Init(); // Prepare json settings
+    LoadGlobalConfig(); // Load setting
 
     // Personal Settings to don't have to set them at every reset.
     // They are saved after have been set, so the flag FORCE_CONFIG can be disabled after
@@ -61,28 +86,45 @@ void setup() {
             strcpy(global_config.wifiSSID, WIFISSID);
             strcpy(global_config.ServerHost, SERVERHOST);
             global_config.ServerPort = SERVERPORT;
-            const static unsigned short t[] = DEVICELIST;
-
+            const static short t[] = DEVICELIST;
         #else
             strcpy(global_config.wifiPassword, "xxxxxxxxxxxxxxxxxxx");
             strcpy(global_config.wifiSSID, "xxxxxxxxxxxxxxx");
             strcpy(global_config.ServerHost, "192.168.1.1");
             global_config.ServerPort = 8080;
-            const static unsigned short t[] = {122, 75, 16, 36, 28, 35, 63, 90, 145};
+            //  0 is disabled
+            // -1 is the Home page
+            // -2 is the first sub page
+            const static short t[] =
+            {
+                122, 75, 16, 36, 28, -2, 63, 90, 145,    // HomePage
+                125, 75, 16, 36, 28, 0, 63, 0, -1         // Subpage 1
+            };
         #endif
 
         global_config.wifiConfigured = true;
         global_config.ipConfigured = true;
 
         short v;
+        short pmax = (sizeof(t) / sizeof(t[0])) / (TOTAL_ICONX*TOTAL_ICONY);
 
-        for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++)
-        {
-            if (i < sizeof(t) / sizeof(t[0])) { v = t[i]; } else { v = 0; }
-            global_config.ListDevices[i] = v;
-        }
+        int ptr = 0;
+        for (uint p=0; p<pmax; p++) {
+            for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++)
+            {
+                if (ptr < sizeof(t) / sizeof(t[0])) { v = t[ptr]; } else { v = 0; }
+                global_pages[p].ListDevices[i] = v;
+                ptr += 1;
+            }
+	    }
 
         WriteGlobalConfig();
+    #endif
+
+    screen_setup(); // Set display
+    Serial.println(F("Screen init done"));
+    #ifdef ESP32_S3TOUCHLCD7
+        ioExpanderInit();
     #endif
 
 //Disable LED
@@ -100,8 +142,6 @@ digitalWrite(RGB_LED_B, true);
 analogReadMilliVolts(CDS);
 #endif
 
-
-
 //Enable light sensor
 #if defined (BOARD_HAS_CDS) && defined (AUTO_BRIGHTNESS)
 pinMode(CDS, INPUT);
@@ -115,7 +155,6 @@ analogSetAttenuation(ADC_0db); // 0dB(1.0x) 0~800mV
     InitIPEngine(); // IP stuff
     wifi_init(); // Wifi initialisation
     WS_init(); // Websocket initialisation
-    Init_data(); // Data initialisation
 
 #ifdef PUSHOTA
     //Webserver for OTA
@@ -123,6 +162,7 @@ analogSetAttenuation(ADC_0db); // 0dB(1.0x) 0~800mV
 #endif
 
     //make_sound(500,500);
+    //dumpConfig();
 
     Serial.println(F("Application ready"));
 
@@ -153,7 +193,7 @@ void loop(){
     //sound_loop();
 
     lv_timer_handler();
-    lv_task_handler();
+    //lv_task_handler();
 
 }
 

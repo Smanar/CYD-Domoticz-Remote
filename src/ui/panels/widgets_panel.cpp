@@ -6,9 +6,13 @@
 #include "../../conf/global_config.h"
 #include "../../core/ip_engine.h"
 #include "../navigation.h"
+#include "../../conf/global_config.h"
+#include "../../debug/lvgl_debug.h"
 
 extern lv_style_t style_shadow;
 extern lv_style_t style_pressed;
+
+extern Device myDevices[];
 
 //Calculate values to use to display the homepage (even number)
 #define TOTAL_OFFSET_X 10
@@ -18,6 +22,10 @@ int Size_w = int(LCD_WIDTH/TOTAL_ICONX) -  TOTAL_OFFSET_X;
 int Size_h = int(LCD_HEIGHT/TOTAL_ICONY) - TOTAL_OFFSET_Y;
 //Icon size
 //int Size_icon = 35;
+
+static const lv_font_t fonts[] = {big_font_bold, medium_font, small_font};  // Available fonts sort by decreasing size
+
+static void go_page_cb(int pagrPtr);
 
 static void btn_event_cb_group(lv_event_t * e)
 {
@@ -53,10 +61,9 @@ static void btn_event_cb(lv_event_t * e)
     //lv_event_code_t code = lv_event_get_code(e);
     //lv_obj_t * btn = lv_event_get_target(e);
     //int *d = (int*)lv_event_get_param(e);
-    void * d = (void *)lv_event_get_user_data(e); // cast the return pointer to data type pointer
+    Device * d2 = (Device *)lv_event_get_user_data(e);
 
-#ifdef FASTCLIC
-        Device *d2 = (Device *)d;
+    #ifdef FASTCLIC
         if ((d2->type == TYPE_PUSH) || (d2->type == TYPE_LIGHT) || (d2->type == TYPE_SWITCH) || (d2->type == TYPE_PLUG))
         {
             char buff[256] = {};
@@ -64,9 +71,17 @@ static void btn_event_cb(lv_event_t * e)
             HTTPGETRequest(buff);
             return;
         }
-#endif
-        //Serial.printf("Clic sur boutton: %d", * btn_no);
-        Select_deviceMemorised(d);
+    #endif
+    if (d2->type == TYPE_PAGE) {                                // Clicked on a page button?
+        unsigned int pagePtr = -d2->idx -1;                     // Get back to page index (0 - PAGES -1)
+        if (pagePtr < PAGES) {                                  // Withion range?
+            navigation_screen(checkAdminRights(pagePtr + HOMEPAGE_PANEL, GetActivePanel()));
+        }
+        return;
+    }
+    
+    //Serial.printf("Clic sur boutton: %d", * btn_no);
+    Select_deviceMemorised(d2);
 }
 
 static void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int h, lv_color_t color, Device *d, const lv_img_dsc_t* icon)
@@ -84,22 +99,6 @@ static void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int 
     //lv_obj_set_style_pad_all(Button_icon, 0, 0);                                           // Remove padding
     lv_obj_add_event_cb(Button_icon, btn_event_cb, LV_EVENT_CLICKED, (void *)d);             // Assign a callback to the button
 
-    //special part to display small text direclty on widget
-    if (d->type == TYPE_TEXT && strlen(d->data) < 6)
-    {
-        lv_obj_t * label2 = lv_label_create(Button_icon);               /*Add a label to the button*/
-        //lv_label_set_long_mode(label2, LV_LABEL_LONG_WRAP);             /*Break the long lines*/
-        lv_obj_set_style_text_font(label2, &big_font_bold, 0);
-        lv_obj_set_style_text_align(label2, LV_TEXT_ALIGN_CENTER, 0);
-        lv_obj_set_style_text_color(label2, color, 0);
-
-        lv_label_set_text(label2, d->data);                                /*Set the labels text*/
-
-        lv_obj_set_width(label2, Size_w);
-        lv_obj_align_to(label2, Button_icon,  LV_ALIGN_CENTER, 0, 0); 
-        return;
-    }
-
     lv_obj_t *img = lv_img_create(Button_icon);
     //lv_img_set_src(img, LV_SYMBOL_OK "Accept");
     lv_img_set_src(img, icon);
@@ -107,17 +106,38 @@ static void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int 
     lv_obj_align(img, LV_ALIGN_TOP_MID , 0, -10);
     //lv_obj_set_size(img, Size_icon, Size_icon);
     lv_obj_set_style_img_recolor_opa(img, 50, 0);
-    lv_obj_set_style_img_recolor(img, color, 0);
 
     // Display a "on" icon
-    if (d->type < TYPE_SWITCH && strcmp(d->data, "On") == 0)
-    {
-        lv_obj_t * label = lv_label_create(Button_icon);
-        lv_obj_set_style_text_color(label, color, 0);
-        lv_obj_align_to(label, img,  LV_ALIGN_OUT_RIGHT_BOTTOM, 0, 0);
-        //lv_obj_set_style_border_width(label, 5, 0); // To make it visible
-        lv_label_set_text(label, " On");
+    if (d->type < TYPE_SWITCH)
+    {   
+        if ((strcmp(d->data, "On") == 0) || strcmp(d->data, "Open") == 0)
+        {
+            //lv_obj_set_style_img_recolor(img, color, 0);
+            lv_obj_t * label = lv_label_create(Button_icon);
+            lv_obj_set_style_text_color(label, color, 0);
+#if DEVICE_SIZE == 1
+            lv_obj_align_to(label, img,  LV_ALIGN_OUT_RIGHT_BOTTOM, 4, 0);
+#else
+            lv_obj_align_to(label, img,  LV_ALIGN_OUT_RIGHT_BOTTOM, 10, 0);
+#endif
+
+            //lv_obj_set_style_border_width(label, 5, 0); // To make it visible
+            lv_label_set_text(label, d->data);
+            lv_obj_set_style_img_recolor(img, color, 0);    // Use given color
+        }
+        else {
+            #ifdef DIM_OFF_ICONS
+                lv_obj_set_style_img_recolor(img, ICON_GREYED_COLOR, 0);  // Set color to grey
+            #else
+                lv_obj_set_style_img_recolor(img, color, 0);    // Use given color
+            #endif
+        }
     }
+    else
+    {
+        lv_obj_set_style_img_recolor(img, color, 0);    // Use given color
+    }
+
 #if 0
     // Display a open/clode state for covering
     if (d->type == TYPE_BLINDS)
@@ -182,13 +202,24 @@ static void Widget_sensor(lv_obj_t* panel, char* desc, char* value, int x, int y
      // Does _local_ is working here ?
     lv_obj_t * label = lv_label_create(Button_icon);
     lv_obj_set_style_text_font(label, &big_font_bold, 0);
-    lv_obj_set_style_text_color(label, color, 0);
+    #ifdef DIM_OFF_ICONS
+        if ((strcmp("Off", d->data) == 0) || (strcmp("Closed", d->data) == 0))
+        {
+            lv_obj_set_style_text_color(label, ICON_GREYED_COLOR, 0);  // Set color to grey
+        }
+        else
+        {
+            lv_obj_set_style_text_color(label, color, 0);
+        }
+    #else
+        lv_obj_set_style_text_color(label, color, 0);
+    #endif
     lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_RIGHT, 0);
 #if DEVICE_SIZE == 1
     lv_obj_set_height(label, 30);
     lv_obj_set_width(label, Size_w /2);
 #else
-    lv_obj_set_height(label, 55);
+    lv_obj_set_height(label, 57);
     lv_obj_set_width(label, 2* Size_w /3);
 #endif
     lv_obj_align_to(label, img,  LV_ALIGN_OUT_RIGHT_TOP, 0, 0);
@@ -206,6 +237,83 @@ static void Widget_sensor(lv_obj_t* panel, char* desc, char* value, int x, int y
     lv_obj_align_to(label2, Button_icon,  LV_ALIGN_BOTTOM_MID, 0, 10); 
 }
 
+static void Widget_text(lv_obj_t* panel, char* desc, char* value, int x, int y, int w, int h, lv_color_t color, Device *d, const lv_img_dsc_t *icon)
+{
+
+    /*Create a container*/
+    lv_obj_t * Button_icon = lv_obj_create(panel);
+    lv_obj_set_size(Button_icon, w, h);
+    lv_obj_set_pos(Button_icon, x, y);
+    lv_obj_add_style(Button_icon, &style_shadow, LV_PART_MAIN);
+    lv_obj_clear_flag( Button_icon, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_add_event_cb(Button_icon, btn_event_cb, LV_EVENT_CLICKED, (void *)d);              /*Assign a callback to the button*/
+
+     /*Create Value*/
+    lv_obj_t * label = lv_label_create(Button_icon);
+    lv_obj_set_style_text_font(label, &big_font_bold, 0);
+    lv_obj_set_style_text_color(label, color, 0);
+    lv_label_set_long_mode(label, LV_LABEL_LONG_DOT);             /*Add dot at end of long lines*/
+    //lv_label_set_text(label, value);
+
+    int value_height = 0; // It's the total height for value so "h" (padding alreading removed) minus the description height
+    int desc_height = 0;
+    lv_point_t textSize;
+
+    //No description for short text (eg time)
+    if (strlen(d->data) < 6)
+    {
+        value_height = h ; // So all the height available
+    }
+    else
+    {
+        /*Create description*/
+        lv_obj_t * label2 = lv_label_create(Button_icon);
+        lv_label_set_long_mode(label2, LV_LABEL_LONG_WRAP);
+        lv_obj_set_style_text_align(label2, LV_TEXT_ALIGN_CENTER, 0);
+        lv_obj_set_style_text_font(label2, &small_font, 0);
+        lv_label_set_text(label2, desc);
+        lv_obj_set_width(label2, Size_w);
+        lv_obj_align_to(label2, Button_icon,  LV_ALIGN_BOTTOM_MID, 0, 10);
+
+        //lv_obj_update_layout(label2);   // Recompute all label2 parameters
+        // not possible use v_obj_get_y() because there is empty part, it give the label Y coordinate, not the text Y coordinate.
+        lv_txt_get_size(&textSize, desc, &small_font, 0, 0, w, LV_TEXT_FLAG_NONE); // Get text size
+        desc_height = textSize.y;
+
+        value_height = h - 16;
+
+        ////lv_obj_set_style_outline_width(label2, 1, 0);
+        ////lv_obj_set_style_outline_color(label2, LV_COLOR_MAKE(0xFF, 0x00, 0x00), 0); ////
+    }
+
+    lv_obj_set_size(label, w, value_height);
+
+    // Try to reduce font size to display as much as text as possible
+    for (uint8_t i = 0; i < sizeof(fonts) / sizeof(lv_font_t); i++) {
+        lv_txt_get_size(&textSize, value, &fonts[i], 0, 0, w, LV_TEXT_FLAG_NONE); // Get text size
+        lv_obj_set_style_text_font(label, &fonts[i], 0);    // Set current font
+        if (textSize.y <= value_height) {    // Does text fit in label?
+            break;  // Don't try other fonts
+        }
+    }
+
+    if (textSize.y > value_height) { // Dont oversize label if too long
+        textSize.y = value_height;
+    }
+    lv_obj_set_height(label, textSize.y);
+
+    lv_obj_align_to(label, Button_icon,  LV_ALIGN_CENTER, 0, -(desc_height/2)); // Horizontal align for widget
+    lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0); // Horizontal align for text inside the widget
+    lv_label_set_text(label, value);
+    ////lv_obj_set_style_outline_width(label, 1, 0);
+    ////lv_obj_set_style_outline_color(label, LV_COLOR_MAKE(0x00, 0xFF, 0x00), 0);
+
+    #ifdef DEBUG_LVGL
+        char name[50];
+        lv_snprintf(name, sizeof(name), "Button_icon %d-%d", x, y);
+        dumpTreeObject(Button_icon, name, 0, true);
+    #endif
+}
 
 static void Widget_button_group(lv_obj_t* panel, char* desc, int x, int y, int w, int h, lv_color_t color, int idx, const lv_img_dsc_t* icon, bool state, bool group)
 {
@@ -252,23 +360,25 @@ static void Widget_button_group(lv_obj_t* panel, char* desc, int x, int y, int w
 
 }
 
-void home_panel_init(lv_obj_t* panel, Device d[], short page)
+void widget_panel_init(lv_obj_t* panel, bool dont_load_data)
 {
     short x,y;
     short cx,cy;
-    short i = (page * TOTAL_ICONX * TOTAL_ICONY);
+    short i = 0;
+
+    if (!dont_load_data) Init_data_widget_page();
 
     for (y=0; y<TOTAL_ICONY; y=y+1)
     {
         for (x=0; x<TOTAL_ICONX; x=x+1)
         {
-            const lv_color_t device_color = Getcolor(d[i].type);
-            const lv_img_dsc_t *icon = Geticon(d[i].type);
+            const lv_color_t device_color = Getcolor(myDevices[i].type);
+            const lv_img_dsc_t *icon = Geticon(myDevices[i].type);
 
             cx = TOTAL_OFFSET_X / 2 + (Size_w + TOTAL_OFFSET_X) * x;
             cy = TOTAL_OFFSET_Y / 2 + (Size_h + TOTAL_OFFSET_Y) * y;
 
-            switch (d[i].type)
+            switch (myDevices[i].type)
             {
                 case TYPE_UNUSED:  // Not used device
                 break;
@@ -279,13 +389,21 @@ void home_panel_init(lv_obj_t* panel, Device d[], short page)
                 case TYPE_SWITCH_SENSOR:
                 case TYPE_LUX:
                 case TYPE_WEIGHT:
-                case TYPE_METEO:
+                case TYPE_RAIN:
+                case TYPE_UV:
+                case TYPE_WIND:
                 case TYPE_VALUE_SENSOR:
                 case TYPE_SETPOINT:
                 case TYPE_THERMOSTAT:
                 case TYPE_AIR_QUALITY:
+                case TYPE_PERCENT_SENSOR:
                 {
-                    Widget_sensor(panel, d[i].name, d[i].data, cx , cy , Size_w , Size_h, device_color, &d[i],icon);
+                    Widget_sensor(panel, myDevices[i].name, myDevices[i].data, cx , cy , Size_w , Size_h, device_color, &myDevices[i], icon);
+                }
+                break;
+                case TYPE_TEXT:
+                {
+                    Widget_text(panel, myDevices[i].name, myDevices[i].data, cx , cy , Size_w , Size_h, device_color, &myDevices[i], icon);
                 }
                 break;
                 case TYPE_UNKNOWN: // Unknown type
@@ -299,20 +417,19 @@ void home_panel_init(lv_obj_t* panel, Device d[], short page)
                 case TYPE_BLINDS:
                 case TYPE_PUSH:
                 case TYPE_WARNING: // This one is a sensor, but too much text to be displayed on homepage
-                case TYPE_TEXT: // This one is a sensor, but too much text to be displayed on homepage
+                case TYPE_PAGE:
                 {
-                    Widget_button(panel, d[i].name, cx, cy, Size_w , Size_h, device_color, &d[i], icon); 
+                    Widget_button(panel, myDevices[i].name, cx, cy, Size_w , Size_h, device_color, &myDevices[i], icon); 
                 }
                 break;
                 default:
-                    Serial.printf("Undefined widget for HomePage: %d\n", d[i].type);
+                    Serial.printf("Undefined widget for HomePage: %d\n", myDevices[i].type);
                 break;
             }
 
-            i = i + 1;
+            i++;
         }
     }
-
 }
 
 struct _Group
@@ -379,6 +496,6 @@ void group_panel_init(lv_obj_t* panel)
 void Update_scene_data(void)
 {
 #ifndef NO_GROUP_PAGE
-    RefreshScenePage();
+    RefreshScenePanel();
 #endif
 }
