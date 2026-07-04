@@ -98,7 +98,7 @@ void setup() {
             const static short t[] =
             {
                 122, 75, 16, 36, 28, -2, 63, 90, 145,    // HomePage
-                12, 75, 16, 36, 28, 0, 63, 0, -1         // Subpage 1
+                125, 75, 16, 36, 28, 0, 63, 0, -1         // Subpage 1
             };
         #endif
 

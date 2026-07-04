@@ -226,7 +226,7 @@
         char childName[strlen(name)+5]; // Allow adding :999 plus ending zero to current name
         for (uint32_t i=0; i < lv_obj_get_child_cnt(objectToDump); i++) {
             child = lv_obj_get_child(objectToDump, i);
-            snprintf(childName, strlen(name)+5, "%s:%d", name, i);
+            lv_snprintf(childName, strlen(name)+5, "%s:%d", name, i);
             if (recursive) {
                 dumpTreeObject(child, childName, ident+1, recursive);
             } else {

@@ -17,9 +17,13 @@ extern void RefreshWidgetsPanel(bool);
 
 static bool SetNewString(char **dst, const char *src)
 {
+    if (!src) return false;
+
+    char *tmp = (char*)malloc(strlen(src) + 1);
+    if (!tmp) return false;
+
     if (*dst) free(*dst);
-    *dst = (char*)malloc(strlen(src) + 1);
-    if (!*dst) return false;
+    *dst = tmp;
     strcpy(*dst, src);
     return true;
 }
@@ -32,11 +36,11 @@ char * Cleandata(unsigned short t, const char *origin, const char *bonus = nullp
 
     if (bonus)
     {
-        snprintf(TmpBuffer, sizeof(TmpBuffer), "%s;%s", origin, bonus);
+        lv_snprintf(TmpBuffer, sizeof(TmpBuffer), "%s;%s", origin, bonus);
     }
     else
     {
-        snprintf(TmpBuffer, sizeof(TmpBuffer), "%s", origin);
+        lv_snprintf(TmpBuffer, sizeof(TmpBuffer), "%s", origin);
     }
 
     if (t == TYPE_SETPOINT || t == TYPE_THERMOSTAT) {
@@ -96,7 +100,7 @@ void Init_data_widget_page()
 void FillDeviceData(Device *d, int idx)
 {
     char tmp8[6];					// 5 chars + null
-    snprintf(tmp8, sizeof(tmp8), "%d" , idx);
+    lv_snprintf(tmp8, sizeof(tmp8), "%d" , idx);
     InitDeviceRequest(d, tmp8, false);
 }
 
@@ -126,7 +130,7 @@ const char * loadDeviceList(int page, bool displayAll)
     {
         idx = global_pages[page].ListDevices[i];
         if (displayAll || idx > 0) {
-            offset += snprintf(tmp7 + offset, sizeof(tmp7) - offset, (offset == 0) ? "%d" : ",%d", global_pages[page].ListDevices[i]);
+            offset += lv_snprintf(tmp7 + offset, sizeof(tmp7) - offset, (offset == 0) ? "%d" : ",%d", global_pages[page].ListDevices[i]);
         }
     }
     return tmp7;
@@ -137,7 +141,7 @@ bool HandleDomoticzData(JsonObject RJson2, Device * d)
     char * data;
     bool NeedUpdate = false;
 
-    const char* JSondata = NULL;
+    const char* JSondata = "";
     int JSonLevel = 0;
 
     if (RJson2["Data"].is<const char*>()) JSondata = RJson2["Data"];
@@ -146,7 +150,7 @@ bool HandleDomoticzData(JsonObject RJson2, Device * d)
     if (d->type == TYPE_RAIN)
     {
         char t[30];
-        snprintf(t, sizeof(t), "%.2f mm",
+        lv_snprintf(t, sizeof(t), "%.2f mm",
                 RJson2["Rain"].as<float>() * 0.01
             );
         data = Cleandata(d->type, t);
@@ -154,7 +158,7 @@ bool HandleDomoticzData(JsonObject RJson2, Device * d)
     else if (d->type == TYPE_WIND)
     {
         char t[30];
-        snprintf(t, sizeof(t), "%s;%.1f m/s;Gust %.1f m/s",
+        lv_snprintf(t, sizeof(t), "%s;%.1f m/s;Gust %.1f m/s",
                 RJson2["DirectionStr"].as<const char*>(),
                 RJson2["Speed"].as<float>(),
                 RJson2["Gust"].as<float>()
@@ -169,7 +173,7 @@ bool HandleDomoticzData(JsonObject RJson2, Device * d)
     else if (d->type == TYPE_THERMOSTAT)
     {
         char t[10];
-        snprintf(t, 10, "%.1f", RJson2["Temp"].as<float>());
+        lv_snprintf(t, 10, "%.1f", RJson2["Temp"].as<float>());
         data = Cleandata(d->type, t);
     }
     else
@@ -186,8 +190,8 @@ bool HandleDomoticzData(JsonObject RJson2, Device * d)
             if (d->data) free(d->data);
             d->lenData = 0;
             d->data = (char*)malloc(dataLen + 1);   // Allocate space for data plus one (zero) byte
-            d->data[dataLen] = 0;   // Force last char to zero (never ovrwritten if sntncpy used with d->lenData)
             if (!d->data) return false; // malloc failed
+            d->data[dataLen] = 0;   // Force last char to zero (never ovrwritten if sntncpy used with d->lenData)
             d->lenData = dataLen;   // Don't put +1 here to avoid heap corruption!
         }
 
@@ -257,11 +261,8 @@ void Update_device_data(JsonObject RJson2)
 
 }
 
-int * GetGraphValue(int type, int idx, int *min, int *max)
+int * GetGraphValue(int type, int idx, int *min, int *max, int *scale)
 {
-
-    *min = 0xFFFF;
-    *max = 0;
 
 #ifdef OLD_DOMOTICZ
     String url = "/json.htm?type=graph&sensor=";
@@ -318,6 +319,11 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
         //char buffer2[4096];
         //serializeJsonPretty(doc, buffer2, sizeof(buffer2));
         //Serial.println(buffer2);
+
+        static double tab_origin[24];
+        double min_origin = 0;
+        double max_origin = 0;
+        std::fill_n(tab_origin, 24, 0.0);
 
         std::fill_n(tab, 24, 0);
 
@@ -383,29 +389,44 @@ int * GetGraphValue(int type, int idx, int *min, int *max)
                     v = 0;
             }
 
-            // Because of decimal values
-            if (type == TYPE_TEMPERATURE || type == TYPE_RAIN) v = v *10;
-
-            if (type == TYPE_WEIGHT) v = v *1000;
-
             //swift the table
             for (j = 0; j < diff; j++)
             {
-                memmove(tab, tab + 1, 23 * sizeof(int));
-                tab[23] = (int)v;
+                memmove(tab_origin, tab_origin + 1, 23 * sizeof(double));
+                tab_origin[23] = v;
             }
 
         }
 
-        // Scale calcul
+        min_origin = max_origin = tab_origin[0];
+
+        // Range calcul
         for (k = 0; k < 24; k++)
         {
-            if (tab[k] > *max) *max = tab[k];
-            if (tab[k] < *min) *min = tab[k];
+            if (tab_origin[k] > max_origin) max_origin = tab_origin[k];
+            if (tab_origin[k] < min_origin) min_origin = tab_origin[k];
         }
-        v = (*max - *min) / 10;
-        if (*min != 0) *min = *min - v;
-        *max = *max + v;
+        v = (max_origin - min_origin) / 10;
+        if (min_origin != 0) min_origin = min_origin - v;
+        max_origin = max_origin + v;
+
+        // Scale calcul
+        *scale = 1;
+        Serial.println(max_origin - min_origin);
+
+        if (((max_origin - min_origin) < 5) && (max_origin - min_origin > 0.0001f))
+        {
+            *scale = (int)(5.00f / (max_origin - min_origin));
+            Serial.println(*scale);
+        }
+
+        //Finish table
+        for (k = 0; k < 24; k++)
+        {
+            tab[k] = (int)(*scale * tab_origin[k]);
+        }
+        *max = (int)(*scale * max_origin);
+        *min = (int)(*scale * min_origin);
 
         return tab;
     }
