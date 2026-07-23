@@ -189,6 +189,7 @@ void wifi_init()
     Serial.print(F("Wifi connecting to SSID: "));
     Serial.println(global_config.wifiSSID);
     WiFi.begin(global_config.wifiSSID, global_config.wifiPassword);
+    WiFi.setAutoReconnect(true);    // Force WiFi reconnection
     unsigned long startAttempt = millis();
 
     while (WiFi.status() != WL_CONNECTED)
@@ -226,5 +227,6 @@ void wifi_ok(){
 void wifi_stop(void)
 {
     WiFi.disconnect();
+    WiFi.setAutoReconnect(false);
     //wdt_reset();
 }

@@ -29,6 +29,7 @@ static void go_page_cb(int pagrPtr);
 
 static void btn_event_cb_group(lv_event_t * e)
 {
+    if (screen_ignore_action()) return;   // Ignore action just after screen reactivation
     int idx = (int)lv_event_get_user_data(e);
     lv_obj_t * btn = lv_event_get_target(e);
     lv_event_code_t code = lv_event_get_code(e);
@@ -58,6 +59,7 @@ static void btn_event_cb_group(lv_event_t * e)
 
 static void btn_event_cb(lv_event_t * e)
 {
+    if (screen_ignore_action()) return;   // Ignore action just after screen reactivation
     //lv_event_code_t code = lv_event_get_code(e);
     //lv_obj_t * btn = lv_event_get_target(e);
     //int *d = (int*)lv_event_get_param(e);
@@ -87,6 +89,7 @@ static void btn_event_cb(lv_event_t * e)
 static void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int h, lv_color_t color, Device *d, const lv_img_dsc_t* icon)
 {
 
+    if (screen_ignore_action()) return;   // Ignore action just after screen reactivation
     /*Create a container with ROW flex direction*/
     lv_obj_t * Button_icon = lv_obj_create(panel);
     lv_obj_set_size(Button_icon, w, h);
