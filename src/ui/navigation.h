@@ -8,10 +8,13 @@ void SetActivePanel(int);
 void RefreshWidgetsPanel(bool dontLoadData = false);
 void RefreshScenePanel(void);
 void RefreshDevicePanel(void);
+bool screen_ignore_action(void);
 
 int checkAdminRights(const int, const int);
 bool isPageProtected(int page);
 void password_keyboard_display(lv_obj_t* panel);
+
+static unsigned long screenRestartTime = 0;
 
 #define DATA_REMOTE_STATE 1
 #define DATA_REMOTE_DATA 2

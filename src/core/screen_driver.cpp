@@ -430,12 +430,17 @@ void set_screen_brightness()
 void screen_timer_wake()
 {
     lv_timer_reset(screenSleepTimer);
+    screenRestartTime = millis();
     isScreenInSleep = false;
     set_screen_brightness();
 
     // Reset cpu freq
     setCpuFrequencyMhz(CPU_FREQ_HIGH);
     Serial.printf("CPU Speed: %d MHz\n", ESP.getCpuFreqMHz());
+}
+
+bool screen_ignore_action(void) {
+    return ((millis() - screenRestartTime) < 500);   // Ignore actions for 0.5 sec after restarting (reactivating) screen
 }
 
 void screen_timer_sleep(lv_timer_t *timer)
