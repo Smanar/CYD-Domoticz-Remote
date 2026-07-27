@@ -86,7 +86,6 @@ static void btn_event_cb(lv_event_t * e)
 
 static void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int h, lv_color_t color, Device *d, const lv_img_dsc_t* icon)
 {
-
     /*Create a container with ROW flex direction*/
     lv_obj_t * Button_icon = lv_obj_create(panel);
     lv_obj_set_size(Button_icon, w, h);

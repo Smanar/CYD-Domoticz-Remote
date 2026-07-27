@@ -555,19 +555,23 @@ void screen_lv_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *col
 void screen_lv_touchRead(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
 {
     TS_Point p;
+    static bool ignoreNextTouch;
 
     if (touchscreen.tirqTouched() && touchscreen.touched())
     {
         lv_timer_reset(screenSleepTimer);
         lv_timer_reset(homeSleepTimer);
-        // dont pass first touch after power on
         if (isScreenInSleep)
         {
             screen_timer_wake();
+            ignoreNextTouch = true;
+        }
 
-            while (touchscreen.touched())
-                ;
-            return;
+        // dont pass first touch after power on
+        if (ignoreNextTouch)
+        {
+             data->state = LV_INDEV_STATE_REL;
+             return;
         }
 
         p = touchscreen.getPoint();
@@ -581,9 +585,9 @@ void screen_lv_touchRead(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
     else
     {
         data->state = LV_INDEV_STATE_REL;
+        ignoreNextTouch = false;
     }
 }
-
 
 void set_color_scheme(){
     lv_disp_t *dispp = lv_disp_get_default();
