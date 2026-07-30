@@ -2,6 +2,7 @@
 #include "WiFi.h"
 #include "wifi_setup.h"
 #include "../conf/global_config.h"
+#include "navigation.h"
 
 void wifi_init_inner();
 
@@ -146,6 +147,12 @@ const char* errs[] = {
 const int print_freq = 1000;
 int print_timer = 0;
 
+// Called when WiFi is connected and IP set
+//  Force widget refresh to get last version of devices value
+void WiFiGotIP(WiFiEvent_t event, WiFiEventInfo_t info) {
+    RefreshWidgetsPanel();  // Refresh widget if currently displayed
+}
+
 void wifi_init()
 {
 
@@ -188,6 +195,7 @@ void wifi_init()
 
     Serial.print(F("Wifi connecting to SSID: "));
     Serial.println(global_config.wifiSSID);
+    WiFi.onEvent(WiFiGotIP, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
     WiFi.begin(global_config.wifiSSID, global_config.wifiPassword);
     WiFi.setAutoReconnect(true);    // Force WiFi reconnection
     unsigned long startAttempt = millis();
@@ -216,17 +224,3 @@ void wifi_init()
     Serial.println(F("Wifi connected"));
 }
 
-void wifi_ok(){
-    if (WiFi.status() != WL_CONNECTED)
-    {
-        Serial.println(F("Wifi disconnection, restart"));
-        ESP.restart();
-    }
-}
-
-void wifi_stop(void)
-{
-    WiFi.disconnect();
-    WiFi.setAutoReconnect(false);
-    //wdt_reset();
-}
