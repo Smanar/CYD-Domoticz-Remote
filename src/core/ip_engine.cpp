@@ -186,6 +186,7 @@ static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
 			break;
 		case WStype_TEXT:
 			//Serial.printf("[WSc] get text: %s\n", payload);
+
             if (length > 0)
             {
                 #if (0)
@@ -295,6 +296,11 @@ void WS_Run(void)
     }
 
     Serial.printf("Connecting to %s:%d\n",global_config.ServerHost, global_config.ServerPort);
+
+    // Use a valid Origin valide to pass the Domoticz control
+    static char originHeader[64];
+    lv_snprintf(originHeader, sizeof(originHeader), "Origin: http://%s:%d", global_config.ServerHost, global_config.ServerPort);
+    WSclient.setExtraHeaders(originHeader);
 
     // server address, port and URL
     WSclient.begin(global_config.ServerHost, global_config.ServerPort, "/json", "domoticz");
