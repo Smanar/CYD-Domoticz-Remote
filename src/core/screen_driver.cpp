@@ -71,6 +71,9 @@ static lv_disp_draw_buf_t draw_buf;
     #ifdef ESP32_2432S024C
     #include "../drivers/esp32-2432S024C.h"
     #endif
+    #ifdef ESP32_2432S032C_I
+    #include "../drivers/esp32-2432S032C_I.h"
+    #endif
     #ifdef ESP32_JC2432W328
     #include "../drivers/esp32-JC2432W328.h"
     #endif
