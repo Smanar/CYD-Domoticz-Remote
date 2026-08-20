@@ -26,7 +26,7 @@ static lv_obj_t * settings_panel;
 bool isAllDigits(const char* str) {
     if (str == nullptr || str[0] == '\0') return false;
     for (int i = 0; str[i] != '\0'; i++) {
-        if (!std::isdigit(str[i])) return false;
+        if (!isdigit((unsigned char)str[i])) return false;
     }
     return true;
 }
