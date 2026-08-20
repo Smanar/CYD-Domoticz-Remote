@@ -68,6 +68,44 @@ For the hardware part (according to your device) mains settings are in the file 
 	#-DCORE_DEBUG_LEVEL=5 # To enable debug on serial for librairies and core
 	#-DLV_USE_SNAPSHOT=1 # Enable to take screen snapshots (will fail on non PSRAM devices)
 	#-DDEBUG_LVGL # Used to internaly debug LGVL
+```
+You have by defaut only one widget page, but you can add more without problem.   
+- Positive number will be widget ID
+- Negative number will be widget page.
+for exemple
+``` 
+  "pages": [
+    {
+      "name": "Page 1",
+      "number": 1,
+      "idx": [
+        122,
+        75,
+        16,
+        36,
+        28,
+        -2,
+        63,
+        90,
+        145
+      ]
+    },
+    {
+      "name": "Page 2",
+      "number": 2,
+      "idx": [
+        12,
+        75,
+        16,
+        36,
+        28,
+        -1,
+        63,
+        0,
+        0
+      ]
+    }
+  ]
 ``` 
 
 ## Page protection
@@ -78,6 +116,13 @@ There is 2 options for OTA, PUSHOTA and PULLOTA you can enable one of them or no
 
 - PUSHOTA Enable the OTA in PUSH mode, it mean there is a webserver that run permanently, you can access it using /update as url.
 - PULLOTA can be used using the GUI, on the device itself, using the first tab, it will download itself the new firmware, but for the moment the url is hardcoded. https://github.com/Smanar/CYD-Domoticz-Remote/blob/main/src/core/ota.cpp#L15
+
+## Webserver
+If you have enabled PUSHOTA, you will be able to use the on board webserver for:   
+- Update the device firmware.   
+- Download or upload the configuration using a JSON file.
+- Reset the device.
+- Get some inforamtions.   
 
 ## Tested devices, working nativley
 - esp32-2432S028R
@@ -93,7 +138,10 @@ There is 2 options for OTA, PUSHOTA and PULLOTA you can enable one of them or no
 - esp32-S3TOUCHLCD7 (WaveShare ESP32S3 Touch LCD 7)
 
 ## Fonts
-
+It's possible to select 3 Fonts:
+- 1=Standard : The defaut font.   
+- 2=Custom : Here you can create you own, can share it too.
+- 3=French : A custom French font, including all French accented characters.
 
 
 ## Actuals issues   
