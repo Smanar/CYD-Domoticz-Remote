@@ -127,39 +127,39 @@ void setup() {
         ioExpanderInit();
     #endif
 
-//Disable LED
-#ifdef BOARD_HAS_RGB_LED
-pinMode(RGB_LED_R, OUTPUT);
-pinMode(RGB_LED_G, OUTPUT);
-pinMode(RGB_LED_B, OUTPUT);
+    //Disable LED
+    #ifdef BOARD_HAS_RGB_LED
+    pinMode(RGB_LED_R, OUTPUT);
+    pinMode(RGB_LED_G, OUTPUT);
+    pinMode(RGB_LED_B, OUTPUT);
 
-digitalWrite(RGB_LED_R, true);
-digitalWrite(RGB_LED_G, true);
-digitalWrite(RGB_LED_B, true);
-#endif
+    digitalWrite(RGB_LED_R, true);
+    digitalWrite(RGB_LED_G, true);
+    digitalWrite(RGB_LED_B, true);
+    #endif
 
-#if defined (BOARD_HAS_CDS)
-analogReadMilliVolts(CDS);
-#endif
+    #if defined (BOARD_HAS_CDS)
+    analogReadMilliVolts(CDS);
+    #endif
 
-//Enable light sensor
-#if defined (BOARD_HAS_CDS) && defined (AUTO_BRIGHTNESS)
-pinMode(CDS, INPUT);
-analogSetAttenuation(ADC_0db); // 0dB(1.0x) 0~800mV
-//analogSetPinAttenuation(CDS, ADC_0db); // 0dB(1.0) 0~800mV
-#endif
+    //Enable light sensor
+    #if defined (BOARD_HAS_CDS) && defined (AUTO_BRIGHTNESS)
+    pinMode(CDS, INPUT);
+    analogSetAttenuation(ADC_0db); // 0dB(1.0x) 0~800mV
+    //analogSetPinAttenuation(CDS, ADC_0db); // 0dB(1.0) 0~800mV
+    #endif
 
-    //Some settings log
-    Serial.printf("Brightness value: %d\n", global_config.brightness);
-    
-    InitIPEngine(); // IP stuff
-    wifi_init(); // Wifi initialisation
-    WS_init(); // Websocket initialisation
+        //Some settings log
+        Serial.printf("Brightness value: %d\n", global_config.brightness);
+        
+        InitIPEngine(); // IP stuff
+        wifi_init(); // Wifi initialisation
+        WS_init(); // Websocket initialisation
 
-#ifdef PUSHOTA
-    //Webserver for OTA
-    OTA_init();
-#endif
+    #ifdef PUSHOTA
+        //Webserver for OTA
+        OTA_init();
+    #endif
 
     //make_sound(500,500);
     //dumpConfig();
