@@ -15,6 +15,11 @@
 
 //#include "core/sound.h"
 
+// Add user extension data code if exists
+#if __has_include("extensions/userExtensions.h")
+    #include "extensions/userExtensions.h"
+#endif
+
 unsigned long now;
 
 static void scr_event_cb(lv_event_t * e)
@@ -179,6 +184,11 @@ void setup() {
     //Start on Home panel
     navigation_screen(HOMEPAGE_PANEL);
 
+    // Add user user setup extension code if exists
+    #if __has_include("extensions/userExtensions.h")
+        userSetup();
+    #endif
+
 }
 
 void loop(){
@@ -195,6 +205,10 @@ void loop(){
     lv_timer_handler();
     //lv_task_handler();
 
+    // Add user user setup extension code if exists
+    #if __has_include("extensions/userExtensions.h")
+        userLoop();
+    #endif
 }
 
 unsigned long runningTime(void)

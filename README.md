@@ -143,12 +143,21 @@ It's possible to select 3 Fonts:
 - 2=Custom : Here you can create you own, can share it too.
 - 3=French : A custom French font, including all French accented characters.
 
+## User extensions
+One may want to connect some local devices to the panel (like temperature probe or RFID reader), and implement specific code to interact with it.
+
+This is possible creating an "extension" folder to src folder, and creating:
+- an "userExtension.h" file to make routines/functions definition,
+- an "userExtension.cpp" file to define data and extend setup code with "userSetup()" call and loop code with "extensionLoop()" call.
+
+You'll find examples in "examples/extensions" folder.
+
+These will be automatically compiled with "main.cpp" code, if present.
 
 ## Actuals issues   
 - Memory ^^, lot of feature are still in Beta test. For exemple Domoticz JSON are too big to be handled by the device, it cause problem for chart for exemple.
 - The features availables will depend of user devices. The home page will always work, the websocket return too, for the rest IDK. Some JSON are realy impressive, can take some Mega for only 5% of data used, and not possible to reduce them, there is no setting in domoticz. I m using a filtering for some of them, it's possible too using smaller requests to have smaller JSON as return, for exemple this one [https://www.domoticz.com/wiki/Domoticz_ ... 2Fswitche](https://www.domoticz.com/wiki/Domoticz_API/JSON_URL%27s#Get_details_of_all_lights.2Fswitches) but this one don't have data, so it's possible to make a device list, but without information. I will see what to keep or not on usage.   
 
-## troubleshooting    
+## Troubleshooting    
 - Be sure the device have its IP autorised in the Trusted Networks setting in Domoticz.   
 - If you have problem with the Touchpad, you can force a calibration using the parameter -DFORCECALIBRATE=true. Else you will have it only at first launch.
-     
