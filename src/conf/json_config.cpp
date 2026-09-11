@@ -108,12 +108,7 @@ bool readJsonConfig(const char* jsonFile) {
     const char* charPtr;                                            // Pointer for char data
 
     // Load all settings into corresponding variables
-    unsigned char jsonVersion = settings["version"].as<unsigned char>();
-    if (jsonVersion != CONFIG_VERSION) {
-        Serial.printf("Json file version %d, should be %d\n", jsonVersion, CONFIG_VERSION);
-        return false;
-    }
-    global_config.version = jsonVersion;
+    global_config.version = settings["version"].as<unsigned char>();
     global_config.screenCalibrated = settings["screenCalibrated"].as<bool>();
     global_config.wifiConfigured = settings["wifiConfigured"].as<bool>();
     global_config.ipConfigured = settings["ipConfigured"].as<bool>();

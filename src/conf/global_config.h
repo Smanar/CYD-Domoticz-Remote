@@ -7,7 +7,7 @@
 #define CONFIG_VERSION 7
 
 // USED for OTA
-#define APPLICATION_VERSION "26.7.30-1"
+#define APPLICATION_VERSION "26.9.4-1"
 
 #if PAGES < 1
     #error PAGES should be at least 1
