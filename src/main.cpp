@@ -24,6 +24,9 @@ unsigned long now;
 
 static void scr_event_cb(lv_event_t * e)
 {
+    #ifdef INTERACTION
+        if (isInteractionActive()) return;
+    #endif
     int p = GetActivePanel();
     int default_page = p;
 

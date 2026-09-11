@@ -196,7 +196,6 @@ static void not_used_yet_switch(lv_event_t* e){
     WriteGlobalConfig();
 }
 
-
 static void edit_device_list_switch(lv_event_t * e)
 {
     lv_event_code_t code = lv_event_get_code(e);
@@ -220,6 +219,50 @@ static void edit_device_list_switch(lv_event_t * e)
         }
         WriteGlobalConfig();
         Init_data_widget_page();
+    }
+}
+
+static void edit_command_idx_cb(lv_event_t * e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    lv_obj_t * ta = lv_event_get_target(e);
+
+    if (code == LV_EVENT_FOCUSED)
+    {
+        kb_show(ta);
+    }
+    else if (code == LV_EVENT_DEFOCUSED)
+    {
+        kb_hide(nullptr);
+    }
+    else if(code == LV_EVENT_READY || code == LV_EVENT_CANCEL) {
+        kb_hide(ta);
+
+        global_config.commandIdx = atoi(lv_textarea_get_text(ta));
+        WriteGlobalConfig();
+        Init_data_widget_page();    // To force scanning changes on this device
+    }
+}
+
+
+static void edit_response_idx_cb(lv_event_t * e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    lv_obj_t * ta = lv_event_get_target(e);
+
+    if (code == LV_EVENT_FOCUSED)
+    {
+        kb_show(ta);
+    }
+    else if (code == LV_EVENT_DEFOCUSED)
+    {
+        kb_hide(nullptr);
+    }
+    else if(code == LV_EVENT_READY || code == LV_EVENT_CANCEL) {
+        kb_hide(ta);
+
+        global_config.responseIdx = atoi(lv_textarea_get_text(ta));
+        WriteGlobalConfig();
     }
 }
 
@@ -449,6 +492,30 @@ void settings_panel_init(lv_obj_t* panel)
     if (global_config.protectInfo)
     lv_obj_add_state(toggle, LV_STATE_CHECKED);
     create_settings_widget("Protect info page", toggle, panel);
+
+    #ifdef INTERACTION
+        char formatText[10];
+
+        text = lv_textarea_create(panel);
+        lv_obj_add_event_cb(text, edit_command_idx_cb, LV_EVENT_ALL, NULL);
+        snprintf(formatText, sizeof(formatText),"%d", global_config.commandIdx);
+        lv_textarea_set_accepted_chars(text, "0123456789");
+        lv_textarea_set_max_length(text, 5);
+        lv_textarea_add_text(text, formatText);
+        lv_textarea_set_one_line(text, true);
+        lv_obj_set_width(text, lv_pct(60));
+        create_settings_widget("Command IDX", text, panel);
+
+        text = lv_textarea_create(panel);
+        lv_obj_add_event_cb(text, edit_response_idx_cb, LV_EVENT_ALL, NULL);
+        snprintf(formatText, sizeof(formatText),"%d", global_config.responseIdx);
+        lv_textarea_set_accepted_chars(text, "0123456789");
+        lv_textarea_set_max_length(text, 5);
+        lv_textarea_add_text(text, formatText);
+        lv_textarea_set_one_line(text, true);
+        lv_obj_set_width(text, lv_pct(60));
+        create_settings_widget("Response IDX", text, panel);
+    #endif
 
     create_settings_widget("", NULL, panel);
     btn = lv_btn_create(panel);

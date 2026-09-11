@@ -4,7 +4,7 @@
 #include "lvgl.h"
 
 // USED for memorised settings
-#define CONFIG_VERSION 7
+#define CONFIG_VERSION 8
 
 // USED for OTA
 #define APPLICATION_VERSION "26.9.4-1"
@@ -63,6 +63,8 @@ typedef struct _GLOBAL_CONFIG {
         };
     };
     char protectionPassword[16];
+    int commandIdx;
+    int responseIdx;
 } GLOBAL_CONFIG;
 
 

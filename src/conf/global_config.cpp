@@ -118,6 +118,12 @@ void Updatejsonversion(void)
         global_config.protectInfo = true;
     }
 
+    if ( global_config.version <= 7 )
+    {
+        global_config.commandIdx = 0;
+        global_config.responseIdx = 0;
+    }
+
     global_config.version == CONFIG_VERSION;
     WriteGlobalConfig();
 

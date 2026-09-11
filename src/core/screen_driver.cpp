@@ -443,30 +443,31 @@ void screen_timer_wake()
 
 void screen_timer_sleep(lv_timer_t *timer)
 {
+    #ifdef INTERACTION
+        if (isInteractionActive()) return;
+    #endif
 
-#ifdef AUTO_BRIGHTNESS
-    int cds = analogRead(CDS);
-    //int cds = analogReadMilliVolts(CDS);
-    Serial.printf("CDS value: %d\n", cds);
+    #ifdef AUTO_BRIGHTNESS
+        int cds = analogRead(CDS);
+        //int cds = analogReadMilliVolts(CDS);
+        Serial.printf("CDS value: %d\n", cds);
 
-    //value from sensor is 0(light)-4096(dark) so invert value to 0(dark)-4096(light) and divide with 16,06 to get 0-255
-    int b = (4096 -(cds))/16.06; 
-    if (b>= global_config.brightness) b = global_config.brightness; //if value b is higher than config settings use config settings
-    if (b < 0) b = 0; // For negative values
-    if (b< 10) b = 10; //if value b is lower than 10 set 10 as lowest brightness
-    Serial.printf("Brightness value: %d\n", b);
+        //value from sensor is 0(light)-4096(dark) so invert value to 0(dark)-4096(light) and divide with 16,06 to get 0-255
+        int b = (4096 -(cds))/16.06; 
+        if (b>= global_config.brightness) b = global_config.brightness; //if value b is higher than config settings use config settings
+        if (b < 0) b = 0; // For negative values
+        if (b< 10) b = 10; //if value b is lower than 10 set 10 as lowest brightness
+        Serial.printf("Brightness value: %d\n", b);
 
-    screen_setBrightness(b);
+        screen_setBrightness(b);
+    #else
+        screen_setBrightness(0);
+        isScreenInSleep = true;
 
-#else
-
-    screen_setBrightness(0);
-    isScreenInSleep = true;
-
-    // Screen is off, no need to make the cpu run fast, the user won't notice ;)
-    setCpuFrequencyMhz(CPU_FREQ_LOW);
-    Serial.printf("CPU Speed: %d MHz\n", ESP.getCpuFreqMHz());
-#endif
+        // Screen is off, no need to make the cpu run fast, the user won't notice ;)
+        setCpuFrequencyMhz(CPU_FREQ_LOW);
+        Serial.printf("CPU Speed: %d MHz\n", ESP.getCpuFreqMHz());
+    #endif
 }
 
 void screen_timer_setup()
@@ -495,6 +496,9 @@ void set_screen_timer_period()
 
 void home_timer_sleep(lv_timer_t *timer)
 {
+    #ifdef INTERACTION
+        if (isInteractionActive()) return;
+    #endif
     if (WS_Running()) navigation_screen(HOMEPAGE_PANEL);
 }
 

@@ -164,3 +164,35 @@ void getPanelName(int widgetPageIndex, char* pageText, size_t textLen) {
 bool isActivePanel(int widgetPageIndex) {
     return (widgetPageIndex >= HOMEPAGE_PANEL) && (widgetPageIndex <= LAST_PAGE_PANEL);
 }
+
+// Encode an URL (write destBuffer in place until full, always returns required buffer size)
+size_t urlEncode(char *destBuffer, size_t destLen, const char *inpBuffer){
+    const char *hex = "0123456789ABCDEF";
+    size_t resultSize = 0;
+    
+    while (*inpBuffer != '\0') {
+        if (('a' <= *inpBuffer && *inpBuffer <= 'z')
+                || ('A' <= *inpBuffer && *inpBuffer <= 'Z')
+                || ('0' <= *inpBuffer && *inpBuffer <= '9')
+                || *inpBuffer == '-' || *inpBuffer == '_'
+                || *inpBuffer == '.' || *inpBuffer == '~') {
+            resultSize++;
+            if (resultSize < destLen) {
+                *destBuffer++ = *inpBuffer;
+            }
+        } else {
+            resultSize += 3;
+            if (resultSize < destLen) {
+                *destBuffer++ = '%';
+                *destBuffer++ = hex[(unsigned char)*inpBuffer >> 4];
+                *destBuffer++ = hex[*inpBuffer & 0xf];
+            }
+        }
+        inpBuffer++;
+    }
+    // Add an ending null
+    if (destLen) {
+        *destBuffer = 0;
+    }
+    return resultSize;
+}

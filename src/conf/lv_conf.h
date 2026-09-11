@@ -591,7 +591,11 @@
 
 #define LV_USE_METER      0
 
-#define LV_USE_MSGBOX     0
+#ifdef INTERACTION
+    #define LV_USE_MSGBOX     1
+#else
+    #define LV_USE_MSGBOX     0
+#endif
 
 #define LV_USE_SPINBOX    0
 

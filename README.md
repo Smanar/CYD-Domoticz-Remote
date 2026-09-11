@@ -154,6 +154,44 @@ You'll find examples in "examples/extensions" folder.
 
 These will be automatically compiled with "main.cpp" code, if present.
 
+## Interaction with panel:
+
+Remote systems can display messages to panel, and optionally ask for user input.
+
+To include interaction code into panel, you need to request it by defining "-DINTERACTION " in platformio.ini
+
+Communication is done through JSON data exchanged using a couple of Domoticz text devices.
+
+Commands are read into "Command IDX" Domoticz text device, while responses are written to "Response IDX" device.
+
+They both are set to zero, meaning "not used".
+
+JSON request contains the following fields:
+- "type": "ask", mandatory
+- "title": "xxx", default = "No title given", contains message windows title
+- "message": "xxx", default "No message given", contains message to display, can include <cr> to display multiple lines
+- "timeOut": nn, default = 10, seconds to wait for user input, 0 = infinite
+- "responseType":, indicates response type, default to empty meaning no response, can be either:
+  - "string" to get a string response
+  - "number" to get an integer answer
+  - {"list": ["list1 text", "list2 text", "list3 text" ...]}, to specify list of options to choose
+- {"buttons": ["button1 text", "button2 text", "button3 text" ...]}, to specify buttons to display, default to "{"buttons" : ["Ok"]}"
+- "id:" "xxx", to specify id to return, used to discriminate requests, default to empty
+
+JSON answer will be sent on "responseIdx" Domoticz text device (if specified), with following fields:
+- "type": "ask"
+- "errorText": "xxx", will contain error message, empty else. As of now:
+    - Failed to parse interaction: sent JSON can't be parsed (illegal JSON),
+    - Illegal 'type': there's no 'type in message, or 'type' is not a string,
+    - 'Type' should be 'ask': 'type' is given, but not 'ask",
+    - timeout: no response, or response not validated within timeout period,
+    - canceled: message box closed using the "x" button on right top.
+- "button": "xxx", will contain clicked button text, empty else
+- "value": "xxx", will contain given value, empty else
+- "id": "xxx", will contain specified "id" in request, empty else
+
+You'll find examples in "examples/interaction" folder.
+
 ## Actuals issues   
 - Memory ^^, lot of feature are still in Beta test. For exemple Domoticz JSON are too big to be handled by the device, it cause problem for chart for exemple.
 - The features availables will depend of user devices. The home page will always work, the websocket return too, for the rest IDK. Some JSON are realy impressive, can take some Mega for only 5% of data used, and not possible to reduce them, there is no setting in domoticz. I m using a filtering for some of them, it's possible too using smaller requests to have smaller JSON as return, for exemple this one [https://www.domoticz.com/wiki/Domoticz_ ... 2Fswitche](https://www.domoticz.com/wiki/Domoticz_API/JSON_URL%27s#Get_details_of_all_lights.2Fswitches) but this one don't have data, so it's possible to make a device list, but without information. I will see what to keep or not on usage.   
