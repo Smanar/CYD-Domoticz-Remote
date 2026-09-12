@@ -37,6 +37,8 @@ JsonDocument loadJson() {
     settings["protectTool"] = global_config.protectTool;
     settings["protectGroup"] = global_config.protectGroup;
     settings["protectInfo"] = global_config.protectInfo;
+    settings["commandIdx"] = global_config.commandIdx;
+    settings["responseIdx"] = global_config.responseIdx;
     for (uint p=0; p<PAGES; p++) {
         settings["pages"][p]["name"] = global_pages[p].name;
         settings["pages"][p]["isProtected"] = global_pages[p].isProtected;
@@ -108,12 +110,7 @@ bool readJsonConfig(const char* jsonFile) {
     const char* charPtr;                                            // Pointer for char data
 
     // Load all settings into corresponding variables
-    unsigned char jsonVersion = settings["version"].as<unsigned char>();
-    if (jsonVersion != CONFIG_VERSION) {
-        Serial.printf("Json file version %d, should be %d\n", jsonVersion, CONFIG_VERSION);
-        return false;
-    }
-    global_config.version = jsonVersion;
+    global_config.version = settings["version"].as<unsigned char>();
     global_config.screenCalibrated = settings["screenCalibrated"].as<bool>();
     global_config.wifiConfigured = settings["wifiConfigured"].as<bool>();
     global_config.ipConfigured = settings["ipConfigured"].as<bool>();
@@ -150,7 +147,8 @@ bool readJsonConfig(const char* jsonFile) {
     global_config.protectTool = settings["protectTool"].as<bool>();
     global_config.protectGroup = settings["protectGroup"].as<bool>();
     global_config.protectInfo = settings["protectInfo"].as<bool>();
-    
+    global_config.commandIdx = settings["commandIdx"].as<int>();
+    global_config.responseIdx = settings["responseIdx"].as<int>();
     return true;
 }
 

@@ -44,7 +44,7 @@ bool HTTPGETRequestWithReturn(const char * url2, JsonDocument *doc, bool NeedFil
 
     HTTPClient client;
     int httpCode;
-    static char tmpBuffer[180];    // As routine is asynchronous, use only local data
+    char tmpBuffer[strlen(url2)+40];    // As routine is asynchronous, use only local data
 
     lv_snprintf(tmpBuffer, sizeof(tmpBuffer), "http://%s:%d%s",global_config.ServerHost, global_config.ServerPort, url2);
     //String url = "http://" + String(global_config.ServerHost) + ":" + String(global_config.ServerPort) + url2;

@@ -32,7 +32,12 @@ void WriteGlobalConfig() {
 void VerifyOldVersion(){
     Preferences preferences;
 
-    if (!preferences.begin("global_config", true)) return;
+    if (!preferences.begin("global_config", true)) 
+    {
+        Serial.println("No preferences found in memory!");
+        global_config.version = 0;
+        return;
+    }
     // As size changes between V3 (larger) and the new version (smaller), we should read existing
     // preferences into a local buffer with appropriate size
     size_t prefLength = preferences.getBytesLength("global_config");
@@ -89,9 +94,6 @@ void VerifyOldVersion(){
 
         global_config.version = 5; // The fonction Updatejsonversion() will update the rest
 
-        //Save settings using littleFS and json
-        WriteGlobalConfig();
-
 #if 0
         //Clear old data
         Serial.println(F("Clearing Global Config"));
@@ -106,7 +108,8 @@ void VerifyOldVersion(){
 
 void Updatejsonversion(void)
 {
-    if ( global_config.version == 5)
+    Serial.printf("Entering %s with version=%d\n", __func__, global_config.version);   ////
+    if ( global_config.version <= 6 )
     {
         strcpy(global_config.protectionPassword, "");
         global_config.protectSetting = true;
@@ -115,13 +118,19 @@ void Updatejsonversion(void)
         global_config.protectInfo = true;
     }
 
+    if ( global_config.version <= 7 )
+    {
+        global_config.commandIdx = 0;
+        global_config.responseIdx = 0;
+    }
+
     global_config.version == CONFIG_VERSION;
     WriteGlobalConfig();
 
 }
 
 void LoadGlobalConfig() {
-    global_config.version = CONFIG_VERSION;
+    global_config.version = 0;
 
     //Set defaut values
     global_config.brightness = 255;
@@ -143,9 +152,9 @@ void LoadGlobalConfig() {
     }
 
     // Check for version
-    if (global_config.version > CONFIG_VERSION)
+    if (global_config.version < CONFIG_VERSION)
     {
-        Serial.printf("Version missmatch: %d > %d\n", global_config.version, CONFIG_VERSION);
+        Serial.printf("Old version %d found, upgrading to %d\n", global_config.version, CONFIG_VERSION);
         Updatejsonversion();
     }
 

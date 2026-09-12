@@ -13,3 +13,4 @@ void loadInfo(char* textChar, size_t textSize);
 void getType(unsigned short type, char* typeText, size_t textLen);
 void getPanelName(int widgetPageIndex, char* pageText, size_t textLen);
 bool isActivePanel(int widgetPageIndex);
+size_t urlEncode(char *destBuffer, size_t destLen, const char *inpBuffer);

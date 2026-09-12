@@ -8,6 +8,10 @@
 
 extern unsigned long runningTime(void);
 
+
+#define XQUOTE(x) #x
+#define QUOTE(x) XQUOTE(x)
+
 //  Load system and memory information into a char*
 void loadInfo(char* textChar, size_t textSize) {
 
@@ -29,15 +33,75 @@ void loadInfo(char* textChar, size_t textSize) {
     lv_snprintf(textChar + strlen(textChar), textSize - strlen(textChar),
     "LV Heap %d kB used (%d %%), %d%% frag, largest %d kB, max %d kB, total %d kB\n", used_size / 1024, mon.used_pct, mon.frag_pct, mon.free_biggest_size / 1024, mon.max_used / 1024, mon.total_size / 1024);
     lv_snprintf(textChar + strlen(textChar), textSize - strlen(textChar),
-    "Application Version : %s\n", APPLICATION_VERSION);
+    "Application Version: %s\n", APPLICATION_VERSION);
     lv_snprintf(textChar + strlen(textChar), textSize - strlen(textChar),
-    "Running time : %d-%02d:%02d:%02d\n", runningTime()/(3600*24), (runningTime()/3600)%24 , (runningTime()/60)%60, runningTime()%60);
+    "Running time: %d-%02d:%02d:%02d\n", runningTime()/(3600*24), (runningTime()/3600)%24 , (runningTime()/60)%60, runningTime()%60);
     lv_snprintf(textChar + strlen(textChar), textSize - strlen(textChar),
-    "Total data by WS : %d ko\n", total_WS_lenght());
+    "Total data by WS: %d ko\n", total_WS_lenght());
     lv_snprintf(textChar + strlen(textChar), textSize - strlen(textChar),
     "LittleFS %s, %d kB free (%d%%)\n", totalBytes?"ok":"*BAD*", remainingBytes / 1024, (100 * remainingBytes) / totalBytes);
     lv_snprintf(textChar + strlen(textChar), textSize - strlen(textChar),
     "IP %d.%d.%d.%d\n", localIp[0], localIp[1], localIp[2], localIp[3]);
+    lv_snprintf(textChar + strlen(textChar), textSize - strlen(textChar),
+    "Compiled with:\n"
+    #ifdef USER_SETUP_LOADED
+        " -USER_SETUP_LOADED\n"
+    #endif
+    #ifdef FORCE_CONFIG
+        " -FORCE_CONFIG\n"
+    #endif
+    #ifdef FORCECALIBRATE
+        " -FORCECALIBRATE=" QUOTE(FORCECALIBRATE) "\n"
+    #endif
+    #ifdef OLD_DOMOTICZ
+        " -OLD_DOMOTICZ\n"
+    #endif
+    #ifdef PAGES
+        " -PAGES=" QUOTE(PAGES) "\n"
+    #endif
+    #ifdef FASTCLIC
+        " -FASTCLIC\n"
+    #endif
+    #ifdef NO_INFO_PAGE
+        " -NO_INFO_PAGE\n"
+    #endif
+    #ifdef NO_GROUP_PAGE
+        " -NO_GROUP_PAGE\n"
+    #endif
+    #ifdef FONT_TO_USE
+        " -FONT_TO_USE=" QUOTE(FONT_TO_USE) "\n"
+    #endif
+    #ifdef HIDE_PASSWORD
+        " -HIDE_PASSWORD\n"
+    #endif
+    #ifdef AUTO_BRIGHTNESS
+        " -AUTO_BRIGHTNESS\n"
+    #endif
+    #ifdef DIM_OFF_ICONS
+        " -DIM_OFF_ICONS\n"
+    #endif
+    #ifdef LIGHTWS
+        " -LIGHTWS\n"
+    #endif
+    #ifdef PUSHOTA
+        " -PUSHOTA\n"
+    #endif
+    #ifdef PULLOTA
+        " -PULLOTA\n"
+    #endif
+    #ifdef INTERACTION
+        " -INTERACTION\n"
+    #endif
+    #ifdef CORE_DEBUG_LEVEL
+        " -CORE_DEBUG_LEVEL\n"
+    #endif
+    #ifdef LV_USE_SNAPSHOT
+        " -LV_USE_SNAPSHOT\n"
+    #endif
+    #ifdef DEBUG_LVGL
+        " -DEBUG_LVGL\n"
+    #endif
+    );
 }
 
 //  Load a char* with text corresponding to a given internal type
@@ -99,4 +163,36 @@ void getPanelName(int widgetPageIndex, char* pageText, size_t textLen) {
 //  Returns true if given widget page index corresponds to a widget page
 bool isActivePanel(int widgetPageIndex) {
     return (widgetPageIndex >= HOMEPAGE_PANEL) && (widgetPageIndex <= LAST_PAGE_PANEL);
+}
+
+// Encode an URL (write destBuffer in place until full, always returns required buffer size)
+size_t urlEncode(char *destBuffer, size_t destLen, const char *inpBuffer){
+    const char *hex = "0123456789ABCDEF";
+    size_t resultSize = 0;
+    
+    while (*inpBuffer != '\0') {
+        if (('a' <= *inpBuffer && *inpBuffer <= 'z')
+                || ('A' <= *inpBuffer && *inpBuffer <= 'Z')
+                || ('0' <= *inpBuffer && *inpBuffer <= '9')
+                || *inpBuffer == '-' || *inpBuffer == '_'
+                || *inpBuffer == '.' || *inpBuffer == '~') {
+            resultSize++;
+            if (resultSize < destLen) {
+                *destBuffer++ = *inpBuffer;
+            }
+        } else {
+            resultSize += 3;
+            if (resultSize < destLen) {
+                *destBuffer++ = '%';
+                *destBuffer++ = hex[(unsigned char)*inpBuffer >> 4];
+                *destBuffer++ = hex[*inpBuffer & 0xf];
+            }
+        }
+        inpBuffer++;
+    }
+    // Add an ending null
+    if (destLen) {
+        *destBuffer = 0;
+    }
+    return resultSize;
 }
