@@ -8,6 +8,8 @@ static WebSocketsClient WSclient;
 static bool connect_ok = false;
 unsigned long total_data_lengh;
 
+extern bool refreshWidgets;
+
 void Update_device_data(JsonObject RJson2);
 void Update_scene_data(void);
 
@@ -174,11 +176,16 @@ static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
 	switch(type)
     {
 		case WStype_DISCONNECTED:
-			Serial.printf("[WSc] Disconnected!\n");
+            if (connect_ok) {
+                Serial.printf("[WSc] Disconnected!\n");
+                connect_ok = false;
+                refreshWidgets = true;
+            }
 			break;
 		case WStype_CONNECTED:
 			Serial.printf("[WSc] Connected to url: %s\n", payload);
             connect_ok = true;
+            refreshWidgets = true;
 
 			// send message to server when Connected
 			//WSclient.sendTXT("Connected");
