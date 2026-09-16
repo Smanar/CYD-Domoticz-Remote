@@ -8,18 +8,24 @@
 #include "../navigation.h"
 #include "../../conf/global_config.h"
 #include "../../debug/lvgl_debug.h"
+#include "WiFi.h"
 
 extern lv_style_t style_shadow;
 extern lv_style_t style_pressed;
 
 extern Device myDevices[];
 
+// Data for header
+static lv_obj_t* wifi_label = NULL;
+static lv_obj_t* domoticz_label = NULL;
+static lv_obj_t* user_label = NULL;
+
 //Calculate values to use to display the homepage (even number)
 #define TOTAL_OFFSET_X 10
 #define TOTAL_OFFSET_Y 10
 //Calculate widgets size
-int Size_w = int(LCD_WIDTH/TOTAL_ICONX) -  TOTAL_OFFSET_X;
-int Size_h = int(LCD_HEIGHT/TOTAL_ICONY) - TOTAL_OFFSET_Y;
+int Size_w = 0;
+int Size_h = 0;
 //Icon size
 //int Size_icon = 35;
 
@@ -359,6 +365,67 @@ static void Widget_button_group(lv_obj_t* panel, char* desc, int x, int y, int w
 
 }
 
+// Display a header on top of page
+void loadHeader(lv_obj_t* panel) {
+    // Create a container
+    lv_obj_t * container = lv_obj_create(panel);
+    lv_obj_remove_style_all(container);
+    lv_obj_set_size(container, LCD_WIDTH, header_height);
+    lv_obj_set_pos(container, 0, 0);
+    lv_obj_clear_flag(container, LV_OBJ_FLAG_SCROLLABLE);
+
+    // Create red style
+    static lv_style_t red_style;
+    lv_style_init(&red_style);
+    lv_style_set_bg_opa(&red_style, LV_OPA_50);
+    lv_style_set_bg_color(&red_style, lv_color_hex(0x0000FF));
+    lv_style_set_bg_grad_color(&red_style, lv_color_hex(0x0000FF));
+    lv_style_set_text_font(&red_style, &small_font);
+    lv_style_set_text_opa(&red_style, LV_OPA_100);
+    lv_style_set_text_color(&red_style, lv_color_hex(0xFFFFFF));
+
+    // Create green style
+    static lv_style_t green_style;
+    lv_style_init(&green_style);
+    lv_style_set_bg_opa(&green_style, LV_OPA_50);
+    lv_style_set_bg_color(&green_style, lv_color_hex(0x00FF00));
+    lv_style_set_bg_grad_color(&green_style, lv_color_hex(0x00FF00));
+    lv_style_set_text_font(&green_style, &small_font);
+    lv_style_set_text_color(&green_style, lv_color_hex(0x000000));
+    lv_style_set_text_opa(&green_style, LV_OPA_100);
+
+    // WiFi label
+    wifi_label = lv_label_create(container);
+    lv_obj_remove_style_all(wifi_label);
+    lv_obj_add_style(wifi_label, WiFi.isConnected()? &green_style : &red_style, LV_PART_MAIN);
+    lv_label_set_long_mode(wifi_label, LV_LABEL_LONG_CLIP);
+    const char* wifiText = " WiFi ";
+    lv_label_set_text(wifi_label, wifiText);
+    lv_obj_align_to(wifi_label, NULL, LV_ALIGN_BOTTOM_LEFT, 0, 0);
+    lv_obj_update_layout(wifi_label);
+
+    // Domoticz label
+    domoticz_label = lv_label_create(container);
+    lv_obj_remove_style_all(domoticz_label);
+    lv_obj_add_style(domoticz_label, WS_Running() ? &green_style : &red_style, LV_PART_MAIN);
+    lv_label_set_long_mode(domoticz_label, LV_LABEL_LONG_CLIP);
+    const char* domoticzText = " Domoticz ";
+    lv_label_set_text(domoticz_label, domoticzText);
+    lv_obj_align_to(domoticz_label, NULL, LV_ALIGN_BOTTOM_RIGHT, 0, 0);
+    lv_obj_update_layout(domoticz_label);
+
+    // User label
+    user_label = lv_label_create(container);
+    lv_obj_remove_style_all(user_label);
+    lv_obj_set_style_text_font(user_label, &small_font, 0);
+    size_t remaining_space = lv_obj_get_x(domoticz_label) - (lv_obj_get_width(wifi_label)+10);
+    lv_obj_set_width(user_label, remaining_space);
+    lv_obj_set_x(user_label, lv_obj_get_width(wifi_label)+5);
+    lv_label_set_long_mode(user_label, LV_LABEL_LONG_SCROLL_CIRCULAR);
+    lv_label_set_text(user_label, getHeaderMessage());
+    lv_obj_set_style_text_align(user_label, LV_TEXT_ALIGN_CENTER, 0);
+}
+
 void widget_panel_init(lv_obj_t* panel, bool dont_load_data)
 {
     short x,y;
@@ -366,6 +433,11 @@ void widget_panel_init(lv_obj_t* panel, bool dont_load_data)
     short i = 0;
 
     if (!dont_load_data) Init_data_widget_page();
+
+    setHeaderHeight();
+    if (global_config.addHeader) {
+        loadHeader(panel);
+    }
 
     for (y=0; y<TOTAL_ICONY; y=y+1)
     {
@@ -375,8 +447,7 @@ void widget_panel_init(lv_obj_t* panel, bool dont_load_data)
             const lv_img_dsc_t *icon = Geticon(myDevices[i].type);
 
             cx = TOTAL_OFFSET_X / 2 + (Size_w + TOTAL_OFFSET_X) * x;
-            cy = TOTAL_OFFSET_Y / 2 + (Size_h + TOTAL_OFFSET_Y) * y;
-
+            cy = (TOTAL_OFFSET_Y / 2 + (Size_h + TOTAL_OFFSET_Y) * y) + header_height;
             switch (myDevices[i].type)
             {
                 case TYPE_UNUSED:  // Not used device
@@ -470,7 +541,7 @@ void group_panel_init(lv_obj_t* panel)
     for (auto i : JS)
     {
         cx = TOTAL_OFFSET_X / 2 + (Size_w + TOTAL_OFFSET_X) * x;
-        cy = TOTAL_OFFSET_Y / 2 + (Size_h + TOTAL_OFFSET_Y) * y;
+        cy = (TOTAL_OFFSET_Y / 2 + (Size_h + TOTAL_OFFSET_Y) * y) + header_height;
 
         name = i["Name"];
         //if (i.containsKey("idx")) idx = atoi(i["idx"]);
@@ -497,4 +568,9 @@ void Update_scene_data(void)
 #ifndef NO_GROUP_PAGE
     RefreshScenePanel();
 #endif
+}
+
+void setSizes(void){
+    Size_w = int(LCD_WIDTH/TOTAL_ICONX) -  TOTAL_OFFSET_X;
+    Size_h = int((LCD_HEIGHT - header_height) /TOTAL_ICONY) - TOTAL_OFFSET_Y;
 }

@@ -21,6 +21,8 @@ static lv_obj_t * tv;
 static int actived_panel = 0;
 static int master_panel = 0;
 
+static char* headerMessage = nullptr;
+
 extern Device myDevices[];
 
 int GetActiveWidgetPage(void)
@@ -409,3 +411,31 @@ bool isPageProtected(int page) {
         responseSent = true;
     }
 #endif
+
+//  Here, we're called by a change of headerIdx
+void processHeader(const char* message) {
+    Serial.printf("Processing header '%s'\n", message);
+    if (headerMessage) {
+        free(headerMessage);
+    }
+    headerMessage = (char *) malloc(strlen(message) + 1);
+    strcpy(headerMessage, message);
+    RefreshWidgetsPanel(true);
+}
+
+void setHeaderHeight(void) {
+    if (global_config.addHeader) {
+        #if DEVICE_SIZE == 1
+            header_height =  14;
+        #else
+            header_height =  20;
+        #endif
+    } else {
+        header_height = 0;
+    }
+    setSizes();
+}
+
+char* getHeaderMessage(void) {
+    return headerMessage;
+}

@@ -4,10 +4,10 @@
 #include "lvgl.h"
 
 // USED for memorised settings
-#define CONFIG_VERSION 8
+#define CONFIG_VERSION 9
 
 // USED for OTA
-#define APPLICATION_VERSION "26.9.4-1"
+#define APPLICATION_VERSION "26.9.17-1"
 
 #if PAGES < 1
     #error PAGES should be at least 1
@@ -30,7 +30,7 @@ typedef struct _GLOBAL_CONFIG {
             bool lightMode : 1;
             bool invertColors : 1;
             bool rotateScreen : 1;
-            bool notused : 1;
+            bool addHeader : 1;
         };
     };
     float screenCalXOffset;
@@ -65,6 +65,7 @@ typedef struct _GLOBAL_CONFIG {
     char protectionPassword[16];
     int commandIdx;
     int responseIdx;
+    int headerIdx;
 } GLOBAL_CONFIG;
 
 

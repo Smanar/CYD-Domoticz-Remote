@@ -22,6 +22,7 @@
 #endif
 
 unsigned long now;
+uint8_t header_height =  0;
 bool refreshWidgets = false;
 
 static void scr_event_cb(lv_event_t * e)

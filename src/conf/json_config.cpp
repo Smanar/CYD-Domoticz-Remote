@@ -19,7 +19,7 @@ JsonDocument loadJson() {
     settings["lightMode"] = global_config.lightMode;
     settings["invertColors"] = global_config.invertColors;
     settings["rotateScreen"] = global_config.rotateScreen;
-    settings["notused"] = global_config.notused;
+    settings["addHeader"] = global_config.addHeader;
     settings["screenCalXOffset"] = global_config.screenCalXOffset;
     settings["screenCalXMult"] = global_config.screenCalXMult;
     settings["screenCalYOffset"] = global_config.screenCalYOffset;
@@ -39,6 +39,7 @@ JsonDocument loadJson() {
     settings["protectInfo"] = global_config.protectInfo;
     settings["commandIdx"] = global_config.commandIdx;
     settings["responseIdx"] = global_config.responseIdx;
+    settings["headerIdx"] = global_config.headerIdx;
     for (uint p=0; p<PAGES; p++) {
         settings["pages"][p]["name"] = global_pages[p].name;
         settings["pages"][p]["isProtected"] = global_pages[p].isProtected;
@@ -117,7 +118,7 @@ bool readJsonConfig(const char* jsonFile) {
     global_config.lightMode = settings["lightMode"].as<bool>();
     global_config.invertColors = settings["invertColors"].as<bool>();
     global_config.rotateScreen = settings["rotateScreen"].as<bool>();
-    global_config.notused = settings["notused"].as<bool>();
+    global_config.addHeader = settings["addHeader"].as<bool>();
     global_config.screenCalXOffset = settings["screenCalXOffset"].as<float>();
     global_config.screenCalXMult = settings["screenCalXMult"].as<float>();
     global_config.screenCalYOffset = settings["screenCalYOffset"].as<float>();
@@ -149,6 +150,7 @@ bool readJsonConfig(const char* jsonFile) {
     global_config.protectInfo = settings["protectInfo"].as<bool>();
     global_config.commandIdx = settings["commandIdx"].as<int>();
     global_config.responseIdx = settings["responseIdx"].as<int>();
+    global_config.headerIdx = settings["headerIdx"].as<int>();
     return true;
 }
 

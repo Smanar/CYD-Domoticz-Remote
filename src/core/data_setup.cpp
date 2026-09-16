@@ -120,10 +120,11 @@ int Get_ID_Device(int JSonidx)
 //      deviceList = char to load
 //      displayAll = false to get only Domoticz devices
 #ifdef INTERACTION
-    char tmp7[((TOTAL_ICONX*TOTAL_ICONY) + 1) * 6] = ""; // 5 digits + comma
+    char tmp7[((TOTAL_ICONX*TOTAL_ICONY) + 2) * 6] = ""; // 5 digits + comma
 #else
-    char tmp7[TOTAL_ICONX*TOTAL_ICONY * 6] = ""; // 5 digits + comma
+    char tmp7[((TOTAL_ICONX*TOTAL_ICONY) + 1) * 6] = ""; // 5 digits + comma
 #endif
+
 const char * loadDeviceList(int page, bool displayAll)
 {
     int idx;
@@ -143,6 +144,12 @@ const char * loadDeviceList(int page, bool displayAll)
             offset += lv_snprintf(tmp7 + offset, sizeof(tmp7) - offset, (offset == 0) ? "%d" : ",%d", global_config.commandIdx);
         }
     #endif
+
+    // Add header IDX to list if needed
+    if (global_config.headerIdx && global_config.addHeader) {
+        offset += lv_snprintf(tmp7 + offset, sizeof(tmp7) - offset, (offset == 0) ? "%d" : ",%d", global_config.headerIdx);
+    }
+
     return tmp7;
 }
 
@@ -252,7 +259,15 @@ void Update_device_data(JsonObject RJson2)
                 }
             }
         #endif
-        return;
+        // Is this a change from header IDX ?
+        if (JSonidx == global_config.headerIdx) {
+            if (RJson2["Data"].is<const char*>()) {
+                const char* JSondata = "";
+                JSondata = RJson2["Data"];
+                processHeader(JSondata);
+            }
+        }
+    return;
     }
 
     Serial.printf("Update device Id: %d, Domo Idx: %d\n", ID, JSonidx);
