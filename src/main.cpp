@@ -12,6 +12,7 @@
 #include "ui/main_ui.h"
 #include "ui/navigation.h"
 #include "ui/panels/panel.h"
+#include "Arduino.h"
 
 //#include "core/sound.h"
 
@@ -21,6 +22,7 @@
 #endif
 
 unsigned long now;
+bool refreshWidgets = false;
 
 static void scr_event_cb(lv_event_t * e)
 {
@@ -196,8 +198,14 @@ void setup() {
 
 void loop(){
 
-    //wifi_ok(); // Watchdog
+    // Refresh widgets if needed
+    if (refreshWidgets) {
+        RefreshWidgetsPanel();
+        refreshWidgets = false;
+    }
+
     Websocket_loop(); // Needed for websocket event.
+
 #ifdef PUSHOTA
     //Webserver for OTA
     OTA_loop();
