@@ -12,7 +12,7 @@ JsonDocument loadJson() {
 
     JsonDocument settings;
 
-    settings["version"] = global_config.version;
+    settings["version"] = CONFIG_VERSION;
     settings["screenCalibrated"] = global_config.screenCalibrated;
     settings["wifiConfigured"] = global_config.wifiConfigured;
     settings["ipConfigured"] = global_config.ipConfigured;
