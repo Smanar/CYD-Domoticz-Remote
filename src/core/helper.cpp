@@ -13,12 +13,18 @@ typedef struct _longText_t {
     uint8_t value;
 } longText_t;
 
+static char wrapText[] = "wrap";
+static char dotText[] = "dot";
+static char scrollText[] = "scroll";
+static char circularText[] = "circular";
+static char clipText[] = "clip";
+
 longText_t longTextMapping[] = {
-    {"wrap", LV_LABEL_LONG_WRAP},
-    {"dot", LV_LABEL_LONG_DOT},
-    {"scroll", LV_LABEL_LONG_SCROLL},
-    {"circular", LV_LABEL_LONG_SCROLL_CIRCULAR},
-    {"clip", LV_LABEL_LONG_CLIP}
+    {&wrapText[0], LV_LABEL_LONG_WRAP},
+    {&dotText[0], LV_LABEL_LONG_DOT},
+    {&scrollText[0], LV_LABEL_LONG_SCROLL},
+    {&circularText[0], LV_LABEL_LONG_SCROLL_CIRCULAR},
+    {&clipText[0], LV_LABEL_LONG_CLIP}
 };
 
 size_t longTextMappingLen = sizeof(longTextMapping) / sizeof(longText_t);
