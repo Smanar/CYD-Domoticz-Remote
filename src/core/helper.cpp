@@ -8,6 +8,21 @@
 
 extern unsigned long runningTime(void);
 
+typedef struct _longText_t {
+    char* name;
+    uint8_t value;
+} longText_t;
+
+longText_t longTextMapping[] = {
+    {"wrap", LV_LABEL_LONG_WRAP},
+    {"dot", LV_LABEL_LONG_DOT},
+    {"scroll", LV_LABEL_LONG_SCROLL},
+    {"circular", LV_LABEL_LONG_SCROLL_CIRCULAR},
+    {"clip", LV_LABEL_LONG_CLIP}
+};
+
+size_t longTextMappingLen = sizeof(longTextMapping) / sizeof(longText_t);
+
 #define XQUOTE(x) #x
 #define QUOTE(x) XQUOTE(x)
 
@@ -219,4 +234,26 @@ size_t urlEncode(char *destBuffer, size_t destLen, const char *inpBuffer){
         *destBuffer = 0;
     }
     return resultSize;
+}
+
+// Convert a longText string to LV label code value
+uint8_t decodeLongText(const char* longTextCode) {
+    for (uint8_t i = 0; i < longTextMappingLen; i++) {
+        if (!strcmp(longTextCode, longTextMapping[i].name)) {
+            return longTextMapping[i].value;
+        }
+    }
+   Serial.printf("Bad longText code '%s'\n", longTextCode);
+   return longTextMapping[0].value;
+}
+
+// Convert a LV label code value to a longText string
+char* encodeLongText(uint8_t longTextCode) {
+    for (uint8_t i = 0; i < longTextMappingLen; i++) {
+        if (longTextCode == longTextMapping[i].value) {
+            return longTextMapping[i].name;
+        }
+    }
+   Serial.printf("Bad longText code '%d'\n", longTextCode);
+   return longTextMapping[0].name;
 }

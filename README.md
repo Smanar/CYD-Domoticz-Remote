@@ -4,9 +4,9 @@ There is a video here https://www.youtube.com/watch?v=1Lc6MlZjePM
 
 ## Description   
 
-To make short I was searching a small wall mounted touchscreen to control my home, with low consumption enought to be powered all the time.   
-It use Wifi connection to connect direclty to domoticz, to ask information and use the websocket connexion to have real time event, so nothing to add. Just power the device using USB, give the Domoticz IP the wifi password and it's all.   
-The project is still WIP so somes settings are hard coded on the device, for exemple wich one devices will be displayed on the homepage, but it already work in stand alone mode.   
+To make short I was searching a small wall mounted touchscreen to control my home, with low consumption enough to be powered all the time.   
+It use Wifi connection to connect directly to domoticz, to ask information and use the websocket connection to have real time event, so nothing to add. Just power the device using USB, give the Domoticz IP the WiFi password and it's all.   
+The project is still WIP so domes settings are hard coded on the device, for example which one devices will be displayed on the homepage, but it already work in stand alone mode.   
 
 <p align="center">
   <img src="https://github.com/Smanar/Ressources/blob/main/pictures/CYD_1.jpg">
@@ -16,46 +16,46 @@ The project is still WIP so somes settings are hard coded on the device, for exe
   <img src="https://github.com/Smanar/Ressources/blob/main/pictures/domoticz_dashboard.jpg">
 </p>
 
-You can found more recents captures on the official topic here https://www.domoticz.com/forum/viewtopic.php?t=41232
+You can found more recent captures on the official topic here https://www.domoticz.com/forum/viewtopic.php?t=41232
 
 
 ## Installation   
 
-There is different way to install the code on th device, but I think this one is the easier.   
+There is different way to install the code on the device, but I think this one is the easier.   
 
-- Buy a CYD on Ali Express, you can found differents one, different size, different form, different technologies, you can found somes of them here https://github.com/rzeldent/platformio-espressif32-sunton
-- Install device drivers, for exemple here https://www.wch-ic.com/downloads/CH341SER_EXE.html   
-- Donwload Visual Studio Code https://code.visualstudio.com/    
+- Buy a CYD on Ali Express, you can found different one, different size, different form, different technologies, you can found domes of them here https://github.com/rzeldent/platformio-espressif32-sunton
+- Install device drivers, for example here https://www.wch-ic.com/downloads/CH341SER_EXE.html   
+- Download Visual Studio Code https://code.visualstudio.com/    
 - Install PlatformIO on it https://docs.platformio.org/en/latest/integration/ide/vscode.html#installation   
 - Download the project, extract the folder, and open it with Visual Studio Code. Open the complete folder.   
-- Take a look in the platformio.ini file (you can found usefull information/setting in it).   
+- Take a look in the platformio.ini file (you can found useful information/setting in it).   
 - Select your device. The project is configured by default for the 2432S028R, you can select other tested hardware in the platformio.ini file, on the [platformio] part, just comment the previous one and uncomment your hardware. You can add too unsupported device with some file modifications, or give me information about it, I can try to add it.   
 - ???
 - Just launch a compilation (Build) and upload (Upload) the code on the device using the USB cable. Don't forget to press the button (Boot) on the device to autorise the action. You just need to use icons on the application bottom, you don't need to use menus.
-- On domoticz, add the device ip to the "trusted network" (else it will be blocked). The project works fine on port 8080 but not sure on 443.   
-- On first launch, configure the Wifi, the domoticz IP and port, and on setting select the devices you want o display on the Homepage. If you haven't used a configuration fle or hardcoded the settings.   
+- On domoticz, add the device IP to the "trusted network" (else it will be blocked). The project works fine on port 8080 but not sure on 443.   
+- On first launch, configure the Wifi, the domoticz IP and port, and on setting select the devices you want o display on the Homepage. If you haven't used a configuration file or hardcoded the settings.   
 
 ## Settings   
 
 The project is still WIP so some settings are still hard coded.   
-Somes settings depend of hardware, tell me your hardware, I will search values to edit.   
+Domes settings depend of hardware, tell me your hardware, I will search values to edit.   
 
-There are 4 ways to configure the software settings (wifi, device id, and ect ...):   
+There are 4 ways to configure the software settings (WiFi, device id...):   
 - Can use the option FORCE_CONFIG and use hardcoded setting here https://github.com/Smanar/CYD-Domoticz-Remote/blob/main/src/main.cpp#L66
 - You can start the device and configure setting using the GUI.
 - You can use a personnal_settings.h file placed on the project with your settings.
-- You can edit data/settings.json and download it using platformIO "Upload Filesystem Image"
+- You can edit data/settings.json and download it using PlatformIO "Upload Filesystem Image"
 
-By defaut, domoticz defaut devices displayed on Homepage will be 1,2,3,4,5,6,7,8,9 so you need to change them on the application setting panel.   
+By default, domoticz default devices displayed on Homepage will be 1,2,3,4,5,6,7,8,9 so you need to change them on the application setting panel.   
 
-For the hardware part (according to your device) mains settings are in the file platformio.ini, by defaut the project is configured for the esp32-2432S028R
+For the hardware part (according to your device) mains settings are in the file platformio.ini, by default the project is configured for the esp32-2432S028R
 
 ``` 
 	#-DFORCE_CONFIG # Enable or disable the forced network configuration.
 	-DFORCECALIBRATE=false # Reset the calibration at every restart, used to reset it after a config change.
 	#-DOLD_DOMOTICZ # If you are using older Domoticz version < 2023.2
 	-DPAGES=1 # Count of home pages
-	-DFASTCLIC # Enable 1 clic action for some widget
+	-DFASTCLIC # Enable 1 click action for some widget
 	#-DNO_INFO_PAGE # Disable the Info panel
 	#-DNO_GROUP_PAGE # Disable the Group/scene panel
 	#-DFONT_TO_USE=1 # 1=Standard 2=Custom 3=French, See fonts paragraph
@@ -65,14 +65,14 @@ For the hardware part (according to your device) mains settings are in the file 
 	-DLIGHTWS # Only possible for version > 16088, decrease WS requests.
 	-DPUSHOTA # To enable PUSH OTA (Don't enable both OTA)
 	#-DPULLOTA # To enable PULL OTA (Don't enable both OTA)
-	#-DCORE_DEBUG_LEVEL=5 # To enable debug on serial for librairies and core
-	#-DLV_USE_SNAPSHOT=1 # Enable to take screen snapshots (will fail on non PSRAM devices)
-	#-DDEBUG_LVGL # Used to internaly debug LGVL
+	#-DCORE_DEBUG_LEVEL=5 # To enable debug on serial for libraries and core
+	#-=1 # Enable to take screen snapshots (will fail on non PRAM devices)
+	#-DIABOLICAL # Used to internally debug LGVL
 ```
-You have by defaut only one widget page, but you can add more without problem.   
+You have by default only one widget page, but you can add more without problem.   
 - Positive number will be widget ID
 - Negative number will be widget page.
-for exemple
+for example
 ``` 
   "pages": [
     {
@@ -108,23 +108,71 @@ for exemple
   ]
 ``` 
 
+## Larger widgets
+You can enlarge (usually text but not necessarily) widgets and/or set the long text display mode.
+
+To do this, you have yo replace numerical IDX in previous page description by a JSON code like:
+``` 
+  "pages": [
+    {
+      "name": "Home",
+      "isProtected": false,
+      "number": 1,
+      "idx": [
+        352,
+        353,
+        354,
+        355,
+        356,
+        357,
+        358,
+        -3,
+        256,
+        132,
+        {"idx": 499, "width": 1, "height": 2, "longText": "circular"},
+        0,
+        {"idx": 500, "width": 2, "height": 1, "longText": "dot"},
+        0,
+        0,
+        -2
+      ]
+    }
+  ]
+```
+JSON format is:
+```
+   {"idx": 499, "width": 1, "height": 2, "longText": "circular"},
+```
+
+Where:
+    - idx is Domoticz device IDX (or page number) to use
+    - width and height are multipliers of standard widgets (default to 1)
+    - longText indicates how to treat text larger than widget width (default to "wrap"):
+        - "wrap": wrap text on multiple lines,
+        - "dot": add "..." at end of visible text,
+        - "scroll": scroll text back and forth,
+        - "circular": scroll text continuously,
+        - "clip": cut text to visible length.
+
+Note that almost no checks are done, so you can overwrite widget by another one, or make a widget that won't be fully (or not at all) displayed on screen. You've been warned!
+
 ## Page protection
-You can protect any page from unauthorized access. When a protection password is defined in settngs, user will have to provide this password to be allowed accessing the page. Page validation or rejection is kept for 30 seconds.
+You can protect any page from unauthorized access. When a protection password is defined in settings, user will have to provide this password to be allowed accessing the page. Page validation or rejection is kept for 30 seconds.
 
 ## OTA
-There is 2 options for OTA, PUSHOTA and PULLOTA you can enable one of them or nothing (not both ofc).
+There are 2 options for OTA: PUSHOTA and PULLOTA.You can enable one of them or nothing (not both ofc).
 
-- PUSHOTA Enable the OTA in PUSH mode, it mean there is a webserver that run permanently, you can access it using /update as url.
-- PULLOTA can be used using the GUI, on the device itself, using the first tab, it will download itself the new firmware, but for the moment the url is hardcoded. https://github.com/Smanar/CYD-Domoticz-Remote/blob/main/src/core/ota.cpp#L15
+- PUSHOTA Enable the OTA in PUSH mode, it mean there is a webserver that run permanently, you can access it using /update as URL.
+- PULLOTA can be used using the GUI, on the device itself, using the first tab, it will download itself the new firmware, but for the moment the URL is hardcoded. https://github.com/Smanar/CYD-Domoticz-Remote/blob/main/src/core/ota.cpp#L15
 
 ## Webserver
 If you have enabled PUSHOTA, you will be able to use the on board webserver for:   
 - Update the device firmware.   
 - Download or upload the configuration using a JSON file.
 - Reset the device.
-- Get some inforamtions.   
+- Get some information.   
 
-## Tested devices, working nativley
+## Tested devices, working natively
 - esp32-2432S028R
 - esp32-2432S024C
 - esp32-E32S3RGB43
@@ -139,7 +187,7 @@ If you have enabled PUSHOTA, you will be able to use the on board webserver for:
 
 ## Fonts
 It's possible to select 3 Fonts:
-- 1=Standard : The defaut font.   
+- 1=Standard : The default font.   
 - 2=Custom : Here you can create you own, can share it too.
 - 3=French : A custom French font, including all French accented characters.
 
@@ -197,12 +245,12 @@ You may add a header over widget pages. You just have to enable "Display header"
 
 When activated, top of screen will display "Wifi" on left and "Domoticz" on right. Color is green when operational, red when broken.
 
-You may also display a message from Domoticz between there 2 indicators. Specify Domoticz text device IDx in "Header IDX" on settings page.
+You may also display a message from Domoticz between there 2 indicators. Specify Domoticz text device IDX in "Header IDX" on settings page.
 
-## Actuals issues   
-- Memory ^^, lot of feature are still in Beta test. For exemple Domoticz JSON are too big to be handled by the device, it cause problem for chart for exemple.
-- The features availables will depend of user devices. The home page will always work, the websocket return too, for the rest IDK. Some JSON are realy impressive, can take some Mega for only 5% of data used, and not possible to reduce them, there is no setting in domoticz. I m using a filtering for some of them, it's possible too using smaller requests to have smaller JSON as return, for exemple this one [https://www.domoticz.com/wiki/Domoticz_ ... 2Fswitche](https://www.domoticz.com/wiki/Domoticz_API/JSON_URL%27s#Get_details_of_all_lights.2Fswitches) but this one don't have data, so it's possible to make a device list, but without information. I will see what to keep or not on usage.   
+## Actual issues   
+- Memory ^^, lot of feature are still in Beta test. For example Domoticz JSON are too big to be handled by the device, it cause problem for chart for example.
+- The features available will depend of user devices. The home page will always work, the websocket return too, for the rest IDK. Some JSON are really impressive, can take some Mega for only 5% of data used, and not possible to reduce them, there is no setting in domoticz. I m using a filtering for some of them, it's possible too using smaller requests to have smaller JSON as return, for example this one [https://www.domoticz.com/wiki/Domoticz_ ... 2Fswitche](https://www.domoticz.com/wiki/Domoticz_API/JSON_URL%27s#Get_details_of_all_lights.2Fswitches) but this one don't have data, so it's possible to make a device list, but without information. I will see what to keep or not on usage.   
 
 ## Troubleshooting    
-- Be sure the device have its IP autorised in the Trusted Networks setting in Domoticz.   
+- Be sure the device have its IP authorised in the Trusted Networks setting in Domoticz.   
 - If you have problem with the Touchpad, you can force a calibration using the parameter -DFORCECALIBRATE=true. Else you will have it only at first launch.

@@ -2,6 +2,7 @@
 #include "ArduinoJson.h"
 #include "global_config.h"
 #include "json_config.h"
+#include "../core/helper.h"
 
 extern GLOBAL_CONFIG global_config;
 
@@ -45,7 +46,14 @@ JsonDocument loadJson() {
         settings["pages"][p]["isProtected"] = global_pages[p].isProtected;
         settings["pages"][p]["number"] = p+1;
         for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++) {
-            settings["pages"][p]["idx"][i] = global_pages[p].ListDevices[i];
+            if (global_pages[p].width[i] == 1 && global_pages[p].height[i] == 1 && global_pages[p].longText[i] == LV_LABEL_LONG_WRAP) {
+                settings["pages"][p]["idx"][i] = global_pages[p].ListDevices[i];
+            } else {
+                settings["pages"][p]["idx"][i]["idx"] = global_pages[p].ListDevices[i];
+                settings["pages"][p]["idx"][i]["width"] = global_pages[p].width[i];
+                settings["pages"][p]["idx"][i]["height"] = global_pages[p].height[i];
+                settings["pages"][p]["idx"][i]["longText"] = encodeLongText(global_pages[p].longText[i]);
+            }
         }
     }
 
@@ -135,7 +143,20 @@ bool readJsonConfig(const char* jsonFile) {
         if (charPtr) strncpy(global_pages[p].name, charPtr, sizeof(global_pages[p].name));
         global_pages[p].isProtected = settings["pages"][p]["isProtected"].as<bool>();
         for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++) {
-            global_pages[p].ListDevices[i] = settings["pages"][p]["idx"][i].as<int>();
+            global_pages[p].ListDevices[i] = settings["pages"][p]["idx"][i]["idx"].as<int>();
+            if (global_pages[p].ListDevices[i]) {
+                global_pages[p].width[i] = settings["pages"][p]["idx"][i]["width"].as<int>();
+                global_pages[p].height[i] = settings["pages"][p]["idx"][i]["height"].as<int>();
+                global_pages[p].longText[i] = decodeLongText(settings["pages"][p]["idx"][i]["longText"].as<const char*>());
+                Serial.printf("%d: idx=%d, width=%d, height=%d, longText=%d\n", i,
+                    global_pages[p].ListDevices[i], global_pages[p].width[i],
+                    global_pages[p].height[i], global_pages[p].longText[i]);
+            } else {
+                global_pages[p].ListDevices[i] = settings["pages"][p]["idx"][i].as<int>();
+                global_pages[p].width[i] = 1;
+                global_pages[p].height[i] = 1;
+                global_pages[p].longText[i] = LV_LABEL_LONG_WRAP;
+            }
         }
     }
     global_config.color_scheme = settings["color_scheme"].as<unsigned char>();

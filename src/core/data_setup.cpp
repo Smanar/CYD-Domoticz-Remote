@@ -72,6 +72,9 @@ void Init_data_widget_page()
         myDevices[i].level = 0;
         myDevices[i].levelname = NULL;
         myDevices[i].maxlevel = 0;
+        myDevices[i].width = global_pages[page].width[i];
+        myDevices[i].height = global_pages[page].height[i];;
+        myDevices[i].longText = global_pages[page].longText[i];
 
         if (idx < 0) //Sub page or buggy
         {

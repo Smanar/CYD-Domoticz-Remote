@@ -7,7 +7,7 @@
 #define CONFIG_VERSION 9
 
 // USED for OTA
-#define APPLICATION_VERSION "26.9.17-1"
+#define APPLICATION_VERSION "26.9.19-1"
 
 #if PAGES < 1
     #error PAGES should be at least 1
@@ -16,6 +16,9 @@
 typedef struct _GLOBAL_PAGE {
     char name[32];
     int ListDevices[TOTAL_ICONX*TOTAL_ICONY];
+    unsigned short width[TOTAL_ICONX*TOTAL_ICONY];
+    unsigned short height[TOTAL_ICONX*TOTAL_ICONY];
+    unsigned short longText[TOTAL_ICONX*TOTAL_ICONY];
     bool isProtected;
 } GLOBAL_PAGE;
 

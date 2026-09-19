@@ -1,9 +1,11 @@
 #include "lvgl.h"
 #include "panel.h"
 #include "../../core/screen_driver.h"
+#include "../../core/helper.h"
 #include "../../conf/global_config.h"
 #include "../main_ui.h"
 #include "../../ui/navigation.h"
+#include "ArduinoJson.h"
 
 void Init_data_widget_page();
 
@@ -213,10 +215,44 @@ static void edit_device_list_switch(lv_event_t * e)
     else if(code == LV_EVENT_READY || code == LV_EVENT_CANCEL) {
         kb_hide(ta);
 
-        for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++)
-        {
-            global_pages[pageToChange].ListDevices[i] = GetIntTok(lv_textarea_get_text(ta), i,',');
+        // Convert string to json list (adding [])
+        size_t textLen = strlen(lv_textarea_get_text(ta));
+        char jsonText[textLen+3];
+        jsonText[0] = '[';
+        strcpy(&jsonText[1], lv_textarea_get_text(ta));
+        jsonText[textLen+1] = ']';
+        jsonText[textLen+2] = 0;
+
+        // Decode json
+        JsonDocument jsonDoc;
+        DeserializationError error = deserializeJson(jsonDoc, jsonText);
+        if (error) {
+            Serial.printf("%s parsing %s\n", error.c_str(), jsonText);
+            char title[100];
+            lv_snprintf(title, sizeof(title), "%s parsing data. New input ignored", error.c_str());
+            lv_obj_t* msgbox = lv_msgbox_create(NULL, title, jsonText, NULL, true);
+            lv_obj_set_size(msgbox, LV_PCT(70), LV_PCT(70));
+            lv_obj_align(msgbox, LV_ALIGN_CENTER, 0, 0);
+            return;
         }
+        for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++) {
+            const char* idxData = jsonDoc[i] | "";
+            if (*idxData) {
+                global_pages[pageToChange].ListDevices[i] = jsonDoc[i]["idx"].as<int>();
+                global_pages[pageToChange].width[i] = jsonDoc[i]["width"].as<int>();
+                global_pages[pageToChange].height[i] = jsonDoc[i]["height"].as<int>();
+                global_pages[pageToChange].longText[i] = decodeLongText(jsonDoc[i]["longText"].as<const char*>());
+                Serial.printf("%d: idx=%d, width=%d, height=%d, longText=%d\n", i,
+                    global_pages[pageToChange].ListDevices[i], global_pages[pageToChange].width[i],
+                    global_pages[pageToChange].height[i], global_pages[pageToChange].longText[i]);
+            } else {
+                global_pages[pageToChange].ListDevices[i] = jsonDoc[i].as<int>();
+                global_pages[pageToChange].width[i] = 1;
+                global_pages[pageToChange].height[i] = 1;
+                global_pages[pageToChange].longText[i] = LV_LABEL_LONG_WRAP;
+            }
+        }
+
         WriteGlobalConfig();
         Init_data_widget_page();
     }
@@ -478,7 +514,24 @@ void settings_panel_init(lv_obj_t* panel)
 
     pageDeviceList = lv_textarea_create(panel);
     lv_obj_add_event_cb(pageDeviceList, edit_device_list_switch, LV_EVENT_ALL, NULL);
-    lv_textarea_add_text(pageDeviceList, loadDeviceList(pageToChange, true));
+    // Recreate IDX list
+    JsonDocument jsonDoc;
+    for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++) {
+        if (global_pages[pageToChange].width[i] == 1 &&
+                global_pages[pageToChange].height[i] == 1 &&
+                global_pages[pageToChange].longText[i] == LV_LABEL_LONG_WRAP) {
+            jsonDoc[i] = global_pages[pageToChange].ListDevices[i];
+        } else {
+            jsonDoc[i]["idx"] = global_pages[pageToChange].ListDevices[i];
+            jsonDoc[i]["width"] = global_pages[pageToChange].width[i];
+            jsonDoc[i]["height"] = global_pages[pageToChange].height[i];
+            jsonDoc[i]["longText"] = encodeLongText(global_pages[pageToChange].longText[i]);
+        }
+    }
+    size_t jsonLen = measureJson(jsonDoc);
+    char jsonText[jsonLen+1];
+    serializeJson(jsonDoc, jsonText, sizeof(jsonText));
+    lv_textarea_add_text(pageDeviceList, jsonText);
     lv_textarea_set_one_line(pageDeviceList, true);
     lv_obj_set_width(pageDeviceList, lv_pct(70));
     create_settings_widget("... devices", pageDeviceList, panel);

@@ -433,7 +433,6 @@ void setHeaderHeight(void) {
     } else {
         header_height = 0;
     }
-    setSizes();
 }
 
 char* getHeaderMessage(void) {
