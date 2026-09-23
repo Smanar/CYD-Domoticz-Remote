@@ -113,7 +113,7 @@ static void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int 
     // Display a "on" icon
     if (d->type < TYPE_SWITCH)
     {   
-        if ((strcmp(d->data, "On") == 0) || strcmp(d->data, "Open") == 0)
+        if (d->data && (strcmp(d->data, "On") == 0 || strcmp(d->data, "Open") == 0))
         {
             //lv_obj_set_style_img_recolor(img, color, 0);
             lv_obj_t * label = lv_label_create(Button_icon);
@@ -206,7 +206,7 @@ static void Widget_sensor(lv_obj_t* panel, char* desc, char* value, int x, int y
     lv_obj_t * label = lv_label_create(Button_icon);
     lv_obj_set_style_text_font(label, &big_font_bold, 0);
     #ifdef DIM_OFF_ICONS
-        if ((strcmp("Off", d->data) == 0) || (strcmp("Closed", d->data) == 0))
+        if (d->data && (strcmp("Off", d->data) == 0) || (strcmp("Closed", d->data) == 0))
         {
             lv_obj_set_style_text_color(label, ICON_GREYED_COLOR, 0);  // Set color to grey
         }
@@ -561,7 +561,7 @@ void group_panel_init(lv_obj_t* panel)
 
         name = i["Name"];
         //if (i.containsKey("idx")) idx = atoi(i["idx"]);
-        if (i["idx"].is<const char*>()) idx = atoi(i["idx"]);
+        idx = i["idx"].as<int>();
 
         device_color = lv_color_make(0xFF, 0x2F, 0x2F);
         if (strcmp(i["Type"], "Group") == 0) device_color = lv_color_make(0x2F, 0x2F, 0xFF);

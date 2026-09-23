@@ -66,8 +66,8 @@ For the hardware part (according to your device) mains settings are in the file 
 	-DPUSHOTA # To enable PUSH OTA (Don't enable both OTA)
 	#-DPULLOTA # To enable PULL OTA (Don't enable both OTA)
 	#-DCORE_DEBUG_LEVEL=5 # To enable debug on serial for libraries and core
-	#-=1 # Enable to take screen snapshots (will fail on non PRAM devices)
-	#-DIABOLICAL # Used to internally debug LGVL
+	#-DLV_USE_SNAPSHOT=1 # Enable to take screen snapshots (will fail on non PRAM devices)
+	#-DDEBUG_LVGL # Used to internally debug LGVL
 ```
 You have by default only one widget page, but you can add more without problem.   
 - Positive number will be widget ID

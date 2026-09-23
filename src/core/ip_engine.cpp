@@ -6,7 +6,7 @@
 
 static WebSocketsClient WSclient;
 static bool connect_ok = false;
-unsigned long total_data_lengh;
+unsigned long total_data_lenght;
 
 extern bool refreshWidgets;
 
@@ -26,7 +26,7 @@ void InitIPEngine(void)
     filter["result"][0]["Rain"] = true;
     filter["result"][0]["Type"] = true;
 
-    total_data_lengh = 0;
+    total_data_lenght = 0;
 }
 
 bool verify_ip(){
@@ -46,7 +46,7 @@ bool HTTPGETRequestWithReturn(const char * url2, JsonDocument *doc, bool NeedFil
 
     HTTPClient client;
     int httpCode;
-    char tmpBuffer[strlen(url2)+40];    // As routine is asynchronous, use only local data
+    char tmpBuffer[256];    // As routine is asynchronous, use only local data
 
     lv_snprintf(tmpBuffer, sizeof(tmpBuffer), "http://%s:%d%s",global_config.ServerHost, global_config.ServerPort, url2);
     //String url = "http://" + String(global_config.ServerHost) + ":" + String(global_config.ServerPort) + url2;
@@ -202,7 +202,7 @@ static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
                 strncpy(payloadText, (const char*) payload, sizeof(payloadText));
                 Serial.printf("WS text %s\n", payloadText);
                 #endif
-                total_data_lengh += length;
+                total_data_lenght += length;
 
                 JsonDocument doc;
                 doc.clear();
@@ -331,5 +331,5 @@ void Websocket_loop(void)
 
 unsigned long total_WS_lenght(void)
 {
-    return total_data_lengh/1024;
+    return total_data_lenght/1024;
 }

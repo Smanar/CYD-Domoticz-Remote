@@ -207,10 +207,14 @@ bool HandleDomoticzData(JsonObject RJson2, Device * d)
         size_t dataLen = strlen(data);
         if (dataLen > d->lenData)
         {
-            if (d->data) free(d->data);
-            d->lenData = 0;
-            d->data = (char*)malloc(dataLen + 1);   // Allocate space for data plus one (zero) byte
-            if (!d->data) return false; // malloc failed
+            char* tmp = (char*)realloc(d->data, dataLen + 1);   // Allocate space for data plus one (zero) byte
+            if (!tmp) 
+            {
+                // malloc failed
+                return false; 
+            }
+            
+            d->data = tmp;
             d->data[dataLen] = 0;   // Force last char to zero (never ovrwritten if sntncpy used with d->lenData)
             d->lenData = dataLen;   // Don't put +1 here to avoid heap corruption!
         }
@@ -305,16 +309,20 @@ int * GetGraphValue(int type, int idx, int *min, int *max, int *scale)
 {
 
 #ifdef OLD_DOMOTICZ
-    String url = "/json.htm?type=graph&sensor=";
+    char url[128];
+    const char* base_url = "/json.htm?type=graph&sensor=";
 #else
-    String url = "/json.htm?type=command&param=graph&sensor=";
+    char url[128];
+    const char* base_url = "/json.htm?type=command&param=graph&sensor=";
 #endif
+
+    const char* sensor_type = nullptr;
 
     switch (type)
     {
         case TYPE_TEMPERATURE:
         case TYPE_HUMIDITY:
-            url = url + "temp";
+            sensor_type = "temp";
             break;
         case TYPE_CONSUMPTION:
         case TYPE_POWER:
@@ -322,19 +330,19 @@ int * GetGraphValue(int type, int idx, int *min, int *max, int *scale)
         case TYPE_AIR_QUALITY:
         case TYPE_WEIGHT:
         case TYPE_VALUE_SENSOR:
-            url = url + "counter";
+            sensor_type = "counter";
             break;
         case TYPE_PERCENT_SENSOR:
-            url = url + "Percentage";
+            sensor_type = "Percentage";
             break;
         case TYPE_RAIN:
-            url = url + "rain";
+            sensor_type = "rain";
             break;
         case TYPE_WIND:
-            url = url + "wind";
+            sensor_type = "wind";
             break;
         case TYPE_UV:
-            url = url + "uv";
+            sensor_type = "uv";
             break;
         default:
             //not supported
@@ -342,16 +350,17 @@ int * GetGraphValue(int type, int idx, int *min, int *max, int *scale)
             return nullptr;
     }
 
+    snprintf(url, sizeof(url), "%s%s&idx=%d&range=day", base_url, sensor_type, idx);
+
     JsonDocument doc;
-    url = url + "&idx=" + String(idx) + "&range=day";
-    if (HTTPGETRequestWithReturn((char *)url.c_str(), &doc))
+    if (HTTPGETRequestWithReturn(url, &doc))
     {
         JsonArray JS;
         JS = doc["result"];
 
         if (JS.isNull())
         {
-            Serial.printf("Json not available for type %d, url %s\n", type, url.c_str());
+            Serial.printf("Json not available for type %d, url %s\n", type, url);
             return nullptr;
         }
 
@@ -383,7 +392,9 @@ int * GetGraphValue(int type, int idx, int *min, int *max, int *scale)
         for (auto i : JS)
         {
             //"d" : "2024-02-16 19:45",
-            c = i["d"];
+            c = i["d"].as<const char*>();
+            if (!c) continue;
+            
             sscanf(c+11, "%2d", &hour);
 
             if (hour>23) hour = 23;
@@ -400,30 +411,30 @@ int * GetGraphValue(int type, int idx, int *min, int *max, int *scale)
             switch (type)
             {
                 case TYPE_TEMPERATURE:
-                    v = i["te"];
+                    v = i["te"].as<double>();
                     break;
                 case TYPE_HUMIDITY:
-                    v = i["hu"];
+                    v = i["hu"].as<double>();
                     break;
                 case TYPE_CONSUMPTION:
-                    v = i["eu"];
+                    v = i["eu"].as<double>();
                     break;
                 case TYPE_POWER:
-                    v = i["u"];
+                    v = i["u"].as<double>();
                     break;
                 case TYPE_PERCENT_SENSOR:
                 case TYPE_VALUE_SENSOR:
                 case TYPE_WEIGHT:
-                    v = i["v"];
+                    v = i["v"].as<double>();
                     break;
                 case TYPE_RAIN:
-                    v = i["mm"];
+                    v = i["mm"].as<double>();
                     break;
                 case TYPE_WIND:
-                    v = i["sp"];
+                    v = i["sp"].as<double>();
                     break;
                 case TYPE_UV:
-                    v = i["uvi"];
+                    v = i["uvi"].as<double>();
                     break;
                 default:
                     v = 0;
@@ -474,10 +485,10 @@ int * GetGraphValue(int type, int idx, int *min, int *max, int *scale)
 	return nullptr;
 }
 
+
 bool InitDeviceRequest(Device *dd, const char* c, bool isarray)
 {
-
-    if (!*c) return false;                                          // Don't send empty request (will else send all devices)
+    if (!*c) return false; // Don't send empty request (will else send all devices)
     JsonDocument doc;
     int idx = 0;
 
@@ -489,9 +500,7 @@ bool InitDeviceRequest(Device *dd, const char* c, bool isarray)
 
     if (!HTTPGETRequestWithReturn((char *)url.c_str(), &doc)) return false;
 
-    JsonArray JS;
-    JS = doc["result"];
-
+    JsonArray JS = doc["result"];
     if (JS.isNull())
     {
         Serial.println(F("Json not available\n"));
@@ -502,30 +511,21 @@ bool InitDeviceRequest(Device *dd, const char* c, bool isarray)
 
     for (auto i : JS)
     {
+        // //First need the idx
+        idx = i["idx"].as<int>();
 
-        //First need the idx
-        if (i["idx"].is<int>())
+        if (isarray) //Check the array
         {
-            idx = i["idx"].as<int>();
-        }
-        else if (i["idx"].is<const char*>())
-        {
-            idx = atoi(i["idx"].as<const char*>());
-        }
-
-        if (isarray)
-        {
-            //Check the array
             d = nullptr;
-            for (int j = 0; j < (TOTAL_ICONX*TOTAL_ICONY); j +=1 )
+            for (int j = 0; j < (TOTAL_ICONX*TOTAL_ICONY); j++)
             {
                 if (dd[j].idx == idx)
                 {
                     d = &dd[j];
+                    break; // found it
                 }
             }
-            // Not present ? Something is wrong in the request, skip it
-            if (!d) continue;
+            if (!d) continue; // Not present ? Something is wrong in the request, skip it
         }
         else
         {
@@ -533,20 +533,14 @@ bool InitDeviceRequest(Device *dd, const char* c, bool isarray)
             d->idx = idx;
         }
 
-
         if (!SetNewString(&d->name, i["Name"])) return false;
-
+        
         //Serial.printf("Initialize Domoticz devices id: %d, name %s\n", d->idx, d->name);
 
-        const char* JSondata = NULL;
-        const char* type = NULL;
-        const char* subtype = NULL;
-        const char* image = NULL;
-
-        type = i["Type"];
-        subtype = i["SubType"];
-        image = i["Image"];
-        JSondata = i["Data"];
+        const char* JSondata = i["Data"].as<const char*>();
+        const char* type = i["Type"].as<const char*>();
+        const char* subtype = i["SubType"].as<const char*>();
+        const char* image = i["Image"].as<const char*>();
 
         if (!type || !subtype || !JSondata)
         {
@@ -556,8 +550,8 @@ bool InitDeviceRequest(Device *dd, const char* c, bool isarray)
 
         if (!SetNewString(&d->ID, i["ID"])) return false;
 
-        d->level = i["Level"];
-
+        d->level = i["Level"].as<int>();
+        
         //Set a defaut value
         d->type = TYPE_UNKNOWN;
 
@@ -565,157 +559,113 @@ bool InitDeviceRequest(Device *dd, const char* c, bool isarray)
         {
             d->type = TYPE_LIGHT;
 
-            if (strcmp(subtype,"Selector Switch") == 0)
+            if (strcmp(subtype, "Selector Switch") == 0)
             {
-
                 d->type = TYPE_SELECTOR;
-                const char *base64 = i["LevelNames"];
-                if (d->levelname) free(d->levelname);
-                // Decoded string is always smaller, bytes = (string_length(encoded_string) − 814) / 1.37
-                // So we loose 30% of memory for nothing but don't need to re-alloc it.
-                d->levelname = (char*)malloc(strlen(i["LevelNames"]) + 1);
-                if (!d->levelname) return false; // malloc failed
-
-                unsigned int string_length = decode_base64((const unsigned char*)base64, (unsigned char *)d->levelname);
-                d->levelname[string_length] = '\0';
-
-                char *ptr = d->levelname;
-                while (*ptr != '\0')
+                const char *base64 = i["LevelNames"].as<const char*>();
+                
+                if (base64)
                 {
-                    if (*ptr == '|') { *ptr = '\n'; }
-                    ptr++;
-                }
+                    size_t base64Len = strlen(base64);
+                    // Decoded string is always smaller, bytes = (string_length(encoded_string) − 814) / 1.37
+                    // So we loose 30% of memory for nothing but don't need to re-alloc it.
+                    char* tmp_levelname = (char*)realloc(d->levelname, base64Len + 1);
+                    if (!tmp_levelname) 
+                    {
+                        Serial.println(F("Erreur: Échec realloc levelname"));
+                        return false; // L'ancien d->levelname reste intact
+                    }
+                    d->levelname = tmp_levelname;
 
+                    unsigned int string_length = decode_base64((const unsigned char*)base64, (unsigned char *)d->levelname);
+                    d->levelname[string_length] = '\0';
+
+                    char *ptr = d->levelname;
+                    while (*ptr != '\0')
+                    {
+                        if (*ptr == '|') { *ptr = '\n'; }
+                        ptr++;
+                    }
+                }
             }
             else // Type "switch"
             {
-                const char* switchtype = i["SwitchType"];
+                const char* switchtype = i["SwitchType"].as<const char*>();
 
-                if (strcmp(switchtype,"Dimmer") == 0)
+                if (strcmp(switchtype, "Dimmer") == 0)
                 {
                     d->type = TYPE_DIMMER;
-
+                    
                     // some device don't have 0/100 values
-                    if (i["MaxDimLevel"].is<double>()) d->maxlevel = i["MaxDimLevel"];
-
+                    if (i["MaxDimLevel"].is<double>()) d->maxlevel = i["MaxDimLevel"].as<double>();
                 }
-                else if (strcmp(switchtype,"On/Off") == 0)
+                else if (strcmp(switchtype, "On/Off") == 0)
                 {
                     d->type = TYPE_LIGHT;
                 }
-                else if ((strcmp(switchtype,"Push On Button") == 0) || (strcmp(switchtype,"Push Off Button") == 0))
+                else if ((strcmp(switchtype, "Push On Button") == 0) || (strcmp(switchtype, "Push Off Button") == 0))
                 {
                     d->type = TYPE_PUSH;
                 }
-                else if ((strcmp(switchtype,"Venetian Blinds EU") == 0) || (strcmp(switchtype,"Venetian Blinds US") == 0)
-                || (strcmp(switchtype,"Blinds Percentage") == 0) || (strcmp(switchtype,"Blinds % + Stop") == 0))
+                else if ((strcmp(switchtype, "Venetian Blinds EU") == 0) || (strcmp(switchtype, "Venetian Blinds US") == 0)
+                || (strcmp(switchtype, "Blinds Percentage") == 0) || (strcmp(switchtype, "Blinds % + Stop") == 0))
                 {
                     d->type = TYPE_BLINDS;
                 }
-                else // Just passive sensor
+                else 
                 {
                     d->type = TYPE_SWITCH_SENSOR;
                 }
             }
-
         }
         else if (strncmp(type, "Lighting", 8) == 0)
         {
             d->type = TYPE_LIGHT;
             
-            const char* switchtype = i["SwitchType"];
-            if (strcmp(switchtype,"Dimmer") == 0)
+            const char* switchtype = i["SwitchType"].as<const char*>();
+            if (strcmp(switchtype, "Dimmer") == 0)
             {
                 d->type = TYPE_DIMMER;
-
                 // some device don't have 0/100 values
-                if (i["MaxDimLevel"].is<double>()) d->maxlevel = i["MaxDimLevel"];
-
+                if (i["MaxDimLevel"].is<double>()) d->maxlevel = i["MaxDimLevel"].as<double>();
             }
         }
-        else if (strcmp(type, "Color Switch") == 0)
-        {
-            d->type = TYPE_COLOR;
-        }
-        else if (strncmp(type, "Temp",4) == 0)
-        {
-            d->type = TYPE_TEMPERATURE;
-        }
-        else if (strcmp(type, "Humidity") == 0)
-        {
-            d->type = TYPE_HUMIDITY;
-        }
-        else if (strcmp(type, "Rain") == 0)
-        {
-            d->type = TYPE_RAIN;
-        }
-        else if (strcmp(type, "Wind") == 0)
-        {
-            d->type = TYPE_WIND;
-        }
-        else if (strcmp(type, "UV") == 0)
-        {
-            d->type = TYPE_UV;
-        }
-        else if (strcmp(type, "Usage") == 0)
-        {
-            d->type = TYPE_POWER;
-        }
-        else if ((strcmp(type, "P1 Smart Meter") == 0) || (strcmp(type, "RFXMeter") == 0))
-        {
-            d->type = TYPE_CONSUMPTION;
-        }
-        else if (strcmp(type, "Weight") == 0)
-        {
-            d->type = TYPE_WEIGHT;
-        }
-        else if (strcmp(type, "Air Quality") == 0)
-        {
-            d->type = TYPE_AIR_QUALITY;
-        }
+        else if (strcmp(type, "Color Switch") == 0) d->type = TYPE_COLOR;
+        else if (strncmp(type, "Temp", 4) == 0) d->type = TYPE_TEMPERATURE;
+        else if (strcmp(type, "Humidity") == 0) d->type = TYPE_HUMIDITY;
+        else if (strcmp(type, "Rain") == 0) d->type = TYPE_RAIN;
+        else if (strcmp(type, "Wind") == 0) d->type = TYPE_WIND;
+        else if (strcmp(type, "UV") == 0) d->type = TYPE_UV;
+        else if (strcmp(type, "Usage") == 0) d->type = TYPE_POWER;
+        else if ((strcmp(type, "P1 Smart Meter") == 0) || (strcmp(type, "RFXMeter") == 0)) d->type = TYPE_CONSUMPTION;
+        else if (strcmp(type, "Weight") == 0) d->type = TYPE_WEIGHT;
+        else if (strcmp(type, "Air Quality") == 0) d->type = TYPE_AIR_QUALITY;
         else if (strcmp(type, "General") == 0)
         {
             d->type = TYPE_SWITCH_SENSOR;
 
-            if (strcmp(subtype,"Alert") == 0) d->type = TYPE_WARNING;
-            else if (strcmp(subtype,"Percentage") == 0) d->type = TYPE_PERCENT_SENSOR;
-            else if (strcmp(subtype,"Text") == 0) d->type = TYPE_TEXT;
-            else if (strcmp(subtype,"kWh") == 0) d->type = TYPE_CONSUMPTION;
-            else if (strcmp(subtype,"Custom Sensor") == 0) d->type = TYPE_VALUE_SENSOR;
-            else if (strcmp(subtype,"Visibility") == 0) d->type = TYPE_VALUE_SENSOR;
+            if (strcmp(subtype, "Alert") == 0) d->type = TYPE_WARNING;
+            else if (strcmp(subtype, "Percentage") == 0) d->type = TYPE_PERCENT_SENSOR;
+            else if (strcmp(subtype, "Text") == 0) d->type = TYPE_TEXT;
+            else if (strcmp(subtype, "kWh") == 0) d->type = TYPE_CONSUMPTION;
+            else if (strcmp(subtype, "Custom Sensor") == 0) d->type = TYPE_VALUE_SENSOR;
+            else if (strcmp(subtype, "Visibility") == 0) d->type = TYPE_VALUE_SENSOR;
         }
-        else if (strcmp(type, "Lux") == 0)
-        {
-            d->type = TYPE_LUX;
-        }
-        else if ((strcmp(type, "Setpoint") == 0) || (strcmp(type, "Thermostat") == 0))
-        {
-            d->type = TYPE_SETPOINT;
-        }
-        else if (strcmp(type, "Thermostat 6") == 0)
-        {
-            d->type = TYPE_THERMOSTAT;
-        }
+        else if (strcmp(type, "Lux") == 0) d->type = TYPE_LUX;
+        else if ((strcmp(type, "Setpoint") == 0) || (strcmp(type, "Thermostat") == 0)) d->type = TYPE_SETPOINT;
+        else if (strcmp(type, "Thermostat 6") == 0) d->type = TYPE_THERMOSTAT;
+        
         if (image)
         {
-            // Correction by image
-            if (strcmp(image,"WallSocket") == 0)
-            {
-                d->type = TYPE_PLUG;
-            }
-            else if (strcmp(image,"Speaker") == 0)
-            {
-                d->type = TYPE_SPEAKER;
-            }
+            if (strcmp(image, "WallSocket") == 0) d->type = TYPE_PLUG;
+            else if (strcmp(image, "Speaker") == 0) d->type = TYPE_SPEAKER;
         }
 
         //If not already updated
         HandleDomoticzData(i, d);
-
     }
 
     return true;
-
 }
 
 void GetThermostatValue(int idx, int *min, int *max, float *step, float *setpoint)
@@ -726,15 +676,17 @@ void GetThermostatValue(int idx, int *min, int *max, float *step, float *setpoin
     *step = 0.5f;
     *setpoint= 20.0f;
 
+    char url[128];
+
 #ifdef OLD_DOMOTICZ
-    String url = "/json.htm?type=devices&rid=" + String(idx);
+    snprintf(url, sizeof(url), "/json.htm?type=devices&rid=%d", idx);
 #else
-    String url = "/json.htm?type=command&param=getdevices&rid=" + String(idx);
+    snprintf(url, sizeof(url), "/json.htm?type=command&param=getdevices&rid=%d", idx);
 #endif
 
     JsonDocument doc;
 
-    if (HTTPGETRequestWithReturn((char *)url.c_str(), &doc))
+    if (HTTPGETRequestWithReturn(url, &doc))
     {
         JsonArray JS;
         JS = doc["result"];
