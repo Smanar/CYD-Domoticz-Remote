@@ -3,8 +3,11 @@
 #include "wifi_setup.h"
 #include "../conf/global_config.h"
 #include "navigation.h"
+#include "Arduino.h"
 
 void wifi_init_inner();
+
+extern bool refreshWidgets;
 
 static void refresh_btn_event_handler(lv_event_t * e)
 {
@@ -150,7 +153,15 @@ int print_timer = 0;
 // Called when WiFi is connected and IP set
 //  Force widget refresh to get last version of devices value
 void WiFiGotIP(WiFiEvent_t event, WiFiEventInfo_t info) {
-    RefreshWidgetsPanel();  // Refresh widget if currently displayed
+    IPAddress localIp = WiFi.localIP();
+    Serial.printf("Got IP %d.%d.%d.%d\n", localIp[0], localIp[1], localIp[2], localIp[3]);
+    refreshWidgets = true;  // Refresh widget if currently displayed
+}
+
+// Called when WiFi is disconnected
+void WiFiLost(WiFiEvent_t event, WiFiEventInfo_t info) {
+    Serial.printf("WiFi disconnected\n");
+    refreshWidgets = true;  // Refresh widget if currently displayed
 }
 
 void wifi_init()
@@ -196,6 +207,7 @@ void wifi_init()
     Serial.print(F("Wifi connecting to SSID: "));
     Serial.println(global_config.wifiSSID);
     WiFi.onEvent(WiFiGotIP, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
+    WiFi.onEvent(WiFiLost, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
     WiFi.begin(global_config.wifiSSID, global_config.wifiPassword);
     WiFi.setAutoReconnect(true);    // Force WiFi reconnection
     unsigned long startAttempt = millis();
@@ -210,13 +222,13 @@ void wifi_init()
             Serial.printf("WiFi Status: %s\n", (status < 7) ? errs[status] : "Unknown");
         }
 
-        if (millis() - startAttempt > 15000) // 15 secondes
-        {
-            Serial.println(F("WiFi connection failed, back to config"));
-            global_config.wifiConfigured = false;
-            wifi_init();
-            return;
-        }
+        //if (millis() - startAttempt > 15000) // 15 secondes
+        //{
+        //    Serial.println(F("WiFi connection failed, back to config"));
+        //    global_config.wifiConfigured = false;
+        //    wifi_init();
+        //    return;
+        //}
         
         lv_timer_handler();
         //lv_task_handler();

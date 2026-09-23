@@ -8,18 +8,22 @@
 #include "../navigation.h"
 #include "../../conf/global_config.h"
 #include "../../debug/lvgl_debug.h"
+#include "WiFi.h"
 
 extern lv_style_t style_shadow;
 extern lv_style_t style_pressed;
 
 extern Device myDevices[];
 
+// Data for header
+static lv_obj_t* wifi_label = NULL;
+static lv_obj_t* domoticz_label = NULL;
+static lv_obj_t* user_label = NULL;
+
 //Calculate values to use to display the homepage (even number)
 #define TOTAL_OFFSET_X 10
 #define TOTAL_OFFSET_Y 10
-//Calculate widgets size
-int Size_w = int(LCD_WIDTH/TOTAL_ICONX) -  TOTAL_OFFSET_X;
-int Size_h = int(LCD_HEIGHT/TOTAL_ICONY) - TOTAL_OFFSET_Y;
+
 //Icon size
 //int Size_icon = 35;
 
@@ -84,7 +88,7 @@ static void btn_event_cb(lv_event_t * e)
     Select_deviceMemorised(d2);
 }
 
-static void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int h, lv_color_t color, Device *d, const lv_img_dsc_t* icon)
+static void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int h, lv_color_t color, Device *d, const lv_img_dsc_t* icon, uint8_t long_text)
 {
     /*Create a container with ROW flex direction*/
     lv_obj_t * Button_icon = lv_obj_create(panel);
@@ -161,19 +165,19 @@ static void Widget_button(lv_obj_t* panel, char* desc, int x, int y, int w, int 
 
     /*Create description*/
     lv_obj_t * label2 = lv_label_create(Button_icon);               /*Add a label to the button*/
-    lv_label_set_long_mode(label2, LV_LABEL_LONG_WRAP);             /*Break the long lines*/
+    lv_label_set_long_mode(label2, long_text);
     lv_obj_set_style_text_font(label2, &small_font, 0);
     lv_obj_set_style_text_align(label2, LV_TEXT_ALIGN_CENTER, 0);
     //lv_label_set_recolor(label2, true);                           /*Activate coloring*/
     lv_label_set_text(label2, desc);                                /*Set the labels text*/
     //lv_obj_center(label2);
-    //lv_obj_set_size(label2, Size_w-10, 30);
-    lv_obj_set_width(label2, Size_w);
+    //lv_obj_set_size(label2, w-10, 30);
+    lv_obj_set_width(label2, w);
     lv_obj_align_to(label2, Button_icon,  LV_ALIGN_BOTTOM_MID, 0, 10); 
 
 }
 
-static void Widget_sensor(lv_obj_t* panel, char* desc, char* value, int x, int y, int w, int h, lv_color_t color, Device *d, const lv_img_dsc_t *icon)
+static void Widget_sensor(lv_obj_t* panel, char* desc, char* value, int x, int y, int w, int h, lv_color_t color, Device *d, const lv_img_dsc_t *icon, uint8_t long_text)
 {
 
     /*Create a container*/
@@ -216,10 +220,10 @@ static void Widget_sensor(lv_obj_t* panel, char* desc, char* value, int x, int y
     lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_RIGHT, 0);
 #if DEVICE_SIZE == 1
     lv_obj_set_height(label, 30);
-    lv_obj_set_width(label, Size_w /2);
+    lv_obj_set_width(label, w /2);
 #else
     lv_obj_set_height(label, 57);
-    lv_obj_set_width(label, 2* Size_w /3);
+    lv_obj_set_width(label, 2* w /3);
 #endif
     lv_obj_align_to(label, img,  LV_ALIGN_OUT_RIGHT_TOP, 0, 0);
     //lv_obj_set_style_border_width(label, 5, 0); // To make it visible
@@ -227,16 +231,16 @@ static void Widget_sensor(lv_obj_t* panel, char* desc, char* value, int x, int y
 
     /*Create description*/
     lv_obj_t * label2 = lv_label_create(Button_icon);
-    lv_label_set_long_mode(label2, LV_LABEL_LONG_WRAP);
+    lv_label_set_long_mode(label2, long_text);
     lv_obj_set_style_text_align(label2, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_style_text_font(label2, &small_font, 0);
     lv_label_set_text(label2, desc);
-    //lv_obj_set_size(label2, Size_w-10, 30);
-    lv_obj_set_width(label2, Size_w);
+    //lv_obj_set_size(label2, w-10, 30);
+    lv_obj_set_width(label2, w);
     lv_obj_align_to(label2, Button_icon,  LV_ALIGN_BOTTOM_MID, 0, 10); 
 }
 
-static void Widget_text(lv_obj_t* panel, char* desc, char* value, int x, int y, int w, int h, lv_color_t color, Device *d, const lv_img_dsc_t *icon)
+static void Widget_text(lv_obj_t* panel, char* desc, char* value, int x, int y, int w, int h, lv_color_t color, Device *d, const lv_img_dsc_t *icon, uint8_t long_text)
 {
 
     /*Create a container*/
@@ -251,7 +255,7 @@ static void Widget_text(lv_obj_t* panel, char* desc, char* value, int x, int y, 
     lv_obj_t * label = lv_label_create(Button_icon);
     lv_obj_set_style_text_font(label, &big_font_bold, 0);
     lv_obj_set_style_text_color(label, color, 0);
-    lv_label_set_long_mode(label, LV_LABEL_LONG_DOT);             /*Add dot at end of long lines*/
+    lv_label_set_long_mode(label, long_text);
     //lv_label_set_text(label, value);
 
     int value_height = 0; // It's the total height for value so "h" (padding alreading removed) minus the description height
@@ -267,11 +271,11 @@ static void Widget_text(lv_obj_t* panel, char* desc, char* value, int x, int y, 
     {
         /*Create description*/
         lv_obj_t * label2 = lv_label_create(Button_icon);
-        lv_label_set_long_mode(label2, LV_LABEL_LONG_WRAP);
+        lv_label_set_long_mode(label2, long_text);
         lv_obj_set_style_text_align(label2, LV_TEXT_ALIGN_CENTER, 0);
         lv_obj_set_style_text_font(label2, &small_font, 0);
         lv_label_set_text(label2, desc);
-        lv_obj_set_width(label2, Size_w);
+        lv_obj_set_width(label2, w);
         lv_obj_align_to(label2, Button_icon,  LV_ALIGN_BOTTOM_MID, 0, 10);
 
         //lv_obj_update_layout(label2);   // Recompute all label2 parameters
@@ -354,9 +358,70 @@ static void Widget_button_group(lv_obj_t* panel, char* desc, int x, int y, int w
     lv_obj_set_style_text_font(label2, &small_font, 0);
     lv_obj_set_style_text_align(label2, LV_TEXT_ALIGN_CENTER, 0);
     lv_label_set_text(label2, desc);                                /*Set the labels text*/
-    lv_obj_set_width(label2, Size_w);
+    lv_obj_set_width(label2, w);
     lv_obj_align_to(label2, Button_icon,  LV_ALIGN_BOTTOM_MID, 0, 10); 
 
+}
+
+// Display a header on top of page
+void loadHeader(lv_obj_t* panel) {
+    // Create a container
+    lv_obj_t * container = lv_obj_create(panel);
+    lv_obj_remove_style_all(container);
+    lv_obj_set_size(container, LCD_WIDTH, header_height);
+    lv_obj_set_pos(container, 0, 0);
+    lv_obj_clear_flag(container, LV_OBJ_FLAG_SCROLLABLE);
+
+    // Create red style
+    static lv_style_t red_style;
+    lv_style_init(&red_style);
+    lv_style_set_bg_opa(&red_style, LV_OPA_50);
+    lv_style_set_bg_color(&red_style, lv_color_hex(0x0000FF));
+    lv_style_set_bg_grad_color(&red_style, lv_color_hex(0x0000FF));
+    lv_style_set_text_font(&red_style, &small_font);
+    lv_style_set_text_opa(&red_style, LV_OPA_100);
+    lv_style_set_text_color(&red_style, lv_color_hex(0xFFFFFF));
+
+    // Create green style
+    static lv_style_t green_style;
+    lv_style_init(&green_style);
+    lv_style_set_bg_opa(&green_style, LV_OPA_50);
+    lv_style_set_bg_color(&green_style, lv_color_hex(0x00FF00));
+    lv_style_set_bg_grad_color(&green_style, lv_color_hex(0x00FF00));
+    lv_style_set_text_font(&green_style, &small_font);
+    lv_style_set_text_color(&green_style, lv_color_hex(0x000000));
+    lv_style_set_text_opa(&green_style, LV_OPA_100);
+
+    // WiFi label
+    wifi_label = lv_label_create(container);
+    lv_obj_remove_style_all(wifi_label);
+    lv_obj_add_style(wifi_label, WiFi.isConnected()? &green_style : &red_style, LV_PART_MAIN);
+    lv_label_set_long_mode(wifi_label, LV_LABEL_LONG_CLIP);
+    const char* wifiText = " WiFi ";
+    lv_label_set_text(wifi_label, wifiText);
+    lv_obj_align_to(wifi_label, NULL, LV_ALIGN_BOTTOM_LEFT, 0, 0);
+    lv_obj_update_layout(wifi_label);
+
+    // Domoticz label
+    domoticz_label = lv_label_create(container);
+    lv_obj_remove_style_all(domoticz_label);
+    lv_obj_add_style(domoticz_label, WS_Running() ? &green_style : &red_style, LV_PART_MAIN);
+    lv_label_set_long_mode(domoticz_label, LV_LABEL_LONG_CLIP);
+    const char* domoticzText = " Domoticz ";
+    lv_label_set_text(domoticz_label, domoticzText);
+    lv_obj_align_to(domoticz_label, NULL, LV_ALIGN_BOTTOM_RIGHT, 0, 0);
+    lv_obj_update_layout(domoticz_label);
+
+    // User label
+    user_label = lv_label_create(container);
+    lv_obj_remove_style_all(user_label);
+    lv_obj_set_style_text_font(user_label, &small_font, 0);
+    size_t remaining_space = lv_obj_get_x(domoticz_label) - (lv_obj_get_width(wifi_label)+10);
+    lv_obj_set_width(user_label, remaining_space);
+    lv_obj_set_x(user_label, lv_obj_get_width(wifi_label)+5);
+    lv_label_set_long_mode(user_label, LV_LABEL_LONG_SCROLL_CIRCULAR);
+    lv_label_set_text(user_label, getHeaderMessage());
+    lv_obj_set_style_text_align(user_label, LV_TEXT_ALIGN_CENTER, 0);
 }
 
 void widget_panel_init(lv_obj_t* panel, bool dont_load_data)
@@ -367,15 +432,25 @@ void widget_panel_init(lv_obj_t* panel, bool dont_load_data)
 
     if (!dont_load_data) Init_data_widget_page();
 
+    setHeaderHeight();
+    if (global_config.addHeader) {
+        loadHeader(panel);
+    }
+
     for (y=0; y<TOTAL_ICONY; y=y+1)
     {
         for (x=0; x<TOTAL_ICONX; x=x+1)
         {
             const lv_color_t device_color = Getcolor(myDevices[i].type);
             const lv_img_dsc_t *icon = Geticon(myDevices[i].type);
-
+            int Size_w = int(LCD_WIDTH / TOTAL_ICONX) -  TOTAL_OFFSET_X;
+            int Size_h = (int(LCD_HEIGHT - header_height) / TOTAL_ICONY) - TOTAL_OFFSET_Y;
+        
             cx = TOTAL_OFFSET_X / 2 + (Size_w + TOTAL_OFFSET_X) * x;
-            cy = TOTAL_OFFSET_Y / 2 + (Size_h + TOTAL_OFFSET_Y) * y;
+            cy = (TOTAL_OFFSET_Y / 2 + (Size_h + TOTAL_OFFSET_Y) * y) + header_height;
+
+            int Widget_w = (int(LCD_WIDTH / TOTAL_ICONX) * myDevices[i].width) -  TOTAL_OFFSET_X;
+            int Widget_h = (int((LCD_HEIGHT - header_height) / TOTAL_ICONY) * myDevices[i].height) - TOTAL_OFFSET_Y;
 
             switch (myDevices[i].type)
             {
@@ -397,12 +472,18 @@ void widget_panel_init(lv_obj_t* panel, bool dont_load_data)
                 case TYPE_AIR_QUALITY:
                 case TYPE_PERCENT_SENSOR:
                 {
-                    Widget_sensor(panel, myDevices[i].name, myDevices[i].data, cx , cy , Size_w , Size_h, device_color, &myDevices[i], icon);
+                    Widget_sensor(panel, myDevices[i].name, myDevices[i].data,
+                        cx, cy,
+                        Widget_w, Widget_h, 
+                        device_color, &myDevices[i], icon, myDevices[i].longText);
                 }
                 break;
                 case TYPE_TEXT:
                 {
-                    Widget_text(panel, myDevices[i].name, myDevices[i].data, cx , cy , Size_w , Size_h, device_color, &myDevices[i], icon);
+                    Widget_text(panel, myDevices[i].name, myDevices[i].data,
+                        cx, cy,
+                        Widget_w, Widget_h, 
+                        device_color, &myDevices[i], icon, myDevices[i].longText);
                 }
                 break;
                 case TYPE_UNKNOWN: // Unknown type
@@ -418,7 +499,10 @@ void widget_panel_init(lv_obj_t* panel, bool dont_load_data)
                 case TYPE_WARNING: // This one is a sensor, but too much text to be displayed on homepage
                 case TYPE_PAGE:
                 {
-                    Widget_button(panel, myDevices[i].name, cx, cy, Size_w , Size_h, device_color, &myDevices[i], icon); 
+                    Widget_button(panel, myDevices[i].name,
+                        cx, cy,
+                        Widget_w, Widget_h, 
+                        device_color, &myDevices[i], icon, myDevices[i].longText);
                 }
                 break;
                 default:
@@ -467,10 +551,13 @@ void group_panel_init(lv_obj_t* panel)
     const char *status = nullptr;
     lv_color_t device_color;
     
+    int Size_w = int(LCD_WIDTH/TOTAL_ICONX) -  TOTAL_OFFSET_X;
+    int Size_h = int((LCD_HEIGHT - header_height) /TOTAL_ICONY) - TOTAL_OFFSET_Y;
+
     for (auto i : JS)
     {
         cx = TOTAL_OFFSET_X / 2 + (Size_w + TOTAL_OFFSET_X) * x;
-        cy = TOTAL_OFFSET_Y / 2 + (Size_h + TOTAL_OFFSET_Y) * y;
+        cy = (TOTAL_OFFSET_Y / 2 + (Size_h + TOTAL_OFFSET_Y) * y) + header_height;
 
         name = i["Name"];
         //if (i.containsKey("idx")) idx = atoi(i["idx"]);

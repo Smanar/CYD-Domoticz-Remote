@@ -65,7 +65,6 @@ void VerifyOldVersion(){
         global_config.lightMode = configV3.lightMode;
         global_config.invertColors = configV3.invertColors;
         global_config.rotateScreen = configV3.rotateScreen;
-        global_config.notused = configV3.notused;
         global_config.screenCalXOffset = configV3.screenCalXOffset;
         global_config.screenCalXMult = configV3.screenCalXMult;
         global_config.screenCalYOffset = configV3.screenCalYOffset;
@@ -122,6 +121,12 @@ void Updatejsonversion(void)
     {
         global_config.commandIdx = 0;
         global_config.responseIdx = 0;
+    }
+
+    if ( global_config.version <= 8 )
+    {
+        global_config.addHeader = false;
+        global_config.headerIdx = 0;
     }
 
     global_config.version == CONFIG_VERSION;

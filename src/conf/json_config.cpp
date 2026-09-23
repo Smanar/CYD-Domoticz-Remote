@@ -2,6 +2,7 @@
 #include "ArduinoJson.h"
 #include "global_config.h"
 #include "json_config.h"
+#include "../core/helper.h"
 
 extern GLOBAL_CONFIG global_config;
 
@@ -12,14 +13,14 @@ JsonDocument loadJson() {
 
     JsonDocument settings;
 
-    settings["version"] = global_config.version;
+    settings["version"] = CONFIG_VERSION;
     settings["screenCalibrated"] = global_config.screenCalibrated;
     settings["wifiConfigured"] = global_config.wifiConfigured;
     settings["ipConfigured"] = global_config.ipConfigured;
     settings["lightMode"] = global_config.lightMode;
     settings["invertColors"] = global_config.invertColors;
     settings["rotateScreen"] = global_config.rotateScreen;
-    settings["notused"] = global_config.notused;
+    settings["addHeader"] = global_config.addHeader;
     settings["screenCalXOffset"] = global_config.screenCalXOffset;
     settings["screenCalXMult"] = global_config.screenCalXMult;
     settings["screenCalYOffset"] = global_config.screenCalYOffset;
@@ -39,12 +40,20 @@ JsonDocument loadJson() {
     settings["protectInfo"] = global_config.protectInfo;
     settings["commandIdx"] = global_config.commandIdx;
     settings["responseIdx"] = global_config.responseIdx;
+    settings["headerIdx"] = global_config.headerIdx;
     for (uint p=0; p<PAGES; p++) {
         settings["pages"][p]["name"] = global_pages[p].name;
         settings["pages"][p]["isProtected"] = global_pages[p].isProtected;
         settings["pages"][p]["number"] = p+1;
         for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++) {
-            settings["pages"][p]["idx"][i] = global_pages[p].ListDevices[i];
+            if (global_pages[p].width[i] == 1 && global_pages[p].height[i] == 1 && global_pages[p].longText[i] == LV_LABEL_LONG_WRAP) {
+                settings["pages"][p]["idx"][i] = global_pages[p].ListDevices[i];
+            } else {
+                settings["pages"][p]["idx"][i]["idx"] = global_pages[p].ListDevices[i];
+                settings["pages"][p]["idx"][i]["width"] = global_pages[p].width[i];
+                settings["pages"][p]["idx"][i]["height"] = global_pages[p].height[i];
+                settings["pages"][p]["idx"][i]["longText"] = encodeLongText(global_pages[p].longText[i]);
+            }
         }
     }
 
@@ -117,7 +126,7 @@ bool readJsonConfig(const char* jsonFile) {
     global_config.lightMode = settings["lightMode"].as<bool>();
     global_config.invertColors = settings["invertColors"].as<bool>();
     global_config.rotateScreen = settings["rotateScreen"].as<bool>();
-    global_config.notused = settings["notused"].as<bool>();
+    global_config.addHeader = settings["addHeader"].as<bool>();
     global_config.screenCalXOffset = settings["screenCalXOffset"].as<float>();
     global_config.screenCalXMult = settings["screenCalXMult"].as<float>();
     global_config.screenCalYOffset = settings["screenCalYOffset"].as<float>();
@@ -134,7 +143,20 @@ bool readJsonConfig(const char* jsonFile) {
         if (charPtr) strncpy(global_pages[p].name, charPtr, sizeof(global_pages[p].name));
         global_pages[p].isProtected = settings["pages"][p]["isProtected"].as<bool>();
         for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++) {
-            global_pages[p].ListDevices[i] = settings["pages"][p]["idx"][i].as<int>();
+            global_pages[p].ListDevices[i] = settings["pages"][p]["idx"][i]["idx"].as<int>();
+            if (global_pages[p].ListDevices[i]) {
+                global_pages[p].width[i] = settings["pages"][p]["idx"][i]["width"].as<int>();
+                global_pages[p].height[i] = settings["pages"][p]["idx"][i]["height"].as<int>();
+                global_pages[p].longText[i] = decodeLongText(settings["pages"][p]["idx"][i]["longText"].as<const char*>());
+                Serial.printf("%d: idx=%d, width=%d, height=%d, longText=%d\n", i,
+                    global_pages[p].ListDevices[i], global_pages[p].width[i],
+                    global_pages[p].height[i], global_pages[p].longText[i]);
+            } else {
+                global_pages[p].ListDevices[i] = settings["pages"][p]["idx"][i].as<int>();
+                global_pages[p].width[i] = 1;
+                global_pages[p].height[i] = 1;
+                global_pages[p].longText[i] = LV_LABEL_LONG_WRAP;
+            }
         }
     }
     global_config.color_scheme = settings["color_scheme"].as<unsigned char>();
@@ -149,6 +171,7 @@ bool readJsonConfig(const char* jsonFile) {
     global_config.protectInfo = settings["protectInfo"].as<bool>();
     global_config.commandIdx = settings["commandIdx"].as<int>();
     global_config.responseIdx = settings["responseIdx"].as<int>();
+    global_config.headerIdx = settings["headerIdx"].as<int>();
     return true;
 }
 
