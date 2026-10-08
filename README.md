@@ -68,6 +68,7 @@ For the hardware part (according to your device) mains settings are in the file 
 	#-DCORE_DEBUG_LEVEL=5 # To enable debug on serial for libraries and core
 	#-DLV_USE_SNAPSHOT=1 # Enable to take screen snapshots (will fail on non PRAM devices)
 	#-DDEBUG_LVGL # Used to internally debug LGVL
+	#-DINTERACTION # To enable remote interaction with panel
 ```
 You have by default only one widget page, but you can add more without problem.   
 - Positive number will be widget ID
