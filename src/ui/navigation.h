@@ -8,6 +8,14 @@ void SetActivePanel(int);
 void RefreshWidgetsPanel(bool dontLoadData = false);
 void RefreshScenePanel(void);
 void RefreshDevicePanel(void);
+#ifdef INTERACTION
+    void processInteraction(const char* message);
+    void sendInteractionResponse(void);
+    bool isInteractionActive(void);
+#endif
+void processHeader(const char* message);
+void setHeaderHeight(void);
+char* getHeaderMessage(void);
 
 int checkAdminRights(const int, const int);
 bool isPageProtected(int page);

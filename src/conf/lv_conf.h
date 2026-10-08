@@ -591,7 +591,7 @@
 
 #define LV_USE_METER      0
 
-#define LV_USE_MSGBOX     0
+#define LV_USE_MSGBOX     1
 
 #define LV_USE_SPINBOX    0
 

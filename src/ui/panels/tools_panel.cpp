@@ -88,15 +88,16 @@ void tools_panel_init(lv_obj_t* panel)
     // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/mem_alloc.html#:%7E:text=Due%20to%20a%20technical%20limitation,allocated%20at%20runtime%20as%20heap.
     // esp_get_free_heap_size() ???
 
-    char Text[350];
+    char Text[500];
     loadInfo(Text, sizeof(Text));
 
-    label_tool = lv_label_create(cont2);
-    lv_obj_set_style_text_font(label_tool, &medium_font, 0);
-    lv_label_set_long_mode(label_tool, LV_LABEL_LONG_WRAP);
-    lv_label_set_text(label_tool, Text);
-    lv_obj_set_size(label_tool, LV_PCT(100), LV_PCT(100));
-    lv_obj_set_style_text_align(label_tool, LV_TEXT_ALIGN_LEFT, 0);
-
+    lv_obj_t * textarea_tool = lv_textarea_create(cont2);
+    lv_obj_set_style_text_font(textarea_tool, &medium_font, 0);
+    lv_obj_clear_flag(textarea_tool, LV_OBJ_FLAG_SCROLL_ELASTIC);
+    lv_obj_set_scrollbar_mode(textarea_tool, LV_SCROLLBAR_MODE_AUTO);
+    lv_obj_set_style_text_align(textarea_tool, LV_TEXT_ALIGN_LEFT, 0);
+    lv_obj_set_size(textarea_tool, LV_PCT(100), LV_PCT(100));
+    lv_textarea_set_text(textarea_tool, Text);
+    lv_obj_scroll_to(textarea_tool, 0, 0, LV_ANIM_OFF);
 }
 

@@ -6,7 +6,9 @@
 
 static WebSocketsClient WSclient;
 static bool connect_ok = false;
-unsigned long total_data_lengh;
+unsigned long total_data_lenght;
+
+extern bool refreshWidgets;
 
 void Update_device_data(JsonObject RJson2);
 void Update_scene_data(void);
@@ -24,7 +26,7 @@ void InitIPEngine(void)
     filter["result"][0]["Rain"] = true;
     filter["result"][0]["Type"] = true;
 
-    total_data_lengh = 0;
+    total_data_lenght = 0;
 }
 
 bool verify_ip(){
@@ -44,7 +46,7 @@ bool HTTPGETRequestWithReturn(const char * url2, JsonDocument *doc, bool NeedFil
 
     HTTPClient client;
     int httpCode;
-    static char tmpBuffer[180];    // As routine is asynchronous, use only local data
+    char tmpBuffer[256];    // As routine is asynchronous, use only local data
 
     lv_snprintf(tmpBuffer, sizeof(tmpBuffer), "http://%s:%d%s",global_config.ServerHost, global_config.ServerPort, url2);
     //String url = "http://" + String(global_config.ServerHost) + ":" + String(global_config.ServerPort) + url2;
@@ -174,11 +176,16 @@ static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
 	switch(type)
     {
 		case WStype_DISCONNECTED:
-			Serial.printf("[WSc] Disconnected!\n");
+            if (connect_ok) {
+                Serial.printf("[WSc] Disconnected!\n");
+                connect_ok = false;
+                refreshWidgets = true;
+            }
 			break;
 		case WStype_CONNECTED:
 			Serial.printf("[WSc] Connected to url: %s\n", payload);
             connect_ok = true;
+            refreshWidgets = true;
 
 			// send message to server when Connected
 			//WSclient.sendTXT("Connected");
@@ -186,6 +193,7 @@ static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
 			break;
 		case WStype_TEXT:
 			//Serial.printf("[WSc] get text: %s\n", payload);
+
             if (length > 0)
             {
                 #if (0)
@@ -194,7 +202,7 @@ static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
                 strncpy(payloadText, (const char*) payload, sizeof(payloadText));
                 Serial.printf("WS text %s\n", payloadText);
                 #endif
-                total_data_lengh += length;
+                total_data_lenght += length;
 
                 JsonDocument doc;
                 doc.clear();
@@ -296,6 +304,11 @@ void WS_Run(void)
 
     Serial.printf("Connecting to %s:%d\n",global_config.ServerHost, global_config.ServerPort);
 
+    // Use a valid Origin valide to pass the Domoticz control
+    static char originHeader[64];
+    lv_snprintf(originHeader, sizeof(originHeader), "Origin: http://%s:%d", global_config.ServerHost, global_config.ServerPort);
+    WSclient.setExtraHeaders(originHeader);
+
     // server address, port and URL
     WSclient.begin(global_config.ServerHost, global_config.ServerPort, "/json", "domoticz");
     //WSclient.beginSSL(global_config.ServerHost, global_config.ServerPort, "/json", "", "domoticz");
@@ -318,5 +331,5 @@ void Websocket_loop(void)
 
 unsigned long total_WS_lenght(void)
 {
-    return total_data_lengh/1024;
+    return total_data_lenght/1024;
 }

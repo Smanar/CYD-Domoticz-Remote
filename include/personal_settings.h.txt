@@ -1,0 +1,11 @@
+#pragma once
+
+#define WIFISSID "YOUR_SSID"
+#define WIFIPASSWORD "YOUR_PASSWORD"
+#define SERVERHOST "YOUR_IP"
+#define SERVERPORT 8080
+#define DEVICELIST \
+{ \
+    122, 75, 16, 36, 28, -2, 63, 90, 145,    /* HomePage */ \
+    125, 75, 16, 36, 28, 0, 63, 0, -1         /* Subpage 1 */ \
+}

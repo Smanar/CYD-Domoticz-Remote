@@ -1,9 +1,11 @@
 #include "lvgl.h"
 #include "panel.h"
 #include "../../core/screen_driver.h"
+#include "../../core/helper.h"
 #include "../../conf/global_config.h"
 #include "../main_ui.h"
 #include "../../ui/navigation.h"
+#include "ArduinoJson.h"
 
 void Init_data_widget_page();
 
@@ -26,7 +28,7 @@ static lv_obj_t * settings_panel;
 bool isAllDigits(const char* str) {
     if (str == nullptr || str[0] == '\0') return false;
     for (int i = 0; str[i] != '\0'; i++) {
-        if (!std::isdigit(str[i])) return false;
+        if (!isdigit((unsigned char)str[i])) return false;
     }
     return true;
 }
@@ -172,7 +174,7 @@ static void page_dropdown(lv_event_t * e){
 
 static void rotate_screen_switch(lv_event_t* e){
     auto state = lv_obj_get_state(lv_event_get_target(e));
-    global_config.rotateScreen = (state & LV_STATE_CHECKED == LV_STATE_CHECKED);;
+    global_config.rotateScreen = ((state & LV_STATE_CHECKED) == LV_STATE_CHECKED);
     global_config.screenCalibrated = false;
     WriteGlobalConfig();
     ESP.restart();
@@ -190,12 +192,11 @@ static void protect_xxx_cb(lv_event_t* e){
     WriteGlobalConfig();
 }
 
-static void not_used_yet_switch(lv_event_t* e){
-    global_config.notused = lv_obj_has_state(lv_event_get_target(e), LV_STATE_CHECKED);
-    check_if_screen_needs_to_be_disabled();
+static void add_header_cb(lv_event_t* e){
+    global_config.addHeader = lv_obj_has_state(lv_event_get_target(e), LV_STATE_CHECKED);
     WriteGlobalConfig();
+    setHeaderHeight();
 }
-
 
 static void edit_device_list_switch(lv_event_t * e)
 {
@@ -214,12 +215,116 @@ static void edit_device_list_switch(lv_event_t * e)
     else if(code == LV_EVENT_READY || code == LV_EVENT_CANCEL) {
         kb_hide(ta);
 
-        for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++)
+        // Convert string to json list (adding [])
+        size_t textLen = strlen(lv_textarea_get_text(ta));
+        char* jsonText = (char*)malloc(textLen + 3);
+        if (jsonText)
         {
-            global_pages[pageToChange].ListDevices[i] = GetIntTok(lv_textarea_get_text(ta), i,',');
+            jsonText[0] = '[';
+            strcpy(&jsonText[1], lv_textarea_get_text(ta));
+            jsonText[textLen+1] = ']';
+            jsonText[textLen+2] = 0;
+
+            // Decode json
+            JsonDocument jsonDoc;
+            DeserializationError error = deserializeJson(jsonDoc, jsonText);
+            if (error) {
+                Serial.printf("%s parsing %s\n", error.c_str(), jsonText);
+                char title[100];
+                lv_snprintf(title, sizeof(title), "%s parsing data. New input ignored", error.c_str());
+                lv_obj_t* msgbox = lv_msgbox_create(NULL, title, jsonText, NULL, true);
+                lv_obj_set_size(msgbox, LV_PCT(70), LV_PCT(70));
+                lv_obj_align(msgbox, LV_ALIGN_CENTER, 0, 0);
+                return;
+            }
+            for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++) {
+                const char* idxData = jsonDoc[i] | "";
+                if (*idxData) {
+                    global_pages[pageToChange].ListDevices[i] = jsonDoc[i]["idx"].as<int>();
+                    global_pages[pageToChange].width[i] = jsonDoc[i]["width"].as<int>();
+                    global_pages[pageToChange].height[i] = jsonDoc[i]["height"].as<int>();
+                    global_pages[pageToChange].longText[i] = decodeLongText(jsonDoc[i]["longText"].as<const char*>());
+                    Serial.printf("%d: idx=%d, width=%d, height=%d, longText=%d\n", i,
+                        global_pages[pageToChange].ListDevices[i], global_pages[pageToChange].width[i],
+                        global_pages[pageToChange].height[i], global_pages[pageToChange].longText[i]);
+                } else {
+                    global_pages[pageToChange].ListDevices[i] = jsonDoc[i].as<int>();
+                    global_pages[pageToChange].width[i] = 1;
+                    global_pages[pageToChange].height[i] = 1;
+                    global_pages[pageToChange].longText[i] = LV_LABEL_LONG_WRAP;
+                }
+            }
+            
+            free(jsonText);
         }
+
         WriteGlobalConfig();
         Init_data_widget_page();
+    }
+}
+
+static void edit_command_idx_cb(lv_event_t * e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    lv_obj_t * ta = lv_event_get_target(e);
+
+    if (code == LV_EVENT_FOCUSED)
+    {
+        kb_show(ta);
+    }
+    else if (code == LV_EVENT_DEFOCUSED)
+    {
+        kb_hide(nullptr);
+    }
+    else if(code == LV_EVENT_READY || code == LV_EVENT_CANCEL) {
+        kb_hide(ta);
+
+        global_config.commandIdx = atoi(lv_textarea_get_text(ta));
+        WriteGlobalConfig();
+        Init_data_widget_page();    // To force scanning changes on this device
+    }
+}
+
+
+static void edit_response_idx_cb(lv_event_t * e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    lv_obj_t * ta = lv_event_get_target(e);
+
+    if (code == LV_EVENT_FOCUSED)
+    {
+        kb_show(ta);
+    }
+    else if (code == LV_EVENT_DEFOCUSED)
+    {
+        kb_hide(nullptr);
+    }
+    else if(code == LV_EVENT_READY || code == LV_EVENT_CANCEL) {
+        kb_hide(ta);
+
+        global_config.responseIdx = atoi(lv_textarea_get_text(ta));
+        WriteGlobalConfig();
+    }
+}
+
+static void edit_header_idx_cb(lv_event_t * e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    lv_obj_t * ta = lv_event_get_target(e);
+
+    if (code == LV_EVENT_FOCUSED)
+    {
+        kb_show(ta);
+    }
+    else if (code == LV_EVENT_DEFOCUSED)
+    {
+        kb_hide(nullptr);
+    }
+    else if(code == LV_EVENT_READY || code == LV_EVENT_CANCEL) {
+        kb_hide(ta);
+
+        global_config.headerIdx = atoi(lv_textarea_get_text(ta));
+        WriteGlobalConfig();
     }
 }
 
@@ -384,10 +489,10 @@ void settings_panel_init(lv_obj_t* panel)
     create_settings_widget("Rotate Screen", toggle, panel);
 
     toggle = lv_switch_create(panel);
-    lv_obj_add_event_cb(toggle, not_used_yet_switch, LV_EVENT_VALUE_CHANGED, NULL);
-    if (global_config.notused)
+    lv_obj_add_event_cb(toggle, add_header_cb, LV_EVENT_VALUE_CHANGED, NULL);
+    if (global_config.addHeader)
     lv_obj_add_state(toggle, LV_STATE_CHECKED);
-    create_settings_widget("Not used yet", toggle, panel);
+    create_settings_widget("Display header", toggle, panel);
 
     dropdown = lv_dropdown_create(panel);
     String pageList = "";
@@ -414,7 +519,24 @@ void settings_panel_init(lv_obj_t* panel)
 
     pageDeviceList = lv_textarea_create(panel);
     lv_obj_add_event_cb(pageDeviceList, edit_device_list_switch, LV_EVENT_ALL, NULL);
-    lv_textarea_add_text(pageDeviceList, loadDeviceList(pageToChange, true));
+    // Recreate IDX list
+    JsonDocument jsonDoc;
+    for (uint i=0; i<TOTAL_ICONX*TOTAL_ICONY; i++) {
+        if (global_pages[pageToChange].width[i] == 1 &&
+                global_pages[pageToChange].height[i] == 1 &&
+                global_pages[pageToChange].longText[i] == LV_LABEL_LONG_WRAP) {
+            jsonDoc[i] = global_pages[pageToChange].ListDevices[i];
+        } else {
+            jsonDoc[i]["idx"] = global_pages[pageToChange].ListDevices[i];
+            jsonDoc[i]["width"] = global_pages[pageToChange].width[i];
+            jsonDoc[i]["height"] = global_pages[pageToChange].height[i];
+            jsonDoc[i]["longText"] = encodeLongText(global_pages[pageToChange].longText[i]);
+        }
+    }
+    size_t jsonLen = measureJson(jsonDoc);
+    char jsonText[jsonLen+1];
+    serializeJson(jsonDoc, jsonText, sizeof(jsonText));
+    lv_textarea_add_text(pageDeviceList, jsonText);
     lv_textarea_set_one_line(pageDeviceList, true);
     lv_obj_set_width(pageDeviceList, lv_pct(70));
     create_settings_widget("... devices", pageDeviceList, panel);
@@ -449,6 +571,41 @@ void settings_panel_init(lv_obj_t* panel)
     if (global_config.protectInfo)
     lv_obj_add_state(toggle, LV_STATE_CHECKED);
     create_settings_widget("Protect info page", toggle, panel);
+
+    char formatText[10];
+
+    #ifdef INTERACTION
+
+        text = lv_textarea_create(panel);
+        lv_obj_add_event_cb(text, edit_command_idx_cb, LV_EVENT_ALL, NULL);
+        snprintf(formatText, sizeof(formatText),"%d", global_config.commandIdx);
+        lv_textarea_set_accepted_chars(text, "0123456789");
+        lv_textarea_set_max_length(text, 5);
+        lv_textarea_add_text(text, formatText);
+        lv_textarea_set_one_line(text, true);
+        lv_obj_set_width(text, lv_pct(60));
+        create_settings_widget("Comd IDX", text, panel);
+
+        text = lv_textarea_create(panel);
+        lv_obj_add_event_cb(text, edit_response_idx_cb, LV_EVENT_ALL, NULL);
+        snprintf(formatText, sizeof(formatText),"%d", global_config.responseIdx);
+        lv_textarea_set_accepted_chars(text, "0123456789");
+        lv_textarea_set_max_length(text, 5);
+        lv_textarea_add_text(text, formatText);
+        lv_textarea_set_one_line(text, true);
+        lv_obj_set_width(text, lv_pct(60));
+        create_settings_widget("Resp IDX", text, panel);
+    #endif
+
+    text = lv_textarea_create(panel);
+    lv_obj_add_event_cb(text, edit_header_idx_cb, LV_EVENT_ALL, NULL);
+    snprintf(formatText, sizeof(formatText),"%d", global_config.headerIdx);
+    lv_textarea_set_accepted_chars(text, "0123456789");
+    lv_textarea_set_max_length(text, 5);
+    lv_textarea_add_text(text, formatText);
+    lv_textarea_set_one_line(text, true);
+    lv_obj_set_width(text, lv_pct(60));
+    create_settings_widget("Header IDX", text, panel);
 
     create_settings_widget("", NULL, panel);
     btn = lv_btn_create(panel);
