@@ -207,6 +207,10 @@ These will be automatically compiled with "main.cpp" code, if present.
 
 Remote systems can display messages to panel, and optionally ask for user input.
 
+<p align="center">
+  <img src="https://github.com/Smanar/Ressources/blob/main/pictures/interaction_dashboard.jpg" alt="interaction dashboard">
+</p>
+
 To include interaction code into panel, you need to request it by defining "-DINTERACTION " in platformio.ini
 
 Communication is done through JSON data exchanged using a couple of Domoticz text devices.
